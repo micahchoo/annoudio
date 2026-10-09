@@ -21,9 +21,9 @@ Suites (closing pass, 2026-10-09; commands and counts in design/closing-notes.md
 `pnpm test:int` 279, `pnpm test:e2e` 58 (Chromium, muted), embed 293 + 4 skipped (Chromium,
 Firefox, WebKit), worker 85; plugins 13 (rerun by the main session after 7b). `pnpm build` green in app, embed, worker.
 
-## Nothing is committed
+## Git
 
-The repo was `git init`ed and has NO commits. The owner commits. A first commit is overdue.
+First commit `e1b9be8` (2026-10-09) holds everything built in this session. The owner commits; agents never do.
 
 ## How to run
 
