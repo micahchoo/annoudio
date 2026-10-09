@@ -1,0 +1,39 @@
+{
+  "@context": "http://www.w3.org/ns/anno.jsonld",
+  "id": "https://org.example/stories/river-voices/1/0192f3a4-7c1e-7b10-9d55-3e1f0a2b4c6d",
+  "type": "Annotation",
+  "motivation": "commenting",
+  "created": "2026-10-08T19:02:11Z",
+  "modified": "2026-10-09T10:14:00Z",
+  "creator": { "id": "https://org.example/members/m-118", "type": "Person", "nickname": "Leela" },
+  "rights": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "body": [
+    {
+      "type": "TextualBody",
+      "value": "My grandmother sang this on the ferry.",
+      "format": "text/plain",
+      "language": "ml"
+    },
+    {
+      "id": "https://org.example/media/0192f3a4-aa01-7000-8000-000000000001",
+      "type": "Sound",
+      "format": "audio/mp4"
+    },
+    {
+      "type": "SpecificResource",
+      "source": "https://org.example/vocab/river-voices/c/ferry",
+      "purpose": "tagging"
+    },
+    { "type": "TextualBody", "value": "Ferry", "purpose": "tagging", "language": "en" }
+  ],
+  "target": {
+    "type": "SpecificResource",
+    "source": "https://org.example/recordings/1",
+    "scope": "https://org.example/projects/river-voices",
+    "selector": {
+      "type": "FragmentSelector",
+      "conformsTo": "http://www.w3.org/TR/media-frags/",
+      "value": "t=42,51"
+    }
+  }
+}

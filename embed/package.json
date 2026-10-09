@@ -1,0 +1,28 @@
+{
+  "name": "annoudio-embed",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Annoudio player: <annoudio-player> and the /embed/v1.js loader.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "playwright test",
+    "test:hosts": "playwright test --project=hosts-chromium --project=hosts-firefox --project=hosts-webkit"
+  },
+  "dependencies": {
+    "wavesurfer.js": "8.0.2"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.64.0",
+    "@types/node": "^22.20.5",
+    "esbuild": "0.28.2",
+    "eslint": "^9.39.5",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}

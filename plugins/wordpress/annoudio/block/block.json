@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "annoudio/player",
+	"version": "0.2.0",
+	"title": "Annoudio player",
+	"category": "media",
+	"icon": "format-audio",
+	"description": "A recording and its community stories, from your Annoudio stack.",
+	"keywords": [
+		"audio",
+		"stories",
+		"annotation"
+	],
+	"textdomain": "annoudio",
+	"attributes": {
+		"recording": {
+			"type": "string",
+			"default": ""
+		},
+		"src": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "file:./index.js"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "annoudio-plugins-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright tests of the Annoudio WordPress plugin and Omeka S module on the test hosts.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/node": "^22.20.5"
+  }
+}

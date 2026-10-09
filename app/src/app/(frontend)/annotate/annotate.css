@@ -1,0 +1,431 @@
+/* The member pages: the Annotate page, Your stories and Your account. The colours read
+   the theme tokens of the project (Frame.tsx sets them on the root), with these defaults. */
+
+.annotate {
+  --ink: var(--annoudio-color-text, #1b1b1b);
+  --paper: var(--annoudio-color-surface, #ffffff);
+  --muted: var(--annoudio-color-muted, #545454);
+  --line: var(--annoudio-color-border, #8a8a8a);
+  --accent: var(--annoudio-color-accent, #0b57d0);
+  --on-accent: var(--annoudio-color-on-accent, #ffffff);
+  --radius: var(--annoudio-radius, 4px);
+  --error: #b3261e;
+
+  max-width: 40rem;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1rem 1rem 3rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--annoudio-font-family, system-ui, sans-serif);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.annotate .top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.annotate .top__project {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.annotate .back {
+  margin: 0.75rem 0 0;
+}
+
+.annotate .back a {
+  display: inline-block;
+  min-height: 24px;
+}
+
+.annotate .member-menu {
+  position: relative;
+}
+
+.annotate .member-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  list-style: none;
+}
+
+.annotate .member-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.annotate .member-menu ul {
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  min-width: 12rem;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  list-style: none;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
+}
+
+.annotate .member-menu li a,
+.annotate .member-menu li button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.annotate .member-menu li a:hover,
+.annotate .member-menu li button:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.annotate .member-menu form {
+  margin: 0;
+}
+
+.annotate .status {
+  margin: 1.5rem 0 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper));
+}
+
+.annotate .status--returned {
+  border-left-color: var(--error);
+  background: color-mix(in srgb, var(--error) 8%, var(--paper));
+}
+
+.annotate .status h2 {
+  margin: 0;
+}
+
+.annotate .badge {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.annotate .moment {
+  font-weight: 600;
+}
+
+.annotate footer.rights {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.annotate h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.annotate h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.annotate p {
+  margin: 0.5rem 0;
+}
+
+.annotate .instance,
+.annotate .hint {
+  color: var(--muted);
+}
+
+.annotate label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.annotate input:not([type='checkbox']),
+.annotate textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+}
+
+.annotate input[aria-invalid='true'],
+.annotate textarea[aria-invalid='true'] {
+  border: 2px solid var(--error);
+}
+
+.annotate button {
+  margin: 1rem 0.5rem 0 0;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.annotate button[type='button'] {
+  background: var(--paper);
+  color: var(--accent);
+}
+
+.annotate button:disabled {
+  opacity: 0.6;
+}
+
+.annotate :focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.annotate a {
+  color: var(--accent);
+}
+
+.annotate .error {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.annotate .player {
+  margin: 1rem 0;
+}
+
+.annotate .range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
+}
+
+.annotate .time {
+  flex: 1 1 12rem;
+}
+
+.annotate fieldset {
+  margin: 1.5rem 0 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.annotate legend {
+  font-weight: 600;
+}
+
+.annotate .topics {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: none;
+}
+
+.annotate .topics > li > label {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+.annotate .rights {
+  margin-top: 1.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.annotate .returned {
+  color: var(--ink);
+}
+
+.annotate .own ul {
+  padding: 0;
+  list-style: none;
+}
+
+.annotate .own li {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.annotate .state {
+  color: var(--muted);
+}
+
+.annotate .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.annotate .attachments {
+  padding: 0;
+  list-style: none;
+}
+
+.annotate .attachments li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.annotate .attachments img {
+  max-width: 6rem;
+  max-height: 6rem;
+  object-fit: cover;
+}
+
+.annotate .media audio {
+  max-width: 100%;
+}
+
+.annotate .pick input {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* The story that a reply answers. */
+.annotate .parent blockquote {
+  margin: 0.5rem 0;
+  padding: 0.25rem 0 0.25rem 1rem;
+  border-left: 4px solid var(--line);
+  white-space: pre-wrap;
+}
+
+/* The page shows the rights line of the project itself; the player here does not repeat it. */
+.annotate annoudio-player::part(rights) {
+  display: none;
+}
+
+/* Your stories (P7) and Your account (P8). */
+.annotate .group h2 {
+  margin-top: 1.75rem;
+}
+
+.annotate .count {
+  color: var(--muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.annotate .cards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.annotate .card {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.annotate .card h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.annotate .card__meta {
+  margin: 0.25rem 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.annotate .card__text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.annotate .card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-bottom: 0;
+}
+
+.annotate .card__links a {
+  display: inline-block;
+  min-height: 24px;
+}
+
+.annotate .empty {
+  margin-top: 2rem;
+  font-size: 1.1rem;
+}
+
+.annotate .field {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.annotate .field .label {
+  font-weight: 600;
+}
+
+.annotate .field .hint {
+  font-size: 0.875rem;
+}
+
+.annotate label.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+
+.annotate label.check input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+  flex: none;
+}
+
+.annotate .saved-note {
+  margin-left: 0.5rem;
+  font-weight: 600;
+}
+
+.annotate .sign-out button {
+  background: var(--paper);
+  color: var(--accent);
+}

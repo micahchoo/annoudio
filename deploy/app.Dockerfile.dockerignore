@@ -1,0 +1,25 @@
+# Context: the repository root. Send only the app/, embed/ and worker/ sources to the build.
+*
+!app/
+!embed/
+!worker/
+!deploy/app/
+!deploy/seed/first-operator.ts
+
+# Never send secrets, host packages or build output.
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+app/.next
+app/.next-e2e
+app/tsconfig.tsbuildinfo
+app/playwright-report
+app/test-results
+app/media
+embed/test-results
+embed/playwright-report
+embed/tests
+embed/.cache
+worker/dist
+worker/tests

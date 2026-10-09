@@ -1,0 +1,25 @@
+# Local development only. Starts Postgres for the app.
+# Use: docker compose -f deploy/docker-compose.dev.yml up -d
+# The project name keeps this stack apart from other stacks in a folder named "deploy".
+name: annoudio-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: annoudio
+      POSTGRES_PASSWORD: annoudio
+      POSTGRES_DB: annoudio
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U annoudio -d annoudio']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

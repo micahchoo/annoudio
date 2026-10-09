@@ -1,0 +1,105 @@
+# Test hosts for the player (Phase 2): one local WordPress and one local Omeka S.
+# Local testing only. Not for production. Passwords are test values.
+#
+# Start:  docker compose -f deploy/test-hosts/docker-compose.yml up -d
+# Set up: deploy/test-hosts/setup.sh   (installs both, pastes the snippet into one page each)
+# Stop:   docker compose -f deploy/test-hosts/docker-compose.yml down
+# Before `down -v`, run `docker compose ls` and check that only annoudio-hosts is affected.
+#
+# The project name keeps this stack apart from other stacks in a folder named "deploy".
+name: annoudio-hosts
+
+services:
+  wp-db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root-test
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress-test
+    volumes:
+      - wp-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  wordpress:
+    image: wordpress:7.1.3-php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      wp-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8091:80"
+    environment:
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress-test
+    volumes:
+      - wp-html:/var/www/html
+
+  # Runs only on demand: docker compose -f … run --rm wp-cli wp …
+  wp-cli:
+    image: wordpress:cli-php8.3
+    profiles: ["tools"]
+    user: "33:33"
+    depends_on:
+      - wordpress
+    environment:
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress-test
+    volumes:
+      - wp-html:/var/www/html
+
+  omeka-db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root-test
+      MARIADB_DATABASE: omeka
+      MARIADB_USER: omeka
+      MARIADB_PASSWORD: omeka-test
+    volumes:
+      - omeka-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # Maintained community image (no official one exists): https://github.com/giocomai/omeka-s-docker
+  # It installs Omeka S without the web installer when OMEKA_ADMIN_* are set.
+  omeka:
+    image: giocomai/omeka-s-docker:v4.2.1
+    restart: unless-stopped
+    depends_on:
+      omeka-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8092:80"
+    environment:
+      MYSQL_USER: omeka
+      MYSQL_PASSWORD: omeka-test
+      MYSQL_DATABASE: omeka
+      MYSQL_HOST: omeka-db
+      APPLICATION_ENV: production
+      OMEKA_THEMES: https://github.com/omeka-s-themes/default
+      OMEKA_ADMIN_EMAIL: admin@example.org
+      OMEKA_ADMIN_NAME: Site Administrator
+      OMEKA_ADMIN_PASSWORD: omeka-admin-test
+      OMEKA_SITE_TITLE: Annoudio test host
+    volumes:
+      - omeka-volume:/var/www/html/volume
+      - ./omeka-page.php:/opt/annoudio/omeka-page.php:ro
+
+volumes:
+  wp-db:
+  wp-html:
+  omeka-db:
+  omeka-volume:

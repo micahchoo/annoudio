@@ -1,0 +1,16 @@
+/* The base of the public pages (the Annotate page, Your stories, Your account). Each page
+   sets its own look in its own file. */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}

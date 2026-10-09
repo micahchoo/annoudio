@@ -1,0 +1,15 @@
+/* Hostile host CSS: the kind of global rules that themes ship. None of it may reach the player's parts. */
+html { font-size: 18px; }
+body { font-family: Georgia, serif; color: #333333; line-height: 2.5; letter-spacing: 0.1em;
+  text-transform: uppercase; text-align: center; word-spacing: 4px; font-style: italic; font-weight: 300; }
+* { box-sizing: content-box; }
+div { padding: 7px; margin: 3px; }
+p { margin: 2em; color: purple; }
+a { color: orange; text-decoration: none; }
+button { background: hotpink !important; padding: 20px !important; border: 5px solid lime !important;
+  font-weight: 900; border-radius: 30px; }
+ol, ul { list-style: square; margin: 3em; padding: 3em; }
+li { margin: 1em; }
+input { width: 40px; }
+input[type=range] { accent-color: lime; }
+svg { width: 200px; }

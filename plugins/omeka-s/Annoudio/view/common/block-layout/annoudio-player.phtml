@@ -1,0 +1,13 @@
+<?php
+/**
+ * The player element of the snippet (CONTRACT.md 1). The loader is in the head (Player::prepareRender).
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var string $project
+ * @var string $recording
+ * @var string $src
+ */
+// escapeHtml escapes both quote kinds (ENT_QUOTES), so it is safe in a quoted attribute.
+$attr = $this->plugin('escapeHtml');
+?>
+<annoudio-player project="<?= $attr($project) ?>" recording="<?= $attr($recording) ?>" src="<?= $attr($src) ?>"></annoudio-player>

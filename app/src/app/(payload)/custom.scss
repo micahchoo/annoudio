@@ -1,0 +1,683 @@
+// Styles of the custom admin components (src/admin/). Payload's theme variables keep
+// them correct in the light and the dark admin theme.
+
+.annoudio-panel {
+  margin-bottom: var(--base);
+  padding: calc(var(--base) * 0.75);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m);
+
+  h3 {
+    margin: var(--base) 0 calc(var(--base) * 0.25);
+  }
+}
+
+.annoudio-panel__heading {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--base) * 0.5);
+  margin: 0 0 calc(var(--base) * 0.5);
+}
+
+.annoudio-panel__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: calc(var(--base) * 0.25) var(--base);
+
+  dt {
+    color: var(--theme-elevation-600);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.annoudio-panel__text {
+  white-space: pre-wrap;
+  font-size: 1.1em;
+}
+
+.annoudio-panel__returned,
+.annoudio-dialog__error {
+  color: var(--theme-error-750);
+}
+
+.annoudio-panel__player audio,
+.annoudio-panel__media audio,
+.annoudio-panel__media video {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+}
+
+.annoudio-panel__image {
+  display: block;
+  max-width: 100%;
+  max-height: 20rem;
+}
+
+.annoudio-panel__tags,
+.annoudio-panel__media {
+  padding-left: 1.2em;
+}
+
+.annoudio-badge {
+  display: inline-block;
+  padding: 0.1em 0.6em;
+  border-radius: 1em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--theme-elevation-100);
+  color: var(--theme-elevation-800);
+}
+
+.annoudio-badge--neutral {
+  background: var(--theme-elevation-100);
+  color: var(--theme-elevation-800);
+}
+
+.annoudio-badge--attention {
+  background: var(--theme-warning-100);
+  color: var(--theme-warning-800);
+}
+
+.annoudio-badge--warning {
+  background: var(--theme-error-100);
+  color: var(--theme-error-800);
+}
+
+.annoudio-badge--success {
+  background: var(--theme-success-100);
+  color: var(--theme-success-800);
+}
+
+.annoudio-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--base) * 0.5);
+  margin-bottom: var(--base);
+}
+
+.annoudio-tabs__tab {
+  padding: 0.3em 0.9em;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 2em;
+  text-decoration: none;
+
+  &[aria-current='page'] {
+    background: var(--theme-elevation-800);
+    color: var(--theme-elevation-0);
+    border-color: var(--theme-elevation-800);
+  }
+}
+
+.annoudio-dialog {
+  max-width: 32rem;
+  padding: var(--base);
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: var(--style-radius-m);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+
+  &::backdrop {
+    background: rgb(0 0 0 / 0.4);
+  }
+
+  textarea {
+    display: block;
+    width: 100%;
+    margin: calc(var(--base) * 0.25) 0;
+    font: inherit;
+  }
+}
+
+.annoudio-dialog__buttons,
+.annoudio-skos__buttons,
+.annoudio-snippet__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--base) * 0.5);
+}
+
+.annoudio-snippet__code {
+  overflow-x: auto;
+  padding: calc(var(--base) * 0.5);
+  background: var(--theme-elevation-50);
+  border-radius: var(--style-radius-s);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.annoudio-snippet__id,
+.annoudio-tree__uses,
+.annoudio-tree__hidden,
+.annoudio-duration__probe {
+  color: var(--theme-elevation-600);
+}
+
+.annoudio-duration__value {
+  display: block;
+  font-size: 1.2em;
+}
+
+.annoudio-tree {
+  padding-left: 1.2em;
+}
+
+.annoudio-dashboard {
+  margin-bottom: calc(var(--base) * 2);
+}
+
+.annoudio-dashboard__waiting {
+  font-size: 1.3em;
+}
+
+.annoudio-dashboard__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base);
+  padding: 0;
+  list-style: none;
+}
+
+.annoudio-theme-preview {
+  max-width: 40rem;
+  margin-bottom: var(--base);
+}
+
+// Text for a screen reader only.
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// Today (O3).
+.annoudio-today {
+  max-width: 48rem;
+  padding-top: calc(var(--base) * 1.5);
+  padding-bottom: calc(var(--base) * 2);
+}
+
+.annoudio-today__title {
+  margin: 0 0 var(--base);
+}
+
+.annoudio-today__error {
+  color: var(--theme-error-750);
+}
+
+.annoudio-checklist__steps {
+  margin: 0 0 var(--base);
+  padding: 0;
+  list-style: none;
+}
+
+.annoudio-checklist__step {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  align-items: start;
+  gap: 0 calc(var(--base) * 0.5);
+  padding: calc(var(--base) * 0.5) 0;
+  border-bottom: 1px solid var(--theme-elevation-100);
+
+  > :nth-child(n + 3) {
+    grid-column: 2;
+  }
+
+  form {
+    margin: 0;
+  }
+
+  .btn {
+    margin: calc(var(--base) * 0.25) 0 0;
+  }
+}
+
+// The mark is a box; a done step has a filled box with a tick. Text says the state too.
+.annoudio-checklist__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--theme-elevation-500);
+  border-radius: var(--style-radius-s);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+
+  [data-done='true'] > & {
+    border-color: var(--theme-success-500);
+    background: var(--theme-success-500);
+    color: var(--theme-elevation-0);
+  }
+}
+
+.annoudio-checklist__hint {
+  margin: calc(var(--base) * 0.25) 0 0;
+  color: var(--theme-elevation-650);
+  max-width: 40rem;
+}
+
+.annoudio-work__lead {
+  margin: 0 0 calc(var(--base) * 0.5);
+  font-size: 1.15rem;
+  text-wrap: pretty;
+}
+
+.annoudio-work__waiting {
+  margin-bottom: var(--base);
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.annoudio-work__jobs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--base) * 0.5);
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.annoudio-work__recent {
+  margin: var(--base) 0 0;
+  color: var(--theme-elevation-650);
+}
+
+// The job links in the sidebar.
+.annoudio-nav {
+  margin-bottom: calc(var(--base) * 0.75);
+}
+
+.annoudio-nav__link {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--base) * 0.4);
+}
+
+.annoudio-nav__badge {
+  min-width: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 1rem;
+  background: var(--theme-warning-100);
+  color: var(--theme-warning-800);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5rem;
+  text-align: center;
+}
+
+// The review list (O4).
+.annoudio-tabs__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.annoudio-tabs__start .btn {
+  margin: 0 0 var(--base);
+}
+
+.annoudio-empty {
+  padding: calc(var(--base) * 1.5) 0;
+  font-size: 1.1rem;
+}
+
+// Our empty text replaces Payload's "No results found" for an empty tab.
+.collection-list:has(.annoudio-empty) .no-results {
+  display: none;
+}
+
+// The review screen (O5).
+.annoudio-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0;
+}
+
+.annoudio-status__age {
+  color: var(--theme-elevation-650);
+}
+
+.annoudio-controls__note {
+  align-self: center;
+  max-width: 16rem;
+  color: var(--theme-elevation-650);
+  font-size: 0.9rem;
+}
+
+.annoudio-dialog__warning {
+  font-weight: 600;
+}
+
+.annoudio-dialog {
+  h2 {
+    margin: 0 0 calc(var(--base) * 0.75);
+  }
+
+  p {
+    margin: 0 0 calc(var(--base) * 0.75);
+  }
+
+  .annoudio-dialog__buttons {
+    margin-top: var(--base);
+  }
+}
+
+.annoudio-dialog label {
+  display: block;
+  margin-top: var(--base);
+  font-weight: 600;
+}
+
+.annoudio-preview {
+  margin: 0 0 var(--base);
+  padding: calc(var(--base) * 0.75);
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: var(--style-radius-m);
+  background: var(--theme-elevation-50);
+}
+
+.annoudio-preview__meta {
+  color: var(--theme-elevation-650);
+  font-size: 0.9rem;
+}
+
+.annoudio-preview__text {
+  margin: calc(var(--base) * 0.25) 0;
+  white-space: pre-wrap;
+}
+
+.annoudio-preview__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin: calc(var(--base) * 0.5) 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.1em 0.6em;
+    border-radius: 1em;
+    background: var(--theme-elevation-150);
+    font-size: 0.85rem;
+  }
+}
+
+.annoudio-parent blockquote {
+  margin: calc(var(--base) * 0.5) 0;
+  padding-left: calc(var(--base) * 0.75);
+  border-left: 3px solid var(--theme-elevation-300);
+}
+
+// Remove: the danger colour, apart from the other controls.
+.btn.annoudio-remove {
+  margin-inline-start: calc(var(--base) * 0.5);
+  color: var(--theme-error-750);
+  box-shadow: inset 0 0 0 1px var(--theme-error-400);
+}
+
+.annoudio-preview > :last-child {
+  margin-bottom: 0;
+}
+
+// History (O6).
+.annoudio-history {
+  max-width: 48rem;
+  padding-top: var(--base);
+  padding-bottom: calc(var(--base) * 2);
+}
+
+.annoudio-history__intro {
+  color: var(--theme-elevation-650);
+}
+
+.annoudio-history__lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0 var(--base);
+    padding: calc(var(--base) * 0.5) 0;
+    border-bottom: 1px solid var(--theme-elevation-100);
+  }
+
+  time {
+    color: var(--theme-elevation-650);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.annoudio-status__again {
+  font-weight: 600;
+}
+
+.annoudio-list-actions .btn {
+  margin: 0 0 var(--base);
+}
+
+// Put a recording on a site (O7).
+.annoudio-wizard {
+  max-width: 48rem;
+  padding-top: calc(var(--base) * 1.5);
+  padding-bottom: calc(var(--base) * 2);
+
+  h1 {
+    margin: 0 0 var(--base);
+  }
+}
+
+.annoudio-wizard__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--base) * 0.5);
+  margin: 0 0 var(--base);
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.2em 0.8em;
+    border: 1px solid var(--theme-elevation-200);
+    border-radius: 2em;
+    color: var(--theme-elevation-650);
+  }
+
+  [aria-current='step'] {
+    border-color: var(--theme-elevation-800);
+    background: var(--theme-elevation-800);
+    color: var(--theme-elevation-0);
+  }
+
+  [data-done='true'] {
+    color: var(--theme-elevation-800);
+  }
+}
+
+.annoudio-wizard__heading {
+  margin: 0 0 calc(var(--base) * 0.75);
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-elevation-800);
+    outline-offset: 4px;
+  }
+}
+
+.annoudio-wizard__number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  margin-right: 0.25em;
+  border-radius: 50%;
+  background: var(--theme-elevation-150);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+}
+
+.annoudio-wizard__done {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0;
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.annoudio-wizard__step > .btn {
+  margin: var(--base) 0 0;
+}
+
+.annoudio-wizard__preview {
+  margin: var(--base) 0;
+
+  figcaption {
+    margin-bottom: calc(var(--base) * 0.5);
+    color: var(--theme-elevation-650);
+  }
+}
+
+.annoudio-choice {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    margin-bottom: calc(var(--base) * 0.5);
+    font-weight: 600;
+  }
+}
+
+.annoudio-choice__option {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 2rem;
+  cursor: pointer;
+
+  input {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+  }
+}
+
+.annoudio-choice__body {
+  margin: calc(var(--base) * 0.25) 0 calc(var(--base) * 0.75) 1.6rem;
+
+  > label {
+    display: block;
+    margin-top: calc(var(--base) * 0.5);
+    font-weight: 600;
+  }
+}
+
+.annoudio-choice__list {
+  max-height: 16rem;
+  overflow-y: auto;
+  margin-top: calc(var(--base) * 0.5);
+}
+
+.annoudio-input {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--theme-elevation-400);
+  border-radius: var(--style-radius-s);
+  background: var(--theme-input-bg, var(--theme-elevation-0));
+  color: var(--theme-text);
+  font: inherit;
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-elevation-800);
+    outline-offset: 1px;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--theme-error-500);
+  }
+}
+
+.annoudio-hint {
+  margin: 0.25rem 0 0;
+  color: var(--theme-elevation-650);
+  font-size: 0.9rem;
+}
+
+.annoudio-field-error {
+  margin: 0.25rem 0 0;
+  color: var(--theme-error-750);
+}
+
+// Concepts (O10) and the project Overview (O16).
+.annoudio-concepts,
+.annoudio-overview {
+  max-width: 48rem;
+  padding-top: calc(var(--base) * 1.5);
+  padding-bottom: calc(var(--base) * 2);
+
+  h1 {
+    margin: 0 0 calc(var(--base) * 0.5);
+  }
+}
+
+.annoudio-overview__counts {
+  > div {
+    display: contents;
+  }
+}
+
+.annoudio-overview__recordings {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+// Payload's field descriptions are too light on the page background (axe color-contrast,
+// 4.5:1). This colour passes in the light and the dark theme.
+.field-description {
+  color: var(--theme-elevation-650);
+}
+
+.annoudio-doc-tab {
+  list-style: none;
+}
+
+// Payload's list column headings are too light (axe color-contrast).
+.sort-column__label .field-label {
+  color: var(--theme-elevation-800);
+}
+
+// The review list has no bulk action that an operator needs: deletes go through Remove,
+// and nobody edits a story. Payload's selection checkboxes have no names (axe `label`), so
+// the stories list does not show them.
+.collection-list--stories {
+  #heading-_select,
+  .cell-_select,
+  .collection-list__list-selection {
+    display: none;
+  }
+}
+
+// The controls of the review screen keep their words on one line.
+.doc-controls__controls .btn {
+  white-space: nowrap;
+}

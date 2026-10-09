@@ -1,0 +1,149 @@
+# The Annoudio stack: app, Postgres, worker. One stack for each organisation.
+#
+# Production file. Read deploy/GUIDE-dokploy.md (or GUIDE-coolify.md) first.
+# The variables come from deploy/.env (Dokploy and Coolify write it from their
+# Environment screen). Make it from deploy/.env.example.
+#
+# Run it by hand only with -f, and give a project name with -p if a stack named
+# "annoudio-prod" runs on the machine already:
+#   docker compose -f deploy/docker-compose.yml up -d --wait
+#
+# The app listens on port 3000 inside the stack network. A reverse proxy on the host
+# (Traefik in Dokploy and Coolify) sends HTTPS traffic to it. This file publishes no port.
+# For a run without a proxy, add deploy/docker-compose.override.example.yml.
+
+# The rule deploy-compose-name: every compose file here sets `name: annoudio-<env>`.
+# Dokploy and Coolify give their own project name with -p; that name wins over this one.
+name: annoudio-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/app.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://annoudio:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/annoudio}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?set PAYLOAD_SECRET in .env}
+      ANNOUDIO_ORIGIN: ${ANNOUDIO_ORIGIN:?set ANNOUDIO_ORIGIN in .env}
+      SMTP_URL: ${SMTP_URL:?set SMTP_URL in .env}
+      EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM in .env}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      MEDIA_DIR: /media
+      # The app takes the worker's results (media.settled) only with this switch on.
+      # Without it, no voice note, photo or video can ever be published.
+      # The same switch also starts the consumer of the daily operator digest (mail.digest).
+      ANNOUDIO_MEDIA_CONSUMER: '1'
+      # The time zone of the dates that the app writes (admin). Use the same value as the worker.
+      TZ: ${TZ:-UTC}
+      # Keep the heap under the memory limit below.
+      NODE_OPTIONS: --no-deprecation --max-old-space-size=512
+      # Optional limits. A name with no value is not set in the container, so the app
+      # uses its default. Never write an empty value: the app reads "" as 0.
+      STORIES_PAGE_SIZE:
+      STORIES_MAX_AGE:
+      STORIES_MAX_BODIES:
+      STORIES_MAX_TAGS:
+      STORIES_MAX_TEXT:
+      ANNOUDIO_CODES_PER_HOUR:
+    expose:
+      - '3000'
+    volumes:
+      - media:/media
+    healthcheck:
+      # /api/users/init is a Payload route. It answers only when the app can read the database.
+      # The server starts after the migrations (deploy/app/entrypoint.sh), so the check stays
+      # red until every migration is done.
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/api/users/init').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+          cpus: '1.5'
+    logging: *logging
+
+  worker:
+    build:
+      context: ../worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://annoudio:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/annoudio}
+      MEDIA_DIR: /media
+      # The worker sends the daily operator digest at 08:00 in this time zone.
+      TZ: ${TZ:-UTC}
+    volumes:
+      - media:/media
+    # The worker finishes the active job in at most 30 s after SIGTERM (worker/README.md).
+    stop_grace_period: 40s
+    deploy:
+      resources:
+        limits:
+          # ffmpeg on a 3-minute video. One CPU, so a transcode does not slow the app.
+          memory: 768m
+          cpus: '1.0'
+    logging: *logging
+
+  # One short job before the app and the worker start. Both run as the user "node"
+  # (uid 1000), but a new volume belongs to root. This job gives /media to uid 1000.
+  # It changes only the files with a different owner, so it is fast on a large volume.
+  media-init:
+    image: alpine:3.24
+    restart: 'no'
+    user: '0:0'
+    volumes:
+      - media:/media
+    command:
+      - sh
+      - -c
+      - rmdir /media/cdrom /media/floppy /media/usb 2>/dev/null; find /media ! -user 1000 -exec chown 1000:1000 {} +
+    logging: *logging
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: annoudio
+      POSTGRES_DB: annoudio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 128m
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U annoudio -d annoudio']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '1.0'
+    logging: *logging
+
+volumes:
+  # The database. Back it up with pg_dump (deploy/BACKUP.md), not as files.
+  pgdata:
+  # The media bodies: raw/, derived/, uploads/, work/ (design/media-interface.md).
+  # The app and the worker share it. Back it up as files (deploy/BACKUP.md).
+  media:

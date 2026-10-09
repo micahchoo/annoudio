@@ -1,0 +1,41 @@
+{
+  "name": "annoudio-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Annoudio media worker: probes and transcodes media bodies. Jobs run in Postgres (pg-boss).",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "pg-boss": "12.37.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^24.19.1",
+    "@types/pg": "^8.23.1",
+    "eslint": "^9.39.5",
+    "pg": "^8.23.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "4.0.18"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "packageManager": "pnpm@11.25.0"
+}
