@@ -51,6 +51,7 @@ services:
       NODE_OPTIONS: --no-deprecation --max-old-space-size=512
       # Optional limits. A name with no value is not set in the container, so the app
       # uses its default. Never write an empty value: the app reads "" as 0.
+      ANNOUDIO_NAME:
       STORIES_PAGE_SIZE:
       STORIES_MAX_AGE:
       STORIES_MAX_BODIES:

@@ -177,6 +177,19 @@ describe('lifecycle of stored stories', () => {
     expect(await stories.counts()).toMatchObject(tallies({ published: [1, 1] }))
   })
 
+  it('counts of one member: the stories that the member page shows', async () => {
+    await saved(draft({ id: storyId(1) }))
+    await saved(draft({ id: storyId(2), start: 1, end: 2 }), ravi)
+    await stories.publish(operator, storyId(2))
+    expect(await stories.counts({ member: leela.memberId })).toMatchObject(
+      tallies({ waiting: [1, 0] }),
+    )
+    expect(await stories.counts({ member: ravi.memberId })).toMatchObject(
+      tallies({ published: [1, 0] }),
+    )
+    expect(await stories.counts({ member: 'm-nobody' })).toMatchObject(tallies({}))
+  })
+
   it('counts of one project and of one recording, and the age of the oldest waiting story', async () => {
     await saved(draft({ id: storyId(1) }))
     await saved(draft({ id: storyId(2), recording: '2', start: 1, end: 2 }))
@@ -188,6 +201,58 @@ describe('lifecycle of stored stories', () => {
     await stories.publish(operator, storyId(1))
     await stories.publish(operator, storyId(2))
     expect((await stories.counts()).oldestWaiting).toBeNull()
+  })
+})
+
+describe('Sent again, and the State column of the review list', () => {
+  it('a change after a return waits "sent again"; a return or a publish clears it', async () => {
+    await saved()
+    await stories.reject(operator, storyId(1), 'Please say where the boat was.')
+    const change = async (end: number) => {
+      const [own] = await stories.ownDrafts(leela, instance)
+      await saved({ ...draft({ end }), ifMatch: own.etag })
+    }
+    await change(50)
+    expect(await both(1)).toEqual({ ...state('waiting'), again: true })
+    expect((await stories.ownDrafts(leela, instance))[0].sentAgain).toBe(true)
+    // A second change before the review: still sent again.
+    await change(49)
+    expect(await both(1)).toEqual({ ...state('waiting'), again: true })
+    // A return: Returned, not sent again; the next change is sent again once more.
+    await stories.reject(operator, storyId(1), 'And the year?')
+    expect(await both(1)).toEqual(state('returned'))
+    await change(48)
+    expect(await both(1)).toEqual({ ...state('waiting'), again: true })
+    await stories.publish(operator, storyId(1))
+    expect(await both(1)).toEqual(state('published'))
+    expect((await stories.ownDrafts(leela, instance))[0]).not.toHaveProperty('sentAgain')
+    // A change to the published story is a change, not a story sent again.
+    await change(47)
+    expect(await both(1)).toEqual(state('published', 'waiting'))
+  })
+
+  it('every row of the operator list has its state, not only the first (recordings audit, 1)', async () => {
+    await saved()
+    await saved(draft({ id: storyId(2), start: 3, end: 4 }), ravi)
+    await saved(draft({ id: storyId(3), start: 5, end: 6 }))
+    await publishDraft(stories, draft({ id: storyId(4), start: 7, end: 8 }))
+    const user = await payload.create({
+      collection: 'users',
+      data: { email: 'list-reader@example.org', password: 'list-reader-pass-1' },
+    })
+    const { docs } = await payload.find({
+      collection: 'stories',
+      draft: true,
+      sort: 'createdAt',
+      depth: 0,
+      user: { ...user, collection: 'users' },
+    })
+    expect(docs.map((doc) => doc.lifecycle)).toEqual([
+      state('waiting'),
+      state('waiting'),
+      state('waiting'),
+      state('published'),
+    ])
   })
 })
 

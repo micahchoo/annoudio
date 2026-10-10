@@ -33,15 +33,30 @@ export interface Rights {
   iri: string | null;
 }
 
-export interface Theme {
-  sheet: CSSStyleSheet;
-  /** Settles when the theme request settles, with the rights line or null. Never rejects, except on abort. */
-  load(signal: AbortSignal): Promise<Rights | null>;
+/** One field of the project: how the widget labels its values (CONTRACT 3.2, rule 8). */
+export interface FieldLabel {
+  property: string;
+  label: string;
+  showAs: "line" | "tags" | "none";
+  /** True for a field whose values are web addresses. */
+  link: boolean;
 }
 
-interface Loaded {
-  css: string;
+/** What the theme JSON gives besides the tokens. */
+export interface ThemeInfo {
   rights: Rights | null;
+  /** In field order. Null when the theme has no `fields` (no theme, an older stack). */
+  fields: FieldLabel[] | null;
+}
+
+export interface Theme {
+  sheet: CSSStyleSheet;
+  /** Settles when the theme request settles. Never rejects, except on abort. */
+  load(signal: AbortSignal): Promise<ThemeInfo>;
+}
+
+interface Loaded extends ThemeInfo {
+  css: string;
 }
 
 const themes = new Map<string, Theme>();
@@ -55,9 +70,9 @@ export function themeFor(origin: string, project: string): Theme {
     theme = {
       sheet,
       load: (signal) =>
-        requests.get(url, (shared) => fetchTheme(url, shared), signal).then(({ css, rights }) => {
+        requests.get(url, (shared) => fetchTheme(url, shared), signal).then(({ css, rights, fields }) => {
           sheet.replaceSync(css);
-          return rights;
+          return { rights, fields };
         }),
     };
     themes.set(url, theme);
@@ -65,7 +80,7 @@ export function themeFor(origin: string, project: string): Theme {
   return theme;
 }
 
-const NONE: Loaded = { css: "", rights: null };
+const NONE: Loaded = { css: "", rights: null, fields: null };
 
 async function fetchTheme(url: string, signal: AbortSignal): Promise<Loaded> {
   let body: unknown;
@@ -77,7 +92,29 @@ async function fetchTheme(url: string, signal: AbortSignal): Promise<Loaded> {
     if (signal.aborted) throw error;
     return NONE; // Network error or bad JSON: no project theme. Not an error mode (3.2, rule 4).
   }
-  return { css: toCss(body), rights: rightsOf(body) };
+  return { css: toCss(body), rights: rightsOf(body), fields: fieldsOf(body) };
+}
+
+const SHOW_AS = ["line", "tags", "none"];
+
+/** `fields` (3.2, rule 8): entries with a property and a label; others are left out. */
+function fieldsOf(body: unknown): FieldLabel[] | null {
+  if (typeof body !== "object" || body === null) return null;
+  const fields = (body as { fields?: unknown }).fields;
+  if (!Array.isArray(fields)) return null;
+  return fields.flatMap((field): FieldLabel[] => {
+    if (typeof field !== "object" || field === null) return [];
+    const { property, label, showAs, valueType } = field as Record<string, unknown>;
+    if (typeof property !== "string" || typeof label !== "string" || label.trim() === "") return [];
+    return [
+      {
+        property,
+        label: label.trim(),
+        showAs: typeof showAs === "string" && SHOW_AS.includes(showAs) ? (showAs as FieldLabel["showAs"]) : "line",
+        link: valueType === "link",
+      },
+    ];
+  });
 }
 
 /** `rightsLine` and `rightsIri` (3.2, rule 7). An IRI that is not http or https gives no link. */

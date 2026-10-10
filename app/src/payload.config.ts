@@ -24,13 +24,29 @@ import {
 import { createMedia, mediaCollection, type Media, type SettledConsumer } from './modules/media'
 import {
   createMembership,
+  inviteCodesCollection,
+  inviteTriesCollection,
+  inviteUsesCollection,
   loginCodesCollection,
   memberSessionsCollection,
   membersCollection,
 } from './modules/membership'
 import { allProjects, bySlug, projectsCollection } from './modules/projects'
-import { createStories, storiesCollection, storyRepresentationsCollection } from './modules/stories'
-import { conceptsCollection, removeVocabulary } from './modules/vocabulary'
+import {
+  createStories,
+  storiesCollection,
+  storyRepresentationsCollection,
+  storyValuesCollection,
+} from './modules/stories'
+import {
+  conceptsCollection,
+  createVocabulary,
+  ontologiesCollection,
+  ontologyTermsCollection,
+  removeVocabulary,
+  vocabFieldsCollection,
+  vocabListsCollection,
+} from './modules/vocabulary'
 
 const origin = process.env.ANNOUDIO_ORIGIN || ''
 const smtpUrl = process.env.SMTP_URL || ''
@@ -41,6 +57,13 @@ const emailFrom = process.env.EMAIL_FROM || ''
 // time, so a production build never has it.
 const mailboxOn =
   process.env.NODE_ENV !== 'production' && process.env.ANNOUDIO_TEST_MAILBOX === '1' && !smtpUrl
+
+/**
+ * True when members can get a login code by mail: SMTP_URL is set, or the test mailbox
+ * is on. Without it, new projects use invite codes and Today says so
+ * (design/invite-codes.md).
+ */
+export const canMail = Boolean(smtpUrl) || mailboxOn
 
 // Next can bundle each route with its own copy of this file. Keep one mailer per
 // process on globalThis, so the test mailbox route reads the mails that the app sends.
@@ -65,18 +88,35 @@ const config = buildConfig({
       // Today replaces Payload's dashboard. The job links come before Payload's groups.
       views: {
         dashboard: { Component: '/admin/Today#Today', meta: { title: 'Today' } },
-        addPlayer: {
-          Component: '/admin/addPlayer/View#AddPlayer',
-          path: '/add-player',
-          meta: { title: 'Put a recording on a site' },
+        addWidget: {
+          Component: '/admin/addWidget/View#AddWidget',
+          path: '/add-widget',
+          meta: { title: 'Add a widget to a site' },
         },
         concepts: {
           Component: '/admin/vocabulary/ConceptsView#ConceptsView',
           path: '/concepts',
-          meta: { title: 'Concepts' },
+          meta: { title: 'Lists' },
+        },
+        // The operator preview of one widget: /admin/preview/{project}/{recording}.
+        preview: {
+          Component: '/admin/preview/View#PreviewView',
+          path: '/preview',
+          meta: { title: 'Preview of a widget' },
+        },
+        vocabulary: {
+          Component: '/admin/vocabulary/VocabularyView#VocabularyView',
+          path: '/vocabulary',
+          meta: { title: 'Vocabulary' },
         },
       },
+      // The stack's name in place of Payload's logo and icon (admin/Brand.tsx).
+      graphics: { Logo: '/admin/Brand#Logo', Icon: '/admin/Brand#Icon' },
       beforeNavLinks: ['/admin/NavLinks#NavLinks'],
+      // Names for the few Payload buttons that have none (axe button-name).
+      providers: ['/admin/ui/AccessibleNames#AccessibleNames'],
+      // O1: the heading and the help line of the sign-in screen.
+      beforeLogin: ['/admin/LoginIntro#LoginIntro'],
       afterNavLinks: ['/admin/NavLinks#AccountLink'],
     },
     meta: { titleSuffix: ' · Annoudio' },
@@ -95,9 +135,27 @@ const config = buildConfig({
         },
         version: { publishChanges: 'Publish' },
         // O0: the first visit of an empty stack.
+        // Sign in and Sign out, never Login or Log out (design/concept-map.md W4). Keys checked
+        // in @payloadcms/translations 3.90.2 `en.js`.
         authentication: {
           beginCreateFirstUser:
-            'Make the first operator account: your email and a password. Later you can add colleagues in Operators.',
+            'An operator decides which stories about your recordings visitors see. Type your email and a password to make the first operator account.',
+          createFirstUser: 'Create the first operator',
+          login: 'Sign in',
+          loginUser: 'Sign in',
+          forgotPasswordQuestion: 'Forgot your password?',
+          forgotPassword: 'Reset your password',
+          forgotPasswordEmailInstructions:
+            'We send a link to the email of your operator account. Open the link to set a new password.',
+          backToLogin: 'Back to Sign in',
+          logOut: 'Sign out',
+          logout: 'Sign out',
+          logBackIn: 'Sign in again',
+          loggingOut: 'Signing out…',
+          loggedOutSuccessfully: 'You are signed out.',
+          loggedOutInactivity: 'You were signed out, because you did nothing for a long time.',
+          resetPassword: 'Set the password',
+          resetYourPassword: 'Reset your password',
         },
       },
     },
@@ -107,14 +165,22 @@ const config = buildConfig({
   collections: [
     storiesCollection,
     mediaCollection,
-    projectsCollection({ stories: () => stories, removeVocabulary }),
+    projectsCollection({ stories: () => stories, removeVocabulary, canMail }),
     recordingsCollection({ stories: () => stories }),
     conceptsCollection({ origin, stories: () => stories }),
+    ontologiesCollection({ origin }),
+    ontologyTermsCollection,
+    vocabListsCollection,
+    vocabFieldsCollection,
     membersCollection,
     Users,
     storyRepresentationsCollection,
+    storyValuesCollection,
     memberSessionsCollection,
     loginCodesCollection,
+    inviteCodesCollection,
+    inviteUsesCollection,
+    inviteTriesCollection,
   ],
   // Payload's own mail: the password reset of an operator (M7). With SMTP, the nodemailer
   // adapter; without, the memory mailer of the app, so the tests read it.
@@ -149,10 +215,18 @@ export default config
 const optionalNumber = (name: string) =>
   process.env[name] === undefined ? undefined : Number(process.env[name])
 
+/** The one `vocabulary` instance of the app (design/vocab.md §9.2). */
+export const vocabulary = createVocabulary({
+  payload: () => getPayload({ config }),
+  origin,
+  stories: () => stories,
+})
+
 /** The one `stories` instance of the app. Payload starts on its first call. */
 export const stories = createStories({
   payload: () => getPayload({ config }),
   origin,
+  vocabulary,
   notify: async (event) => {
     forgetWaitingCount()
     await notices.storyEvent(event)
@@ -161,7 +235,7 @@ export const stories = createStories({
   maxAge: optionalNumber('STORIES_MAX_AGE'),
   limits: {
     bodies: optionalNumber('STORIES_MAX_BODIES'),
-    tags: optionalNumber('STORIES_MAX_TAGS'),
+    values: optionalNumber('STORIES_MAX_VALUES'),
     text: optionalNumber('STORIES_MAX_TEXT'),
   },
 })
@@ -176,6 +250,8 @@ export const membership = createMembership({
   secret: process.env.PAYLOAD_SECRET || '',
   mailer,
   codesPerHour: optionalNumber('ANNOUDIO_CODES_PER_HOUR'),
+  signInOf: async (slug) =>
+    (await bySlug({ payload: await getPayload({ config }), origin }, slug))?.signIn ?? null,
 })
 
 /** The mails M2 to M5 after a change to a story. */

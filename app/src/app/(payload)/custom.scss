@@ -1,191 +1,6 @@
-// Styles of the custom admin components (src/admin/). Payload's theme variables keep
-// them correct in the light and the dark admin theme.
-
-.annoudio-panel {
-  margin-bottom: var(--base);
-  padding: calc(var(--base) * 0.75);
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: var(--style-radius-m);
-
-  h3 {
-    margin: var(--base) 0 calc(var(--base) * 0.25);
-  }
-}
-
-.annoudio-panel__heading {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--base) * 0.5);
-  margin: 0 0 calc(var(--base) * 0.5);
-}
-
-.annoudio-panel__facts {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: calc(var(--base) * 0.25) var(--base);
-
-  dt {
-    color: var(--theme-elevation-600);
-  }
-
-  dd {
-    margin: 0;
-  }
-}
-
-.annoudio-panel__text {
-  white-space: pre-wrap;
-  font-size: 1.1em;
-}
-
-.annoudio-panel__returned,
-.annoudio-dialog__error {
-  color: var(--theme-error-750);
-}
-
-.annoudio-panel__player audio,
-.annoudio-panel__media audio,
-.annoudio-panel__media video {
-  display: block;
-  width: 100%;
-  max-width: 32rem;
-}
-
-.annoudio-panel__image {
-  display: block;
-  max-width: 100%;
-  max-height: 20rem;
-}
-
-.annoudio-panel__tags,
-.annoudio-panel__media {
-  padding-left: 1.2em;
-}
-
-.annoudio-badge {
-  display: inline-block;
-  padding: 0.1em 0.6em;
-  border-radius: 1em;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background: var(--theme-elevation-100);
-  color: var(--theme-elevation-800);
-}
-
-.annoudio-badge--neutral {
-  background: var(--theme-elevation-100);
-  color: var(--theme-elevation-800);
-}
-
-.annoudio-badge--attention {
-  background: var(--theme-warning-100);
-  color: var(--theme-warning-800);
-}
-
-.annoudio-badge--warning {
-  background: var(--theme-error-100);
-  color: var(--theme-error-800);
-}
-
-.annoudio-badge--success {
-  background: var(--theme-success-100);
-  color: var(--theme-success-800);
-}
-
-.annoudio-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(var(--base) * 0.5);
-  margin-bottom: var(--base);
-}
-
-.annoudio-tabs__tab {
-  padding: 0.3em 0.9em;
-  border: 1px solid var(--theme-elevation-200);
-  border-radius: 2em;
-  text-decoration: none;
-
-  &[aria-current='page'] {
-    background: var(--theme-elevation-800);
-    color: var(--theme-elevation-0);
-    border-color: var(--theme-elevation-800);
-  }
-}
-
-.annoudio-dialog {
-  max-width: 32rem;
-  padding: var(--base);
-  border: 1px solid var(--theme-elevation-200);
-  border-radius: var(--style-radius-m);
-  background: var(--theme-bg);
-  color: var(--theme-text);
-
-  &::backdrop {
-    background: rgb(0 0 0 / 0.4);
-  }
-
-  textarea {
-    display: block;
-    width: 100%;
-    margin: calc(var(--base) * 0.25) 0;
-    font: inherit;
-  }
-}
-
-.annoudio-dialog__buttons,
-.annoudio-skos__buttons,
-.annoudio-snippet__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: calc(var(--base) * 0.5);
-}
-
-.annoudio-snippet__code {
-  overflow-x: auto;
-  padding: calc(var(--base) * 0.5);
-  background: var(--theme-elevation-50);
-  border-radius: var(--style-radius-s);
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.annoudio-snippet__id,
-.annoudio-tree__uses,
-.annoudio-tree__hidden,
-.annoudio-duration__probe {
-  color: var(--theme-elevation-600);
-}
-
-.annoudio-duration__value {
-  display: block;
-  font-size: 1.2em;
-}
-
-.annoudio-tree {
-  padding-left: 1.2em;
-}
-
-.annoudio-dashboard {
-  margin-bottom: calc(var(--base) * 2);
-}
-
-.annoudio-dashboard__waiting {
-  font-size: 1.3em;
-}
-
-.annoudio-dashboard__counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--base);
-  padding: 0;
-  list-style: none;
-}
-
-.annoudio-theme-preview {
-  max-width: 40rem;
-  margin-bottom: var(--base);
-}
+// Styles of the custom admin components (src/admin/). All of them read the --ao-* tokens of
+// the design system (design/design-system.md; the token blocks are further down), which
+// point at Payload's variables, so the light and the dark admin theme both work.
 
 // Text for a screen reader only.
 .visually-hidden {
@@ -197,144 +12,157 @@
   white-space: nowrap;
 }
 
-// Today (O3).
-.annoudio-today {
-  max-width: 48rem;
-  padding-top: calc(var(--base) * 1.5);
-  padding-bottom: calc(var(--base) * 2);
-}
-
-.annoudio-today__title {
-  margin: 0 0 var(--base);
-}
-
-.annoudio-today__error {
-  color: var(--theme-error-750);
-}
-
-.annoudio-checklist__steps {
-  margin: 0 0 var(--base);
-  padding: 0;
-  list-style: none;
-}
-
-.annoudio-checklist__step {
-  display: grid;
-  grid-template-columns: 1.75rem 1fr;
-  align-items: start;
-  gap: 0 calc(var(--base) * 0.5);
-  padding: calc(var(--base) * 0.5) 0;
-  border-bottom: 1px solid var(--theme-elevation-100);
-
-  > :nth-child(n + 3) {
-    grid-column: 2;
-  }
-
-  form {
-    margin: 0;
-  }
-
-  .btn {
-    margin: calc(var(--base) * 0.25) 0 0;
-  }
-}
-
-// The mark is a box; a done step has a filled box with a tick. Text says the state too.
-.annoudio-checklist__mark {
-  display: inline-grid;
-  place-items: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid var(--theme-elevation-500);
-  border-radius: var(--style-radius-s);
-  font-size: 0.85rem;
-  font-weight: 700;
-  line-height: 1;
-
-  [data-done='true'] > & {
-    border-color: var(--theme-success-500);
-    background: var(--theme-success-500);
-    color: var(--theme-elevation-0);
-  }
-}
-
-.annoudio-checklist__hint {
-  margin: calc(var(--base) * 0.25) 0 0;
-  color: var(--theme-elevation-650);
-  max-width: 40rem;
-}
-
-.annoudio-work__lead {
-  margin: 0 0 calc(var(--base) * 0.5);
-  font-size: 1.15rem;
-  text-wrap: pretty;
-}
-
-.annoudio-work__waiting {
-  margin-bottom: var(--base);
-
-  .btn {
-    margin: 0;
-  }
-}
-
-.annoudio-work__jobs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(var(--base) * 0.5);
-
-  .btn {
-    margin: 0;
-  }
-}
-
-.annoudio-work__recent {
-  margin: var(--base) 0 0;
-  color: var(--theme-elevation-650);
-}
-
-// The job links in the sidebar.
+// The job links in the sidebar, with an icon each (admin/JobLinks.tsx).
 .annoudio-nav {
-  margin-bottom: calc(var(--base) * 0.75);
+  margin-bottom: var(--ao-space-4);
 }
-
 .annoudio-nav__link {
   display: flex;
   align-items: center;
-  gap: calc(var(--base) * 0.4);
+  gap: var(--ao-space-2);
 }
-
+.annoudio-nav__icon {
+  width: 18px;
+  height: 18px;
+  color: var(--ao-text-muted);
+}
+.annoudio-nav__link[aria-current='page'] .annoudio-nav__icon {
+  color: var(--ao-accent-text);
+}
 .annoudio-nav__badge {
   min-width: 1.5rem;
-  padding: 0 0.4rem;
-  border-radius: 1rem;
-  background: var(--theme-warning-100);
-  color: var(--theme-warning-800);
-  font-size: 0.8rem;
-  font-weight: 700;
+  padding: 0 var(--ao-space-2);
+  border-radius: var(--ao-radius-pill);
+  background: var(--ao-waiting-bg);
+  color: var(--ao-waiting-text);
+  font-size: var(--ao-text-xs);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.5rem;
   text-align: center;
 }
 
-// The review list (O4).
-.annoudio-tabs__count {
+// Today (O3).
+.annoudio-today {
+  display: grid;
+  gap: var(--ao-space-4);
+  max-width: 60rem;
+  padding-block: var(--ao-space-5) var(--ao-space-6);
+}
+.annoudio-today .ao-header {
+  padding-block-end: 0;
+}
+.annoudio-today__about summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: var(--ao-hit);
+  display: flex;
+  align-items: center;
+  gap: var(--ao-space-2);
+  list-style: none;
+}
+.annoudio-today__about summary::-webkit-details-marker { display: none; }
+/* Folded, the card is one line high: no empty space under the title (recordings audit, 01). */
+.annoudio-today__about:not([open]) { padding-block: var(--ao-space-1); }
+.annoudio-today__chevron { flex: none; transform: rotate(-90deg); }
+.annoudio-today__about[open] .annoudio-today__chevron { transform: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .annoudio-today__chevron { transition: transform 120ms cubic-bezier(0.2, 0, 0, 1); }
+}
+.annoudio-today__about p {
+  max-width: 65ch;
+}
+.annoudio-checklist__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--ao-space-2);
+}
+.annoudio-checklist__step {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: var(--ao-space-1) var(--ao-space-3);
+  padding: var(--ao-space-2) var(--ao-space-3);
+  border-radius: var(--ao-radius-m);
+  color: var(--ao-text-muted);
+  form {
+    margin: 0;
+  }
+}
+.annoudio-checklist__step[aria-current='step'] {
+  background: var(--ao-accent-subtle);
+  color: var(--ao-text);
+  font-weight: 600;
+}
+.annoudio-checklist__step[data-done='true'] {
+  color: var(--ao-text);
+}
+.annoudio-checklist__more {
+  grid-column: 2 / -1;
+  font-weight: 400;
+}
+// The mark: the step number in a circle; a done step has a tick. Text says the state too.
+.annoudio-checklist__mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ao-border-control);
+  font-size: var(--ao-text-xs);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  opacity: 0.8;
+  [data-done='true'] > & {
+    border-color: var(--ao-accent);
+    background: var(--ao-accent-subtle);
+    color: var(--ao-accent-text);
+  }
+  [aria-current='step'] > & {
+    border-color: var(--ao-accent);
+    background: var(--ao-accent);
+    color: var(--ao-on-accent);
+  }
+}
+.annoudio-checklist__hint {
+  margin: var(--ao-space-1) 0 var(--ao-space-2);
+  color: var(--ao-text-muted);
+  max-width: 60ch;
+}
+.annoudio-work__lead {
+  font-size: var(--ao-text-lg);
+  text-wrap: pretty;
+}
+.annoudio-work__waiting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ao-space-3);
+}
+.annoudio-work h3 {
+  font-size: var(--ao-text-md);
 }
 
-.annoudio-tabs__start .btn {
-  margin: 0 0 var(--base);
+// The review list (O4).
+.annoudio-review-tabs {
+  display: grid;
+  gap: var(--ao-space-4);
+  margin-bottom: var(--ao-space-4);
 }
-
-.annoudio-empty {
-  padding: calc(var(--base) * 1.5) 0;
-  font-size: 1.1rem;
+.annoudio-tabs__start {
+  margin: 0;
 }
-
-// Our empty text replaces Payload's "No results found" for an empty tab.
-.collection-list:has(.annoudio-empty) .no-results {
+// Our empty state replaces Payload's "No results found" for an empty tab or list.
+.collection-list:has(.ao-empty) .no-results {
   display: none;
+}
+.annoudio-list-actions {
+  margin: 0 0 var(--ao-space-4);
+}
+.annoudio-list-empty {
+  margin-bottom: var(--ao-space-4);
 }
 
 // The review screen (O5).
@@ -342,330 +170,130 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4em;
+  gap: var(--ao-space-2);
   margin: 0;
 }
-
 .annoudio-status__age {
-  color: var(--theme-elevation-650);
+  color: var(--ao-text-muted);
+  font-size: var(--ao-text-sm);
 }
-
 .annoudio-controls__note {
   align-self: center;
   max-width: 16rem;
-  color: var(--theme-elevation-650);
-  font-size: 0.9rem;
+  color: var(--ao-text-muted);
+  font-size: var(--ao-text-sm);
 }
-
 .annoudio-dialog__warning {
   font-weight: 600;
 }
-
-.annoudio-dialog {
-  h2 {
-    margin: 0 0 calc(var(--base) * 0.75);
-  }
-
-  p {
-    margin: 0 0 calc(var(--base) * 0.75);
-  }
-
-  .annoudio-dialog__buttons {
-    margin-top: var(--base);
-  }
-}
-
 .annoudio-dialog label {
   display: block;
-  margin-top: var(--base);
+  margin-top: var(--ao-space-3);
   font-weight: 600;
 }
-
+.annoudio-dialog textarea {
+  display: block;
+  width: 100%;
+  margin: var(--ao-space-1) 0;
+  padding: var(--ao-space-2) var(--ao-space-3);
+  border: 1px solid var(--ao-border-control);
+  border-radius: var(--ao-radius-m);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font: inherit;
+}
+.annoudio-dialog .btn {
+  margin: 0;
+}
 .annoudio-preview {
-  margin: 0 0 var(--base);
-  padding: calc(var(--base) * 0.75);
-  border: 1px solid var(--theme-elevation-200);
-  border-radius: var(--style-radius-m);
-  background: var(--theme-elevation-50);
+  margin: 0;
 }
-
-.annoudio-preview__meta {
-  color: var(--theme-elevation-650);
-  font-size: 0.9rem;
-}
-
 .annoudio-preview__text {
-  margin: calc(var(--base) * 0.25) 0;
+  margin: var(--ao-space-1) 0;
   white-space: pre-wrap;
 }
-
 .annoudio-preview__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4em;
-  margin: calc(var(--base) * 0.5) 0 0;
+  gap: var(--ao-space-1);
+  margin: var(--ao-space-2) 0 0;
   padding: 0;
   list-style: none;
-
   li {
-    padding: 0.1em 0.6em;
-    border-radius: 1em;
-    background: var(--theme-elevation-150);
-    font-size: 0.85rem;
+    padding: 2px var(--ao-space-2);
+    border-radius: var(--ao-radius-pill);
+    background: var(--ao-surface);
+    box-shadow: inset 0 0 0 1px var(--ao-border);
+    font-size: var(--ao-text-xs);
   }
 }
-
-.annoudio-parent blockquote {
-  margin: calc(var(--base) * 0.5) 0;
-  padding-left: calc(var(--base) * 0.75);
-  border-left: 3px solid var(--theme-elevation-300);
-}
-
-// Remove: the danger colour, apart from the other controls.
+// Remove: the danger colour, apart from the other controls; no filled red outside the dialog.
 .btn.annoudio-remove {
-  margin-inline-start: calc(var(--base) * 0.5);
-  color: var(--theme-error-750);
-  box-shadow: inset 0 0 0 1px var(--theme-error-400);
+  margin-inline-start: var(--ao-space-2);
+  color: var(--ao-danger-text);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ao-danger);
 }
-
-.annoudio-preview > :last-child {
-  margin-bottom: 0;
+// The controls of the review screen keep their words on one line.
+.doc-controls__controls .btn {
+  white-space: nowrap;
 }
 
 // History (O6).
 .annoudio-history {
   max-width: 48rem;
-  padding-top: var(--base);
-  padding-bottom: calc(var(--base) * 2);
+  padding-block: var(--ao-space-5) var(--ao-space-6);
+}
+.annoudio-history__heading {
+  font-size: var(--ao-text-xl);
+  margin-bottom: var(--ao-space-2);
 }
 
-.annoudio-history__intro {
-  color: var(--theme-elevation-650);
-}
-
-.annoudio-history__lines {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  li {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0 var(--base);
-    padding: calc(var(--base) * 0.5) 0;
-    border-bottom: 1px solid var(--theme-elevation-100);
-  }
-
-  time {
-    color: var(--theme-elevation-650);
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-.annoudio-status__again {
-  font-weight: 600;
-}
-
-.annoudio-list-actions .btn {
-  margin: 0 0 var(--base);
-}
-
-// Put a recording on a site (O7).
-.annoudio-wizard {
-  max-width: 48rem;
-  padding-top: calc(var(--base) * 1.5);
-  padding-bottom: calc(var(--base) * 2);
-
-  h1 {
-    margin: 0 0 var(--base);
-  }
-}
-
-.annoudio-wizard__steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(var(--base) * 0.5);
-  margin: 0 0 var(--base);
-  padding: 0;
-  list-style: none;
-
-  li {
-    padding: 0.2em 0.8em;
-    border: 1px solid var(--theme-elevation-200);
-    border-radius: 2em;
-    color: var(--theme-elevation-650);
-  }
-
-  [aria-current='step'] {
-    border-color: var(--theme-elevation-800);
-    background: var(--theme-elevation-800);
-    color: var(--theme-elevation-0);
-  }
-
-  [data-done='true'] {
-    color: var(--theme-elevation-800);
-  }
-}
-
-.annoudio-wizard__heading {
-  margin: 0 0 calc(var(--base) * 0.75);
-
-  &:focus-visible {
-    outline: 2px solid var(--theme-elevation-800);
-    outline-offset: 4px;
-  }
-}
-
-.annoudio-wizard__number {
-  display: inline-grid;
-  place-items: center;
-  width: 1.6em;
-  height: 1.6em;
-  margin-right: 0.25em;
-  border-radius: 50%;
-  background: var(--theme-elevation-150);
-  font-size: 0.8em;
+// The length of a recording (admin/catalogue/DurationField.tsx).
+.annoudio-duration__value {
+  display: block;
+  font-size: var(--ao-text-xl);
   font-variant-numeric: tabular-nums;
 }
+.annoudio-duration__probe {
+  color: var(--ao-text-muted);
+}
 
-.annoudio-wizard__done {
+// Lists, items and SKOS files (admin/vocabulary/, admin/projects/SkosTools.tsx).
+.annoudio-concepts {
+  display: grid;
+  gap: var(--ao-space-4);
+  max-width: 60rem;
+  padding-block: var(--ao-space-5) var(--ao-space-6);
+}
+.annoudio-concepts .ao-header {
+  padding-block-end: 0;
+}
+.annoudio-tree {
+  padding-inline-start: 1.2em;
+}
+.annoudio-tree__uses,
+.annoudio-tree__hidden {
+  color: var(--ao-text-muted);
+}
+.annoudio-skos__buttons {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5em;
-  margin: 0;
-
-  .btn {
-    margin: 0;
-  }
+  gap: var(--ao-space-2);
 }
 
-.annoudio-wizard__step > .btn {
-  margin: var(--base) 0 0;
-}
-
-.annoudio-wizard__preview {
-  margin: var(--base) 0;
-
-  figcaption {
-    margin-bottom: calc(var(--base) * 0.5);
-    color: var(--theme-elevation-650);
-  }
-}
-
-.annoudio-choice {
-  margin: 0;
-  padding: 0;
-  border: 0;
-
-  legend {
-    margin-bottom: calc(var(--base) * 0.5);
-    font-weight: 600;
-  }
-}
-
-.annoudio-choice__option {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  min-height: 2rem;
-  cursor: pointer;
-
-  input {
-    width: 1.1rem;
-    height: 1.1rem;
-    margin: 0;
-  }
-}
-
-.annoudio-choice__body {
-  margin: calc(var(--base) * 0.25) 0 calc(var(--base) * 0.75) 1.6rem;
-
-  > label {
-    display: block;
-    margin-top: calc(var(--base) * 0.5);
-    font-weight: 600;
-  }
-}
-
-.annoudio-choice__list {
-  max-height: 16rem;
-  overflow-y: auto;
-  margin-top: calc(var(--base) * 0.5);
-}
-
-.annoudio-input {
-  display: block;
-  width: 100%;
-  max-width: 32rem;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--theme-elevation-400);
-  border-radius: var(--style-radius-s);
-  background: var(--theme-input-bg, var(--theme-elevation-0));
-  color: var(--theme-text);
-  font: inherit;
-
-  &:focus-visible {
-    outline: 2px solid var(--theme-elevation-800);
-    outline-offset: 1px;
-  }
-
-  &[aria-invalid='true'] {
-    border-color: var(--theme-error-500);
-  }
-}
-
-.annoudio-hint {
-  margin: 0.25rem 0 0;
-  color: var(--theme-elevation-650);
-  font-size: 0.9rem;
-}
-
-.annoudio-field-error {
-  margin: 0.25rem 0 0;
-  color: var(--theme-error-750);
-}
-
-// Concepts (O10) and the project Overview (O16).
-.annoudio-concepts,
-.annoudio-overview {
-  max-width: 48rem;
-  padding-top: calc(var(--base) * 1.5);
-  padding-bottom: calc(var(--base) * 2);
-
-  h1 {
-    margin: 0 0 calc(var(--base) * 0.5);
-  }
-}
-
-.annoudio-overview__counts {
-  > div {
-    display: contents;
-  }
-}
-
-.annoudio-overview__recordings {
-  margin: 0;
-  padding-left: 1.2em;
-}
-
-// Payload's field descriptions are too light on the page background (axe color-contrast,
-// 4.5:1). This colour passes in the light and the dark theme.
+// Payload's field descriptions and list headings are too light (axe color-contrast,
+// 4.5:1). These colours pass in the light and the dark theme.
 .field-description {
-  color: var(--theme-elevation-650);
+  color: var(--ao-text-muted);
 }
-
+.sort-column__label .field-label {
+  color: var(--ao-text);
+}
 .annoudio-doc-tab {
   list-style: none;
 }
-
-// Payload's list column headings are too light (axe color-contrast).
-.sort-column__label .field-label {
-  color: var(--theme-elevation-800);
-}
-
 // The review list has no bulk action that an operator needs: deletes go through Remove,
 // and nobody edits a story. Payload's selection checkboxes have no names (axe `label`), so
 // the stories list does not show them.
@@ -677,7 +305,518 @@
   }
 }
 
-// The controls of the review screen keep their words on one line.
-.doc-controls__controls .btn {
-  white-space: nowrap;
+// Invite codes of a project (admin/projects/InviteTools.tsx).
+.annoudio-invites {
+  display: grid;
+  gap: var(--ao-space-4);
 }
+.annoudio-invites__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--ao-space-3) var(--ao-space-4);
+  p {
+    margin: 0;
+  }
+}
+.annoudio-invites__codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--ao-space-1);
+  padding: 0;
+  list-style: none;
+  code {
+    font-size: var(--ao-text-xl);
+    letter-spacing: 0.05em;
+  }
+}
+.annoudio-invites__note {
+  padding: var(--ao-space-2) var(--ao-space-3);
+  border-radius: var(--ao-radius-m);
+  background: var(--ao-waiting-bg);
+  color: var(--ao-waiting-text);
+}
+.annoudio-invites__list {
+  width: 100%;
+  border-collapse: collapse;
+  th,
+  td {
+    padding: var(--ao-space-2) var(--ao-space-3);
+    border-bottom: 1px solid var(--ao-border);
+    text-align: start;
+  }
+}
+
+// The Theme tab preview.
+.annoudio-theme-preview {
+  max-width: 40rem;
+}
+
+/* ------------------------------------------------------------------------------------------
+   The design system (design/design-system.md, §2-4 of design/design-system/styles.css, as
+   written; §1 is Payload's own variables, §5 the style guide page). Tokens are variables
+   only; every component rule needs an `ao-*` class, so no Payload screen changes. The
+   Vocabulary tab and page use it first; a later change applies it to the other screens.
+   ------------------------------------------------------------------------------------------ */
+/* 2. Tokens. Components read only --ao-* tokens. */
+:root, [data-theme] {
+  /* Primitives that Payload does not have: plum (Returned) and green (Published). */
+  --ao-plum-100: #f3e8f7; --ao-plum-600: #7d3f96; --ao-plum-800: #5b2a6e;
+  --ao-plum-200: #e6c8f2; --ao-plum-900: #33203d;
+  --ao-green-100: #e2f2e6; --ao-green-600: #2a7a45; --ao-green-800: #1d5530;
+  --ao-green-200: #a9dcb7; --ao-green-900: #16301f;
+
+  --ao-font: var(--font-body);
+  --ao-font-mono: var(--font-mono);
+  /* Admin type scale (px at the desktop admin; it follows Payload's --base). */
+  --ao-text-xs: calc(var(--base) * 0.6);   /* 12 caption, badge */
+  --ao-text-sm: calc(var(--base) * 0.65);  /* 13 meta, help */
+  --ao-text-md: calc(var(--base) * 0.7);   /* 14 body */
+  --ao-text-lg: calc(var(--base) * 0.8);   /* 16 card heading, stat label */
+  --ao-text-xl: calc(var(--base) * 1);     /* 20 section heading */
+  --ao-text-2xl: calc(var(--base) * 1.3);  /* 26 page title, stat number */
+  --ao-leading-tight: 1.2;
+  --ao-leading-body: 1.5;
+
+  --ao-space-1: calc(var(--base) * 0.2);   /* 4 */
+  --ao-space-2: calc(var(--base) * 0.4);   /* 8 */
+  --ao-space-3: calc(var(--base) * 0.6);   /* 12 */
+  --ao-space-4: calc(var(--base) * 0.8);   /* 16 */
+  --ao-space-5: calc(var(--base) * 1.2);   /* 24 */
+  --ao-space-6: calc(var(--base) * 1.6);   /* 32 */
+  --ao-space-7: calc(var(--base) * 2.4);   /* 48 */
+
+  --ao-radius-s: 4px;    /* = Payload --style-radius-s after the override */
+  --ao-radius-m: 6px;    /* controls, chips: = --style-radius-m */
+  --ao-radius-l: 10px;   /* cards, dialogs: = --style-radius-l */
+  --ao-radius-pill: 999px;
+
+  --ao-ease: cubic-bezier(0.2, 0, 0, 1);
+  --ao-dur-fast: 120ms;  /* hover, colour */
+  --ao-dur-base: 200ms;  /* dialog, toast */
+  --ao-hit: 40px;        /* desktop control height; 44px on .ao-member */
+}
+
+:root, [data-theme="light"] {
+  --ao-bg: var(--theme-bg);
+  --ao-surface: var(--theme-elevation-0);
+  --ao-surface-sunken: var(--theme-elevation-50);
+  --ao-surface-hover: var(--theme-elevation-50);
+  --ao-text: var(--theme-elevation-800);
+  --ao-text-muted: var(--theme-elevation-650);
+  --ao-border: var(--theme-elevation-150);
+  --ao-border-control: var(--theme-elevation-500);
+  --ao-accent: var(--color-success-600);
+  --ao-accent-hover: var(--color-success-650);
+  --ao-on-accent: #ffffff;
+  --ao-accent-subtle: var(--color-success-50);
+  --ao-accent-text: var(--color-success-650);
+  --ao-danger: var(--color-error-600);
+  --ao-danger-hover: var(--color-error-650);
+  --ao-on-danger: #ffffff;
+  --ao-danger-subtle: var(--color-error-100);
+  --ao-danger-text: var(--color-error-750);
+  --ao-focus: var(--color-success-600);
+  --ao-processing-bg: var(--theme-elevation-100); --ao-processing-text: var(--theme-elevation-800); --ao-processing-icon: var(--theme-elevation-650);
+  --ao-waiting-bg: var(--color-warning-100); --ao-waiting-text: var(--color-warning-800); --ao-waiting-icon: var(--color-warning-600);
+  --ao-returned-bg: var(--ao-plum-100); --ao-returned-text: var(--ao-plum-800); --ao-returned-icon: var(--ao-plum-600);
+  --ao-published-bg: var(--ao-green-100); --ao-published-text: var(--ao-green-800); --ao-published-icon: var(--ao-green-600);
+  --ao-shadow-card: 0 0 0 1px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.06);
+  --ao-shadow-overlay: 0 0 0 1px rgb(0 0 0 / 0.08), 0 8px 24px rgb(0 0 0 / 0.16);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --ao-bg: var(--theme-bg);
+  --ao-surface: var(--theme-elevation-50);
+  --ao-surface-sunken: var(--theme-elevation-0);
+  --ao-surface-hover: var(--theme-elevation-100);
+  --ao-text: var(--theme-elevation-800);
+  --ao-text-muted: var(--theme-elevation-650);
+  --ao-border: var(--theme-elevation-150);
+  --ao-border-control: var(--theme-elevation-500);
+  --ao-accent: var(--color-success-350);
+  --ao-accent-hover: var(--color-success-300);
+  --ao-on-accent: #141414;
+  --ao-accent-subtle: var(--color-success-900);
+  --ao-accent-text: var(--color-success-200);
+  --ao-danger: var(--color-error-400);
+  --ao-danger-hover: var(--color-error-200);
+  --ao-on-danger: #141414;
+  --ao-danger-subtle: var(--color-error-900);
+  --ao-danger-text: var(--color-error-200);
+  --ao-focus: var(--color-success-350);
+  --ao-processing-bg: var(--theme-elevation-100); --ao-processing-text: var(--theme-elevation-800); --ao-processing-icon: var(--theme-elevation-650);
+  --ao-waiting-bg: var(--color-warning-900); --ao-waiting-text: var(--color-warning-200); --ao-waiting-icon: var(--color-warning-300);
+  --ao-returned-bg: var(--ao-plum-900); --ao-returned-text: var(--ao-plum-200); --ao-returned-icon: var(--ao-plum-200);
+  --ao-published-bg: var(--ao-green-900); --ao-published-text: var(--ao-green-200); --ao-published-icon: var(--ao-green-200);
+  --ao-shadow-card: 0 0 0 1px rgb(255 255 255 / 0.10);
+  --ao-shadow-overlay: 0 0 0 1px rgb(255 255 255 / 0.12), 0 8px 24px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+/* The member pages: root 16px, larger inputs (no iOS zoom), 44px targets. */
+.ao-member {
+  --ao-text-xs: 0.8125rem; --ao-text-sm: 0.875rem; --ao-text-md: 1rem;
+  --ao-text-lg: 1.125rem; --ao-text-xl: 1.375rem; --ao-text-2xl: 1.75rem;
+  --ao-hit: 44px;
+}
+
+/* 3. Base */
+.ao, .ao *, .ao-member, .ao-member * { box-sizing: border-box; } /* Payload sets this globally; the member pages need it too */
+.ao, .ao-member { font-family: var(--ao-font); font-size: var(--ao-text-md); line-height: var(--ao-leading-body); color: var(--ao-text); }
+.ao :where(h1, h2, h3, h4) { margin: 0; line-height: var(--ao-leading-tight); text-wrap: balance; font-weight: 600; }
+.ao :where(p) { margin: 0; text-wrap: pretty; }
+.ao :where(a:not(.btn, .ao-btn, .ao-chip)) { color: var(--ao-accent-text); text-underline-offset: 0.2em; text-decoration-thickness: from-font; }
+.ao :where(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--ao-focus); outline-offset: 2px; }
+.ao-num { font-variant-numeric: tabular-nums; }
+.ao-icon { width: 1.25em; height: 1.25em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ao-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* 4. Components */
+
+/* Page header with help line */
+.ao-header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--ao-space-3) var(--ao-space-5); padding-block-end: var(--ao-space-5); }
+.ao-header__crumb { font-size: var(--ao-text-sm); color: var(--ao-text-muted); margin-block-end: var(--ao-space-1); }
+.ao-header__title { font-size: var(--ao-text-2xl); letter-spacing: -0.01em; }
+.ao-header__help { margin-block-start: var(--ao-space-2); max-width: 65ch; color: var(--ao-text-muted); }
+.ao-header__actions { display: flex; flex-wrap: wrap; gap: var(--ao-space-3); }
+
+/* Section card */
+.ao-card { background: var(--ao-surface); border-radius: var(--ao-radius-l); box-shadow: var(--ao-shadow-card); padding: var(--ao-space-5); display: grid; gap: var(--ao-space-4); }
+.ao-card__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--ao-space-2) var(--ao-space-4); }
+.ao-card__head :is(h2, h3, h4) { font-size: var(--ao-text-lg); }
+.ao-card__head p { color: var(--ao-text-muted); font-size: var(--ao-text-sm); flex-basis: 100%; }
+.ao-card--sunken { background: var(--ao-surface-sunken); box-shadow: none; }
+
+/* Facts: label/value pairs inside a card */
+.ao-facts { display: grid; grid-template-columns: max-content 1fr; align-items: baseline; gap: var(--ao-space-2) var(--ao-space-5); margin: 0; }
+.ao-facts dt { color: var(--ao-text-muted); }
+.ao-facts dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-2); min-width: 0; overflow-wrap: anywhere; }
+
+/* Empty state with next action */
+.ao-empty { display: grid; justify-items: start; gap: var(--ao-space-3); padding: var(--ao-space-5); border-radius: var(--ao-radius-l); background: var(--ao-surface-sunken); box-shadow: inset 0 0 0 1px var(--ao-border); }
+.ao-empty > .ao-icon { width: 28px; height: 28px; color: var(--ao-text-muted); }
+.ao-empty h3 { font-size: var(--ao-text-lg); }
+.ao-empty p { color: var(--ao-text-muted); max-width: 55ch; }
+
+/* Badge for lifecycle states. Always icon + word: colour is never the only cue. */
+.ao-badge { display: inline-flex; align-items: center; gap: var(--ao-space-1); padding: 2px var(--ao-space-2) 2px 6px; border-radius: var(--ao-radius-pill); font-size: var(--ao-text-xs); font-weight: 600; white-space: nowrap; background: var(--ao-processing-bg); color: var(--ao-processing-text); }
+.ao-badge .ao-icon { width: 14px; height: 14px; stroke-width: 2; color: var(--ao-processing-icon); }
+.ao-badge--waiting { background: var(--ao-waiting-bg); color: var(--ao-waiting-text); }
+.ao-badge--waiting .ao-icon { color: var(--ao-waiting-icon); }
+.ao-badge--returned { background: var(--ao-returned-bg); color: var(--ao-returned-text); }
+.ao-badge--returned .ao-icon { color: var(--ao-returned-icon); }
+.ao-badge--published { background: var(--ao-published-bg); color: var(--ao-published-text); }
+.ao-badge--published .ao-icon { color: var(--ao-published-icon); }
+.ao-badges { display: inline-flex; flex-wrap: wrap; gap: var(--ao-space-1); }
+
+/* Stat */
+.ao-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--ao-space-3); }
+.ao-stat { display: grid; gap: var(--ao-space-1); padding: var(--ao-space-4); border-radius: var(--ao-radius-l); background: var(--ao-surface); box-shadow: var(--ao-shadow-card); border-inline-start: 4px solid var(--ao-stat-edge, var(--ao-border)); }
+.ao-stat--waiting { --ao-stat-edge: var(--ao-waiting-icon); }
+.ao-stat--returned { --ao-stat-edge: var(--ao-returned-icon); }
+.ao-stat--published { --ao-stat-edge: var(--ao-published-icon); }
+.ao-stat__n { font-size: var(--ao-text-2xl); font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.ao-stat__label { font-size: var(--ao-text-md); }
+.ao-stat__note { font-size: var(--ao-text-sm); color: var(--ao-text-muted); }
+
+/* Step indicator (Add a widget to a site) */
+.ao-steps { display: flex; flex-wrap: wrap; gap: var(--ao-space-2); margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.ao-steps li { display: inline-flex; align-items: center; gap: var(--ao-space-2); padding: var(--ao-space-1) var(--ao-space-3) var(--ao-space-1) var(--ao-space-1); border-radius: var(--ao-radius-pill); color: var(--ao-text-muted); counter-increment: step; }
+.ao-steps li::before { content: counter(step); display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--ao-border-control); font-size: var(--ao-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ao-steps li + li { margin-inline-start: var(--ao-space-4); position: relative; }
+.ao-steps li + li::after { content: ""; position: absolute; inset-inline-start: calc(-1 * (var(--ao-space-4) + var(--ao-space-2))); top: 50%; width: calc(var(--ao-space-4) + var(--ao-space-2)); border-top: 1.5px solid var(--ao-border); }
+.ao-steps [data-done]::before { content: #{'"✓" / ""'}; background: var(--ao-accent-subtle); border-color: var(--ao-accent); color: var(--ao-accent-text); }
+.ao-steps [aria-current="step"] { background: var(--ao-accent-subtle); color: var(--ao-accent-text); font-weight: 600; }
+.ao-steps [aria-current="step"]::before { background: var(--ao-accent); border-color: var(--ao-accent); color: var(--ao-on-accent); }
+
+/* Relationship chip: a link to a related thing, with a count */
+.ao-chip { display: inline-flex; align-items: center; gap: var(--ao-space-2); min-height: 32px; max-width: 100%; padding: 2px 4px 2px var(--ao-space-2); border-radius: var(--ao-radius-m); background: var(--ao-surface-sunken); box-shadow: inset 0 0 0 1px var(--ao-border); color: var(--ao-text); text-decoration: none; font-size: var(--ao-text-sm); }
+.ao-chip .ao-icon { color: var(--ao-text-muted); width: 16px; height: 16px; }
+.ao-chip__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ao-chip__count { padding: 0 6px; border-radius: var(--ao-radius-s); background: var(--ao-surface); font-size: var(--ao-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ao-text-muted); white-space: nowrap; }
+.ao-chip__go { color: var(--ao-text-muted); width: 14px; height: 14px; }
+a.ao-chip { transition: box-shadow var(--ao-dur-fast) var(--ao-ease), background-color var(--ao-dur-fast) var(--ao-ease); }
+@media (hover: hover) { a.ao-chip:hover { background: var(--ao-accent-subtle); box-shadow: inset 0 0 0 1px var(--ao-accent); } }
+.ao-chips { display: flex; flex-wrap: wrap; gap: var(--ao-space-2); }
+
+/* Buttons */
+.ao-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--ao-space-2); min-height: var(--ao-hit); padding: 0 var(--ao-space-4); border: 0; border-radius: var(--ao-radius-m); font: inherit; font-weight: 600; line-height: 1.2; text-decoration: none; cursor: pointer; white-space: nowrap;
+  background: var(--ao-surface); color: var(--ao-text); box-shadow: inset 0 0 0 1px var(--ao-border-control);
+  transition: background-color var(--ao-dur-fast) var(--ao-ease), box-shadow var(--ao-dur-fast) var(--ao-ease), scale var(--ao-dur-fast) var(--ao-ease); }
+.ao-btn .ao-icon { width: 18px; height: 18px; stroke-width: 2; margin-inline-start: -2px; }
+@media (hover: hover) { .ao-btn:hover { background: var(--ao-surface-hover); } }
+.ao-btn--primary { background: var(--ao-accent); color: var(--ao-on-accent); box-shadow: none; }
+@media (hover: hover) { .ao-btn--primary:hover { background: var(--ao-accent-hover); } }
+.ao-btn--danger { color: var(--ao-danger-text); box-shadow: inset 0 0 0 1px var(--ao-danger); }
+@media (hover: hover) { .ao-btn--danger:hover { background: var(--ao-danger-subtle); } }
+.ao-btn--danger-solid { background: var(--ao-danger); color: var(--ao-on-danger); box-shadow: none; }
+@media (hover: hover) { .ao-btn--danger-solid:hover { background: var(--ao-danger-hover); } }
+.ao-btn--quiet { box-shadow: none; background: transparent; color: var(--ao-accent-text); }
+.ao-btn:disabled, .ao-btn[aria-disabled="true"] { background: var(--ao-surface-sunken); color: var(--ao-text-muted); box-shadow: inset 0 0 0 1px var(--ao-border); cursor: not-allowed; }
+.ao-btn--block { width: 100%; }
+.ao-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-3); }
+.ao-actions__end { margin-inline-start: auto; }
+
+/* Form field with label, help, error */
+.ao-field { display: grid; gap: var(--ao-space-1); }
+.ao-field > label, .ao-field > legend, .ao-label { font-weight: 600; padding: 0; }
+.ao-field__help { color: var(--ao-text-muted); font-size: var(--ao-text-sm); max-width: 65ch; }
+.ao-field__error { display: flex; align-items: center; gap: var(--ao-space-1); color: var(--ao-danger-text); font-size: var(--ao-text-sm); font-weight: 600; }
+.ao-input, .ao-select select, .ao-copy textarea { width: 100%; min-height: var(--ao-hit); padding: var(--ao-space-2) var(--ao-space-3); border: 1px solid var(--ao-border-control); border-radius: var(--ao-radius-m); background: var(--ao-surface); color: var(--ao-text); font: inherit; }
+.ao-input[aria-invalid="true"] { border-color: var(--ao-danger); box-shadow: inset 0 0 0 1px var(--ao-danger); }
+textarea.ao-input { min-height: 7em; resize: vertical; }
+.ao-form { display: grid; gap: var(--ao-space-5); max-width: 40rem; }
+.ao-row-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--ao-space-3); }
+
+/* Dropdown / select: the native element with a drawn chevron */
+.ao-select { position: relative; }
+.ao-select select { appearance: none; padding-inline-end: var(--ao-space-6); cursor: pointer; }
+.ao-select .ao-icon { position: absolute; inset-inline-end: var(--ao-space-3); top: 50%; translate: 0 -50%; width: 16px; height: 16px; pointer-events: none; color: var(--ao-text-muted); }
+
+/* Colour picker field */
+.ao-color { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-2) var(--ao-space-3); }
+.ao-color .ao-input { flex: 0 1 9rem; min-width: 7rem; }
+.ao-color input[type="color"] { width: var(--ao-hit); height: var(--ao-hit); padding: 3px; border: 1px solid var(--ao-border-control); border-radius: var(--ao-radius-m); background: var(--ao-surface); cursor: pointer; }
+.ao-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.ao-color input[type="color"]::-webkit-color-swatch { border: 0; border-radius: var(--ao-radius-s); }
+.ao-color input[type="color"]::-moz-color-swatch { border: 0; border-radius: var(--ao-radius-s); }
+.ao-color .ao-input { font-family: var(--ao-font-mono); text-transform: lowercase; }
+.ao-contrast { flex: 1 1 14rem; display: inline-flex; align-items: center; gap: var(--ao-space-2); font-size: var(--ao-text-sm); }
+.ao-contrast__swatch { display: grid; place-items: center; width: 36px; height: 28px; border-radius: var(--ao-radius-s); font-weight: 700; box-shadow: inset 0 0 0 1px var(--ao-border); }
+.ao-contrast[data-pass="false"] { color: var(--ao-danger-text); font-weight: 600; }
+.ao-color__default { flex-basis: 100%; font-size: var(--ao-text-sm); color: var(--ao-text-muted); }
+
+/* Copy field (snippet) */
+.ao-copy { display: grid; gap: var(--ao-space-2); }
+.ao-copy textarea { font-family: var(--ao-font-mono); font-size: var(--ao-text-sm); line-height: 1.6; background: var(--ao-surface-sunken); resize: none; min-height: 6.5em; }
+.ao-copy__status { display: inline-flex; align-items: center; gap: var(--ao-space-1); color: var(--ao-published-text); font-weight: 600; min-height: 1.5em; }
+
+/* Dialog */
+.ao-dialog { width: min(32rem, calc(100vw - 32px)); padding: 0; border: 0; border-radius: var(--ao-radius-l); background: var(--ao-surface); color: var(--ao-text); box-shadow: var(--ao-shadow-overlay); overscroll-behavior: contain; }
+.ao-dialog::backdrop { background: rgb(5 5 5 / 0.5); }
+.ao-dialog__body { display: grid; gap: var(--ao-space-4); padding: var(--ao-space-5); }
+.ao-dialog h2 { font-size: var(--ao-text-xl); }
+.ao-dialog--inline { position: static; display: block; margin: 0; width: min(32rem, 100%); }
+.ao-preview { padding: var(--ao-space-3) var(--ao-space-4); border-radius: var(--ao-radius-m); background: var(--ao-surface-sunken); border-inline-start: 3px solid var(--ao-accent); }
+.ao-preview__meta { font-size: var(--ao-text-sm); color: var(--ao-text-muted); }
+
+/* Toast */
+.ao-toast { display: flex; align-items: flex-start; gap: var(--ao-space-3); width: min(26rem, 100%); padding: var(--ao-space-3) var(--ao-space-4); border-radius: var(--ao-radius-l); background: var(--ao-surface); box-shadow: var(--ao-shadow-overlay); }
+.ao-toast > .ao-icon { color: var(--ao-published-icon); margin-block-start: 1px; }
+.ao-toast--error > .ao-icon { color: var(--ao-danger); }
+.ao-toast p { flex: 1; }
+.ao-toast .ao-btn { min-height: 32px; padding: 0 var(--ao-space-2); margin: -4px -8px -4px 0; }
+
+/* List row with meta */
+.ao-list { margin: 0; padding: 0; list-style: none; border-radius: var(--ao-radius-l); background: var(--ao-surface); box-shadow: var(--ao-shadow-card); }
+.ao-list > li + li { border-top: 1px solid var(--ao-border); }
+.ao-row { display: grid; grid-template-columns: 1fr auto; gap: var(--ao-space-1) var(--ao-space-4); padding: var(--ao-space-3) var(--ao-space-4); position: relative; }
+@media (hover: hover) { .ao-row:hover { background: var(--ao-surface-hover); } }
+.ao-row__title { font-weight: 600; color: var(--ao-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ao-row__title::after { content: ""; position: absolute; inset: 0; } /* whole row is the link's hit area */
+.ao-row__meta { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-1) var(--ao-space-3); color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
+.ao-row__meta .ao-chip, .ao-row__end .ao-btn { position: relative; z-index: 1; }
+.ao-row__end { grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; gap: var(--ao-space-3); color: var(--ao-text-muted); font-size: var(--ao-text-sm); font-variant-numeric: tabular-nums; }
+
+/* Tabs: links, one page each (Payload document views) */
+.ao-tabs { display: flex; gap: var(--ao-space-1); border-bottom: 1px solid var(--ao-border); overflow-x: auto; }
+.ao-tabs a { display: inline-flex; align-items: center; gap: var(--ao-space-2); min-height: var(--ao-hit); padding: 0 var(--ao-space-3); color: var(--ao-text-muted); text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+@media (hover: hover) { .ao-tabs a:hover { color: var(--ao-text); } }
+.ao-tabs a[aria-current="page"] { color: var(--ao-text); font-weight: 600; border-bottom-color: var(--ao-accent); }
+.ao-tabs .ao-chip__count { background: var(--ao-surface-sunken); }
+
+/* Phone form layout (Annotate page) */
+.ao-phone { max-width: 26rem; margin-inline: auto; padding: var(--ao-space-4) var(--ao-space-4) 0; background: var(--ao-bg); border-radius: var(--ao-radius-l); box-shadow: var(--ao-shadow-card); }
+.ao-phone__top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--ao-space-3); }
+.ao-phone__project { font-size: var(--ao-text-sm); color: var(--ao-text-muted); font-weight: 600; }
+.ao-phone .ao-header__title { font-size: var(--ao-text-2xl); }
+.ao-phone .ao-form { gap: var(--ao-space-4); padding-block: var(--ao-space-4); }
+.ao-phone__bar { position: sticky; bottom: 0; display: grid; gap: var(--ao-space-2); margin-inline: calc(-1 * var(--ao-space-4)); padding: var(--ao-space-3) var(--ao-space-4) max(var(--ao-space-3), env(safe-area-inset-bottom)); background: var(--ao-bg); box-shadow: 0 -1px 0 var(--ao-border); }
+.ao-moment { display: flex; align-items: center; gap: var(--ao-space-2); padding: var(--ao-space-2) var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-accent-subtle); color: var(--ao-accent-text); font-weight: 600; }
+.ao-topics { display: flex; flex-wrap: wrap; gap: var(--ao-space-2); border: 0; padding: 0; margin: 0; }
+.ao-topic { position: relative; }
+.ao-topic input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.ao-topic span { display: inline-flex; align-items: center; gap: var(--ao-space-1); min-height: var(--ao-hit); padding: 0 var(--ao-space-4); border-radius: var(--ao-radius-pill); box-shadow: inset 0 0 0 1px var(--ao-border-control); }
+.ao-topic input:checked + span { background: var(--ao-accent-subtle); color: var(--ao-accent-text); box-shadow: inset 0 0 0 2px var(--ao-accent); font-weight: 600; }
+.ao-topic input:focus-visible + span { outline: 2px solid var(--ao-focus); outline-offset: 2px; }
+
+/* Motion: opt-in only. Nothing waits for an animation. */
+@media (prefers-reduced-motion: no-preference) {
+  .ao-btn:active:not(:disabled) { scale: 0.96; }
+  .ao-dialog[open] { animation: ao-in var(--ao-dur-base) var(--ao-ease); }
+  .ao-toast { animation: ao-rise var(--ao-dur-base) var(--ao-ease); }
+}
+@keyframes ao-in { from { opacity: 0; scale: 0.98; } }
+@keyframes ao-rise { from { opacity: 0; translate: 0 8px; } }
+
+@media (forced-colors: active) {
+  .ao-badge, .ao-chip, .ao-btn, .ao-stat, .ao-card, .ao-topic span { border: 1px solid CanvasText; }
+  .ao-steps [aria-current="step"] { outline: 2px solid Highlight; }
+}
+
+/* The Vocabulary tab (admin/vocabulary/FieldList.tsx, AddQuestion.tsx). */
+.annoudio-questions { display: grid; gap: var(--ao-space-4); margin-block: var(--ao-space-4); }
+.annoudio-questions .ao-header { padding-block-end: 0; }
+.annoudio-questions .ao-header__title { font-size: var(--ao-text-xl); }
+.annoudio-questions__curie { font-family: var(--ao-font-mono); font-size: var(--ao-text-xs); }
+.annoudio-questions__hidden { margin-inline-start: var(--ao-space-2); }
+.annoudio-questions__list .ao-row__title { white-space: normal; }
+.annoudio-questions__catalogue { margin: 0; padding: 0; list-style: none; }
+.annoudio-questions__choice { display: inline-flex; align-items: center; gap: var(--ao-space-1); min-height: var(--ao-hit); padding-inline-end: var(--ao-space-3); }
+.annoudio-questions__check label { display: inline-flex; align-items: center; gap: var(--ao-space-2); min-height: var(--ao-hit); }
+.annoudio-questions__max { max-width: 6rem; }
+.annoudio-questions__lock { padding: var(--ao-space-2) var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-waiting-bg); color: var(--ao-waiting-text); }
+.ao-dialog .ao-field > summary { cursor: pointer; min-height: var(--ao-hit); display: flex; align-items: center; }
+.ao-dialog { max-height: calc(100vh - 32px); overflow-y: auto; }
+/* The page of an entity list (admin/vocabulary/ConceptTree.tsx). */
+.annoudio-entities { border-collapse: collapse; margin-block: var(--ao-space-4); }
+.annoudio-entities :is(th, td) { padding: var(--ao-space-2) var(--ao-space-3); border-bottom: 1px solid var(--ao-border); text-align: start; }
+.annoudio-add-list { max-width: 40rem; }
+
+/* ------------------------------------------------------------------------------------------
+   The rework (design/rework-notes.md): Payload's own screens get the design-system values
+   (design/design-system.md §4, the only overrides), then the components of the custom
+   pages that the vocabulary build did not have.
+   ------------------------------------------------------------------------------------------ */
+
+/* §4: the variables are the stable interface; the two class rules are checked after each
+   Payload upgrade (btn--style-primary, field-type, rs__). */
+:root {
+  --style-radius-s: 4px;
+  --style-radius-m: 6px;
+  --style-radius-l: 10px;
+  --accessibility-outline: 2px solid var(--ao-focus);
+}
+.btn--style-primary:not(.btn--disabled) {
+  --bg-color: var(--ao-accent);
+  --hover-bg: var(--ao-accent-hover);
+  --color: var(--ao-on-accent);
+}
+/* WCAG 1.4.11: the edge of a control has 3:1 against its background. */
+.field-type :is(input, textarea, select), .rs__control {
+  border-color: var(--ao-border-control);
+}
+
+/* A native dropdown inside a Payload form (admin/ui/SelectField.tsx) and in our pages. */
+.ao-select { display: block; max-width: 32rem; }
+.ao-select select { min-height: var(--ao-hit); }
+.field-type .ao-select select { font-size: var(--ao-text-md); }
+
+/* Links that make a new connection: "Add to a project". */
+.ao-chip--add { color: var(--ao-accent-text); background: transparent; box-shadow: none; border: 1px dashed var(--ao-border-control); }
+.ao-chip--add .ao-icon { color: var(--ao-accent-text); }
+
+/* A stat that opens its list. */
+.ao-stat__link { display: grid; gap: var(--ao-space-1); color: inherit; text-decoration: none; }
+@media (hover: hover) { .ao-stat:has(.ao-stat__link:hover) { box-shadow: var(--ao-shadow-card), inset 0 0 0 1px var(--ao-accent); } }
+ul.ao-stats { margin: 0; padding: 0; list-style: none; }
+.ao-stat--processing { --ao-stat-edge: var(--ao-processing-icon); }
+
+/* The help line under a page or tab heading: what this is in audio annotation. */
+.ao .ao-header__help, .annoudio-help { margin: 0 0 var(--ao-space-4); max-width: 65ch; color: var(--ao-text-muted); font-size: var(--ao-text-md); text-wrap: pretty; }
+.ao-card + .ao-card, .ao > .ao-card + section, .ao > section + section { margin-block-start: var(--ao-space-4); }
+.ao-card .ao-header__help { margin: 0; }
+.ao-card__head > a { font-size: var(--ao-text-sm); }
+
+/* The recording page (admin/catalogue/RecordingPanel.tsx). */
+.annoudio-recording { margin-block-end: var(--ao-space-5); display: grid; gap: var(--ao-space-4); }
+.annoudio-recording .ao-card + .ao-card { margin: 0; }
+.annoudio-usedin { display: grid; gap: var(--ao-space-2); }
+.annoudio-address { font-family: var(--ao-font-mono); font-size: var(--ao-text-xs); overflow-wrap: anywhere; color: var(--ao-text-muted); }
+.annoudio-widget-row .ao-row__title { white-space: normal; }
+.annoudio-snippet__code { font-family: var(--ao-font-mono); font-size: var(--ao-text-sm); line-height: 1.6; background: var(--ao-surface-sunken); color: var(--ao-text); border: 1px solid var(--ao-border-control); border-radius: var(--ao-radius-m); padding: var(--ao-space-2) var(--ao-space-3); resize: vertical; min-height: 6.5em; width: 100%; }
+
+/* The review screen (admin/stories/StoryPanel.tsx). */
+.annoudio-story { display: grid; gap: var(--ao-space-4); margin-block-end: var(--ao-space-5); }
+.annoudio-story .ao-card + .ao-card { margin: 0; }
+.annoudio-story h3 { font-size: var(--ao-text-lg); margin-block-start: var(--ao-space-2); }
+.annoudio-story__text { white-space: pre-wrap; font-size: var(--ao-text-lg); max-width: 65ch; margin: 0; }
+.annoudio-story__returned { padding: var(--ao-space-2) var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-returned-bg); color: var(--ao-returned-text); }
+.annoudio-story__state { color: var(--ao-text-muted); }
+.annoudio-story__range audio, .annoudio-story__media :is(audio, video) { display: block; width: 100%; max-width: 32rem; }
+.annoudio-story__range { margin: 0; display: grid; gap: var(--ao-space-1); }
+.annoudio-story__range figcaption { color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
+.annoudio-story__image { display: block; max-width: 100%; max-height: 20rem; border-radius: var(--ao-radius-m); outline: 1px solid rgb(0 0 0 / 0.1); outline-offset: -1px; }
+.annoudio-story__media { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--ao-space-3); }
+.annoudio-story__answers { row-gap: var(--ao-space-2); }
+.annoudio-story__answer { display: contents; }
+.annoudio-unlisted { display: grid; gap: var(--ao-space-2); justify-items: start; padding: var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-waiting-bg); color: var(--ao-waiting-text); }
+.annoudio-unlisted p { display: flex; align-items: center; gap: var(--ao-space-2); margin: 0; }
+.annoudio-unlisted .ao-field__help { color: inherit; }
+
+/* The member page (admin/members/MemberPanel.tsx). */
+.annoudio-member { display: grid; gap: var(--ao-space-4); margin-block-end: var(--ao-space-5); }
+.annoudio-member .ao-card + .ao-card { margin: 0; }
+.annoudio-member__blocked { padding: var(--ao-space-2) var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-danger-subtle); color: var(--ao-danger-text); font-weight: 600; }
+.annoudio-member__subhead { font-size: var(--ao-text-lg); }
+.annoudio-member__invites { margin: 0; padding: 0; list-style: none; flex-direction: column; }
+
+/* The project Overview (admin/projects/Overview.tsx). */
+.annoudio-overview { display: grid; gap: var(--ao-space-4); padding-block: var(--ao-space-4) var(--ao-space-6); max-width: 60rem; }
+.annoudio-overview__recordings .ao-row__title { white-space: normal; }
+.annoudio-overview .ao-card + .ao-card { margin: 0; }
+.annoudio-overview .ao-card__head .ao-btn { margin-inline-start: auto; }
+
+/* The Theme tab: the widget beside the fields (admin/projects/ThemePreview.tsx). */
+@media (min-width: 1100px) {
+  .render-fields:has(> .annoudio-theme-panel) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30rem); column-gap: var(--ao-space-6); align-items: start; }
+  .render-fields:has(> .annoudio-theme-panel) > .annoudio-theme-panel { grid-column: 2; grid-row: 1 / span 50; position: sticky; top: calc(var(--base) * 5); }
+  .render-fields:has(> .annoudio-theme-panel) > :not(.annoudio-theme-panel) { grid-column: 1; }
+}
+.annoudio-theme-panel .ao-card { gap: var(--ao-space-3); }
+.annoudio-theme-preview annoudio-player { display: block; }
+
+/* The colour picker field (admin/projects/ColorField.tsx). */
+.annoudio-colour .ao-color { align-items: center; }
+.annoudio-colour .ao-contrast { margin: 0; }
+.annoudio-colour .ao-color__default { margin: 0; }
+
+/* The wizard (admin/addWidget/Wizard.tsx). */
+.annoudio-wizard { display: grid; gap: var(--ao-space-4); padding-block: var(--ao-space-4) var(--ao-space-6); max-width: 60rem; }
+.annoudio-wizard .ao-header { padding-block-end: 0; }
+.annoudio-wizard__step { gap: var(--ao-space-3); }
+.annoudio-wizard__heading { display: flex; align-items: center; gap: var(--ao-space-2); font-size: var(--ao-text-xl); }
+.annoudio-wizard__heading:focus { outline: none; }
+.annoudio-wizard__heading:focus-visible { outline: 2px solid var(--ao-focus); outline-offset: 2px; }
+.annoudio-wizard__number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ao-accent); color: var(--ao-on-accent); font-size: var(--ao-text-sm); font-variant-numeric: tabular-nums; }
+.annoudio-wizard__done { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-2); margin: 0; }
+.annoudio-wizard__done > .ao-icon { color: var(--ao-published-icon); }
+.annoudio-wizard__new { border: 0; padding: 0; margin: 0; }
+.annoudio-wizard__preview { margin: 0; display: grid; gap: var(--ao-space-2); }
+.annoudio-wizard__preview figcaption { color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
+
+/* The preview page (admin/preview/View.tsx). */
+.annoudio-preview-page { display: grid; gap: var(--ao-space-4); padding-block: var(--ao-space-5) var(--ao-space-6); max-width: 60rem; }
+.annoudio-preview-page .ao-header { padding-block-end: 0; }
+.annoudio-preview-page .ao-card + .ao-card { margin: 0; }
+.annoudio-preview-page__widget annoudio-player { display: block; }
+
+/* Payload's document tab bar with only its own default tab: nothing to switch between, and
+   its links sit straight in the <ul> (axe `list`). Our tabs (DocTabLink) keep the bar. */
+.doc-tabs:not(:has(.annoudio-doc-tab)) { display: none; }
+/* Payload's "Add …" row button of an array field is too light (axe color-contrast). */
+.array-field__add-row, .array-field__add-row .btn__label { color: var(--ao-accent-text); }
+/* The sign-in screen (admin/LoginIntro.tsx). */
+.annoudio-login { margin-block-end: var(--ao-space-5); }
+.annoudio-login .ao-header__help { margin-block-start: var(--ao-space-2); }
+/* A document page: the collection description is the help line of its list. The page has its
+   own help line (our panels) and the field help, so the list help does not repeat there. */
+.doc-header__after-header .custom-view-description { display: none; }
+/* Payload's tab buttons of a tabs field are too light: opacity 0.5 (axe color-contrast). */
+.tabs-field__tab-button { color: var(--ao-text-muted); opacity: 1; }
+.tabs-field__tab-button--active { color: var(--ao-text); }
+.ao-contrast__mark { display: block; width: 60%; height: 4px; border-radius: 2px; }
+
+/* The page of a list: "New item" with its Add button on one line (recordings audit, 04). */
+.ao-inline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-2); }
+.ao-inline .ao-input { flex: 1 1 14rem; max-width: 24rem; }
+.annoudio-quick-add { margin-top: var(--ao-space-4); }
+/* "← Back to Places" above the item form. */
+.annoudio-back { margin: 0 0 var(--ao-space-4); }
+.annoudio-member__test { display: flex; align-items: center; gap: var(--ao-space-2); }
+/* The stack's name in place of Payload's logo (admin/Brand.tsx). */
+.annoudio-brand { display: inline-flex; align-items: center; gap: var(--ao-space-2); color: var(--ao-text); }
+.annoudio-brand .ao-icon { width: 28px; height: 28px; color: var(--ao-accent); }
+.annoudio-brand__name { font-size: var(--ao-text-lg, 1.125rem); font-weight: 600; }
+.annoudio-brand--icon .ao-icon { width: 22px; height: 22px; }

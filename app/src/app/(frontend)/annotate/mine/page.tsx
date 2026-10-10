@@ -8,7 +8,7 @@ import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 
 import { clockRange } from '@/clock'
-import { withPlayerFragment } from '@/fragment'
+import { withWidgetFragment } from '@/fragment'
 import { recording as findRecording } from '@/modules/catalogue'
 import { bySlug } from '@/modules/projects'
 import { lifecycle, type OwnStory } from '@/modules/stories'
@@ -16,7 +16,9 @@ import { lifecycle, type OwnStory } from '@/modules/stories'
 import { Frame } from '../Frame'
 import { annotatePath } from '../link'
 import { SignInForm } from '../SignInForm'
-import { stateLabel, strings } from '../strings'
+import { StateBadges } from '../StateBadges'
+import { memberPagesMode } from '../signInMode'
+import { strings } from '../strings'
 import '../annotate.css'
 
 export const metadata: Metadata = { title: strings.mine.title, robots: { index: false } }
@@ -38,13 +40,22 @@ export default async function YourStories() {
   if (!session) {
     return (
       <Frame title={s.title} project={null} back={null} session={null} after="/annotate/mine">
-        <SignInForm link={null} next="/annotate/mine" heading={s.signIn} moment={s.moment} />
+        <SignInForm
+          link={null}
+          mode={memberPagesMode()}
+          next="/annotate/mine"
+          heading={s.signIn}
+          moment={s.moment}
+        />
       </Frame>
     )
   }
   const payload = await getPayload({ config })
   const site = { payload, origin: process.env.ANNOUDIO_ORIGIN || '' }
-  const own = await stories.ownStories(session)
+  const [own, account] = await Promise.all([
+    stories.ownStories(session),
+    membership.account(session),
+  ])
   // The names of the projects and recordings, and the member of each story that a reply answers.
   const unique = <T,>(values: T[]) => [...new Set(values)]
   const [projects, recordings, parents] = await Promise.all([
@@ -80,6 +91,7 @@ export default async function YourStories() {
 
   return (
     <Frame title={s.title} project={null} back={null} session={session} after="/annotate/mine">
+      {account && !account.emailVerified && <p className="hint no-mail">{s.noMail}</p>}
       {own.length === 0 ? (
         <p className="empty">{s.empty}</p>
       ) : (
@@ -136,7 +148,7 @@ function Card(props: {
   })
   const listen =
     state.state === 'published' && story.toldOn
-      ? withPlayerFragment(story.toldOn, {
+      ? withWidgetFragment(story.toldOn, {
           project: story.project,
           recording: story.recording,
           t: story.start ?? 0,
@@ -149,7 +161,7 @@ function Card(props: {
         {names.recording.get(story.recording)} · {where}
       </h3>
       <p className="card__meta">
-        {names.project.get(story.project)} <span className="badge">{stateLabel(state)}</span>
+        {names.project.get(story.project)} <StateBadges story={story} />
       </p>
       {story.rejection && (state.change ?? state.state) === 'returned' && (
         <p className="returned">

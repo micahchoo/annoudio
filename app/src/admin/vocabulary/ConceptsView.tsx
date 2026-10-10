@@ -1,7 +1,8 @@
-// Concepts (O10): /admin/concepts and /admin/concepts/{project}. The concept tree of one
-// project; a project picker when there is more than one. A custom admin view: it puts
-// itself in the default template.
+// Lists (O10l) and the page of one list (Q4): /admin/concepts/{project} and
+// /admin/concepts/{project}?list={key}. A project picker when there is more than one. A
+// custom admin view: it puts itself in the default template.
 
+import { vocabulary } from '@payload-config'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { SetStepNav } from '@payloadcms/ui'
 import Link from 'next/link'
@@ -15,8 +16,9 @@ import { PATHS } from '../paths'
 import { strings } from '../strings'
 
 import { ConceptTree } from './ConceptTree'
+import { ListsPanel } from './ListsPanel'
 
-const s = strings.concepts
+const s = strings.lists
 
 export async function ConceptsView(props: AdminViewServerProps) {
   const { initPageResult, payload, user } = props
@@ -25,6 +27,19 @@ export async function ConceptsView(props: AdminViewServerProps) {
   const segments = props.params?.segments
   const asked = Array.isArray(segments) ? segments[1] : undefined
   const project = projects.find((p) => p.slug === asked) ?? projects[0]
+  const listKey = typeof props.searchParams?.list === 'string' ? props.searchParams.list : null
+  const lists = project ? await vocabulary.lists(project.slug) : []
+  const list = listKey ? lists.find((l) => l.key === listKey) : undefined
+  const listId = list
+    ? (
+        await payload.find({
+          collection: 'vocab-lists',
+          where: { iri: { equals: list.iri } },
+          limit: 1,
+          depth: 0,
+        })
+      ).docs[0]?.id
+    : undefined
   return (
     <DefaultTemplate
       i18n={props.i18n}
@@ -36,30 +51,49 @@ export async function ConceptsView(props: AdminViewServerProps) {
       user={user ?? undefined}
       visibleEntities={initPageResult.visibleEntities}
     >
-      <SetStepNav nav={[{ label: s.title }]} />
-      <div className="annoudio-concepts gutter--left gutter--right">
-        <h1>{s.title}</h1>
-        <p>{s.intro}</p>
+      <SetStepNav
+        nav={
+          list
+            ? [{ label: s.title, url: `${PATHS.concepts}/${project!.slug}` }, { label: list.label }]
+            : [{ label: s.title }]
+        }
+      />
+      <div className="ao annoudio-concepts gutter--left gutter--right">
+        <header className="ao-header">
+          <div>
+            <h1 className="ao-header__title">{list ? list.label : s.title}</h1>
+            {list && <p className="ao-header__help">{s.listHelp}</p>}
+          </div>
+        </header>
         {!project ? (
-          <p className="annoudio-empty">{s.noProject}</p>
+          <p className="ao-empty">{strings.concepts.noProject}</p>
+        ) : list && listId !== undefined ? (
+          <>
+            <p>
+              <Link href={`${PATHS.concepts}/${project.slug}`}>{s.allLists}</Link>
+            </p>
+            <ConceptTree
+              payload={payload}
+              project={project}
+              list={{ key: list.key, id: listId, kind: list.kind, label: list.label }}
+            />
+          </>
         ) : (
           <>
             {projects.length > 1 && (
-              <nav aria-label={s.project} className="annoudio-tabs">
+              <nav aria-label={strings.concepts.project} className="ao-tabs annoudio-project-tabs">
                 {projects.map((p) => (
                   <Link
                     key={p.slug}
                     href={`${PATHS.concepts}/${p.slug}`}
                     aria-current={p.slug === project.slug ? 'page' : undefined}
-                    className="annoudio-tabs__tab"
                   >
                     {p.label}
                   </Link>
                 ))}
               </nav>
             )}
-            <h2>{project.label}</h2>
-            <ConceptTree payload={payload} project={project} />
+            <ListsPanel project={project} />
           </>
         )}
       </div>

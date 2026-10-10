@@ -4,17 +4,17 @@ Tags: audio, oral history, stories, annotation, block
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
-The "Annoudio player" block. It shows a recording and its community stories from your Annoudio stack.
+The "Annoudio widget" block. It shows a recording and its community stories from your Annoudio stack.
 
 == Description ==
 
-Annoudio is an audio player with community stories. Your organisation runs one Annoudio stack. This plugin adds one block, "Annoudio player", to the block editor.
+Annoudio is an audio widget with community stories. Your organisation runs one Annoudio stack. This plugin adds one block, "Annoudio widget", to the block editor.
 
-The block keeps only the recording ID (a number) and a copy of the audio address. It keeps no HTML. So authors and editors without the "unfiltered_html" capability can add players. WordPress does not remove them.
+The block keeps only the recording number (a number) and a copy of the audio address. It keeps no HTML. So authors and editors without the "unfiltered_html" capability can add widgets. WordPress does not remove them.
 
 The block gets the title and the audio address of the recording from the Annoudio admin. A page view uses the address that the admin has now (this server keeps it for 5 minutes). The copy in the post is used only when this server cannot reach the stack.
 
@@ -34,7 +34,7 @@ The plugin has one settings page: Settings, Annoudio. Type the stack address and
 
 = What do I copy from the Annoudio admin? =
 
-One number. Open the recording in the Annoudio admin. Its Snippet panel shows "Recording ID: 1". Type that number in the block's "Recording ID" field. You can also paste the full snippet into "Or paste the snippet".
+One number. Open the recording in the Annoudio admin. Its Snippet panel shows "Recording number: 1". Type that number in the block's "Recording number" field. You can also paste the full snippet into "Or paste the snippet".
 
 = The settings page says "This site cannot reach …" =
 
@@ -42,8 +42,11 @@ The WordPress server cannot connect to the stack address. If WordPress and the s
 
 == Changelog ==
 
+= 0.3.0 =
+* One name with the Annoudio admin: the block is "Annoudio widget", and its field is "Recording number". The inserter also finds it with "widget", "audio" and "story". Posts keep their blocks (the block name annoudio/player does not change).
+
 = 0.2.0 =
-* The block needs only the recording ID. It gets the title and the audio address from the Annoudio admin, at page view, with a 5-minute cache.
+* The block needs only the recording number. It gets the title and the audio address from the Annoudio admin, at page view, with a 5-minute cache.
 * The settings page shows the project name.
 
 = 0.1.0 =

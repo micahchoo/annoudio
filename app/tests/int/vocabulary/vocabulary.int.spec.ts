@@ -8,7 +8,7 @@ import type { Payload } from 'payload'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import type { Stories } from '@/modules/stories'
-import { conceptsOf, exportSkos, importSkos } from '@/modules/vocabulary'
+import { conceptsOf, createVocabulary, exportSkos, importSkos } from '@/modules/vocabulary'
 
 import {
   BOAT,
@@ -24,6 +24,7 @@ import {
   seed,
   startPayload,
   storyId,
+  topic,
 } from '../stories/world'
 
 let payload: Payload
@@ -97,7 +98,7 @@ describe('concepts', () => {
   })
 
   it('a label change relabels the published stories in the same change', async () => {
-    await publishDraft(stories, draft({ tags: [FERRY] }))
+    await publishDraft(stories, draft({ values: [topic(FERRY)] }))
     await payload.update({
       collection: 'concepts',
       id: await idOf(FERRY),
@@ -108,17 +109,17 @@ describe('concepts', () => {
   })
 
   it('a concept that a story uses cannot be deleted; hidden, it leaves the picker list only', async () => {
-    await publishDraft(stories, draft({ tags: [BOAT] }))
+    await publishDraft(stories, draft({ values: [topic(BOAT)] }))
     const boat = await idOf(BOAT)
     await expect(payload.delete({ collection: 'concepts', id: boat })).rejects.toThrow(
-      /1 story uses this concept/,
+      /1 story uses this item/,
     )
     await payload.update({ collection: 'concepts', id: boat, data: { hidden: true } })
     expect((await tree()).find((c) => c.iri === BOAT)?.hidden).toBe(true)
     // A story that has the hidden concept keeps it, also on the next save.
     const [own] = await stories.ownDrafts(leela, { project: PROJECT, recording: '1' })
     const again = await stories.saveDraft(leela, {
-      ...draft({ tags: [BOAT], end: 50 }),
+      ...draft({ values: [topic(BOAT)], end: 50 }),
       ifMatch: own.etag,
     })
     expect(again.ok).toBe(true)
@@ -128,7 +129,7 @@ describe('concepts', () => {
     const transport = await add({ label: 'Transport' })
     const raft = await add({ label: 'Raft', parent: transport.id })
     await expect(payload.delete({ collection: 'concepts', id: transport.id })).rejects.toThrow(
-      /narrower concepts/,
+      /narrower items/,
     )
     await payload.delete({ collection: 'concepts', id: raft.id })
     await payload.delete({ collection: 'concepts', id: transport.id })
@@ -184,6 +185,47 @@ describe('SKOS', () => {
       })
     })
   }
+
+  it('an entity list exports its class and owl:sameAs; an item list skos:exactMatch; both import back', async () => {
+    const vocabulary = createVocabulary({ payload, origin: ORIGIN })
+    const op = { operatorId: 'op-1' }
+    const people = await vocabulary.addList(op, PROJECT, {
+      label: 'People',
+      kind: 'entities',
+      class: 'http://xmlns.com/foaf/0.1/Person',
+    })
+    expect(people).toEqual({ ok: true, key: 'people' })
+    // One name, one list: " people " is People again, refused with the way to it.
+    expect(
+      await vocabulary.addList(op, PROJECT, { label: ' people ', kind: 'items' }),
+    ).toEqual({ ok: false, error: 'exists', key: 'people', label: 'People' })
+    await vocabulary.addItem(op, PROJECT, 'people', {
+      label: 'K. Joseph',
+      sameAs: 'http://www.wikidata.org/entity/Q1',
+    })
+    expect(
+      await vocabulary.addItem(op, PROJECT, 'people', { label: 'X', sameAs: 'javascript:1' }),
+    ).toEqual({ ok: false, error: 'bad-same-as' })
+    const file = (await vocabulary.exportFile(PROJECT, {
+      kind: 'list',
+      listKey: 'people',
+      format: 'turtle',
+    }))!
+    expect(file.filename).toBe(`${PROJECT}-people.ttl`)
+    expect(file.body).toContain(`<${BASE}k-joseph> a <http://xmlns.com/foaf/0.1/Person>`)
+    expect(file.body).toMatch(/owl:sameAs <http:\/\/www\.wikidata\.org\/entity\/Q1>/)
+    expect(file.body).toContain(`<${ORIGIN}/vocab/${PROJECT}/s/people> a skos:ConceptScheme`)
+    const again = await importSkos(site(), PROJECT, file.body, { apply: true, list: 'people' })
+    expect(again).toMatchObject({ ok: true, report: { added: 0, changed: 0, unchanged: 1 } })
+
+    await payload.update({
+      collection: 'concepts',
+      where: { iri: { equals: FERRY } },
+      data: { sameAs: 'https://archive.example/ferry' },
+    })
+    const topics = (await exportSkos(site(), PROJECT, 'turtle'))!.body
+    expect(topics).toMatch(/skos:exactMatch <https:\/\/archive\.example\/ferry>/)
+  })
 
   it('the Turtle export is a SKOS concept scheme', async () => {
     await hierarchy()

@@ -10,11 +10,10 @@ import { recording as findRecording } from '@/modules/catalogue'
 import { bySlug } from '@/modules/projects'
 
 import { mediaOf, mediaStateOf, parentOf, rejectionOf } from './collection'
-import { STORIES, labelsOf } from './rebuild'
-import { parseStory, tagsOf, textsOf } from './shape'
+import { STORIES, labelsOf, type Settings } from './rebuild'
+import { itemIrisOf, parseStory, relabel, textsOf, valuesOf } from './shape'
 import { lifecycle } from './lifecycle'
 import type {
-  ConceptIri,
   ProjectReach,
   HistoryLine,
   ProjectSlug,
@@ -28,9 +27,10 @@ const MEDIA_KINDS = { Sound: 'sound', Image: 'image', Video: 'video' } as const
 
 export async function reviewOf(
   payload: Payload,
-  origin: string,
+  settings: Settings,
   id: string,
 ): Promise<StoryReview | null> {
+  const { origin } = settings
   const [latest, main] = await Promise.all(
     [true, false].map((draft) =>
       payload.findByID({ collection: STORIES, id, draft, depth: 0, disableErrors: true }),
@@ -43,7 +43,7 @@ export async function reviewOf(
   const [project, recording, labels, media, parent, replies] = await Promise.all([
     bySlug(site, story.project),
     findRecording(site, story.recording),
-    labelsOf(undefined, payload, story.project, tagsOf(story.annotation)),
+    labelsOf(undefined, settings.vocabulary, story.project, itemIrisOf(story.annotation)),
     mediaOf(site, story),
     story.replyTo === null ? null : parentOf(payload, origin, story.replyTo),
     story.replyTo === null
@@ -62,7 +62,11 @@ export async function reviewOf(
     pendingRevision: reviewState === 'draft' && main?._status === 'published',
     ...(rejection ? { rejection } : {}),
     ...(media.length > 0 ? { mediaState: mediaStateOf(media.map(([, body]) => body)) } : {}),
+    ...(latest.sentAgain === true ? { sentAgain: true } : {}),
     ...(typeof latest.toldOn === 'string' && latest.toldOn ? { toldOn: latest.toldOn } : {}),
+    ...(typeof latest.toldOnUnlisted === 'string' && latest.toldOnUnlisted
+      ? { toldOnUnlisted: latest.toldOnUnlisted }
+      : {}),
     member: { id: story.memberId, nickname: story.annotation.creator.nickname },
     created: story.annotation.created,
     modified: story.annotation.modified,
@@ -75,14 +79,11 @@ export async function reviewOf(
       ...(language ? { language } : {}),
     })),
     media: story.annotation.body.flatMap((body) => {
-      if (!('id' in body)) return []
+      if (Array.isArray(body.type) || !('id' in body)) return []
       const found = media.find(([url]) => url === body.id)?.[1] ?? null
       return [{ kind: MEDIA_KINDS[body.type], url: body.id, state: mediaStateOf([found]) }]
     }),
-    tags: tagsOf(story.annotation).map((iri) => {
-      const label = labels.get(iri)?.label
-      return label ? { iri, label } : { iri }
-    }),
+    values: valuesOf(relabel(story.annotation, labels)),
     project: { slug: story.project, ...(project ? { name: project.label } : {}) },
     recording: {
       id: story.recording,
@@ -94,7 +95,7 @@ export async function reviewOf(
 export async function countsOf(
   payload: Payload,
   origin: string,
-  filter: { project?: ProjectSlug; recording?: RecordingId },
+  filter: { project?: ProjectSlug; recording?: RecordingId; member?: string },
 ): Promise<StoryCounts> {
   const db = (payload.db as unknown as PostgresAdapter).drizzle
   const main = sql.join(
@@ -102,6 +103,7 @@ export async function countsOf(
       sql``,
       ...(filter.project === undefined ? [] : [sql`and project = ${filter.project}`]),
       ...(filter.recording === undefined ? [] : [sql`and recording = ${filter.recording}`]),
+      ...(filter.member === undefined ? [] : [sql`and member = ${filter.member}`]),
     ],
     sql` `,
   )
@@ -112,6 +114,7 @@ export async function countsOf(
       ...(filter.recording === undefined
         ? []
         : [sql`and v.version_recording = ${filter.recording}`]),
+      ...(filter.member === undefined ? [] : [sql`and v.version_member = ${filter.member}`]),
     ],
     sql` `,
   )
@@ -180,24 +183,6 @@ export async function countsOf(
   return counts
 }
 
-export async function tagCountsOf(
-  payload: Payload,
-  project: ProjectSlug,
-): Promise<Map<ConceptIri, number>> {
-  const db = (payload.db as unknown as PostgresAdapter).drizzle
-  const { rows } = await db.execute<{ tag: string; stories: string }>(sql`
-    select tag, count(distinct story) as stories from (
-      select s.id as story, b ->> 'source' as tag
-        from stories s, jsonb_array_elements(s.wadm -> 'body') b
-        where s.project = ${project} and b ->> 'type' = 'SpecificResource'
-      union all
-      select v.parent_id, b ->> 'source'
-        from _stories_v v, jsonb_array_elements(v.version_wadm -> 'body') b
-        where v.latest and v.version_project = ${project} and b ->> 'type' = 'SpecificResource'
-    ) tags group by tag`)
-  return new Map(rows.map((row) => [row.tag, Number(row.stories)]))
-}
-
 export async function recentOf(payload: Payload, since: Date): Promise<RecentCounts> {
   const db = (payload.db as unknown as PostgresAdapter).drizzle
   const at = since.toISOString()
@@ -244,7 +229,11 @@ export async function historyOf(
   })
 }
 
-export async function reachOf(payload: Payload, project: ProjectSlug): Promise<ProjectReach> {
+export async function reachOf(
+  payload: Payload,
+  project: ProjectSlug,
+  leaveOut: string[],
+): Promise<ProjectReach> {
   const db = (payload.db as unknown as PostgresAdapter).drizzle
   const [recordings, members] = await Promise.all([
     db.execute<{ recording: string; stories: string }>(sql`
@@ -252,7 +241,9 @@ export async function reachOf(payload: Payload, project: ProjectSlug): Promise<P
         where project = ${project} and wadm ->> 'motivation' = 'commenting'
         group by recording order by count(*) desc, recording`),
     db.execute<{ members: string }>(
-      sql`select count(distinct member) as members from stories where project = ${project}`,
+      sql`select count(distinct member) as members from stories
+            where project = ${project} and member not in
+              (select jsonb_array_elements_text(${JSON.stringify(leaveOut)}::jsonb))`,
     ),
   ])
   return {

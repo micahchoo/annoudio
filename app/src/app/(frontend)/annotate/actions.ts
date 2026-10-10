@@ -10,11 +10,14 @@ import { getPayload } from 'payload'
 
 import { parseClock } from '@/clock'
 import type { MediaState } from '@/modules/media'
+import type { RedeemInviteError } from '@/modules/membership'
 import type { BodyInput, SaveError } from '@/modules/stories'
-import { bySlug, returnTarget } from '@/modules/projects'
+import { bySlug, returnTarget, type SignInMode } from '@/modules/projects'
 
+import { answerEntries, inputsFrom } from './answers'
 import { UUID_V7, annotatePath, readLink, returnWithFragment, type AnnotateLink } from './link'
 import { requestIp } from './request-ip'
+import { memberPagesMode } from './signInMode'
 import type { SaveState, SignInState } from './state'
 
 /** A path of the member pages, or null: the only places where a sign-in goes. */
@@ -23,6 +26,15 @@ function memberPath(value: FormDataEntryValue | null): string | null {
   return /^\/annotate\/(mine|account)$/.test(path) ? path : null
 }
 
+/** The sign-in forms of a page: the project's mode on the Annotate page. */
+async function signInModeOf(link: AnnotateLink | null): Promise<SignInMode> {
+  if (!link) return memberPagesMode()
+  return (await projectOf(link))?.signIn ?? 'email-code'
+}
+
+const allowsEmail = (mode: SignInMode) => mode !== 'invite-code'
+const allowsInvite = (mode: SignInMode) => mode !== 'email-code'
+
 export async function signIn(previous: SignInState, form: FormData): Promise<SignInState> {
   const link = readLink(form)
   const next = link ? annotatePath(link) : memberPath(form.get('next'))
@@ -30,8 +42,41 @@ export async function signIn(previous: SignInState, form: FormData): Promise<Sig
   const intent = form.get('intent')
   const email = String(form.get('email') ?? '')
   const code = String(form.get('code') ?? '')
+  // A Server Action is a public endpoint: check the mode again, never trust the form.
+  const mode = await signInModeOf(link)
 
   if (intent === 'other-email') return { step: 'email', email: '' }
+  if (intent === 'use-invite') return allowsInvite(mode) ? { step: 'invite', email } : previous
+  if (intent === 'use-email') return allowsEmail(mode) ? { step: 'email', email } : previous
+
+  const redeeming = intent === 'redeem' || (intent === 'nickname' && form.get('via') === 'invite')
+  if (redeeming) {
+    if (!allowsInvite(mode)) return { step: 'email', email, error: 'not-allowed' }
+    const invite = intent === 'redeem' ? String(form.get('invite') ?? '') : code
+    const nickname = intent === 'nickname' ? String(form.get('nickname') ?? '') : undefined
+    const ip = requestIp(await headers(), Number(process.env.TRUST_PROXY ?? 0))
+    const result = await membership.redeemInvite(email, invite, nickname, {
+      ip,
+      project: link?.project,
+      test: await operatorTries(),
+    })
+    if (!result.ok) {
+      if (result.error === 'nickname-required' || result.error === 'invalid-nickname') {
+        return {
+          step: 'nickname',
+          email,
+          code: invite,
+          via: 'invite',
+          ...(nickname === undefined ? {} : { error: result.error }),
+        }
+      }
+      return { step: 'invite', email, error: inviteError(result.error, mode) }
+    }
+    ;(await cookies()).set(result.cookie)
+    redirect(next)
+  }
+
+  if (!allowsEmail(mode)) return { step: 'invite', email }
   if (intent === 'send') {
     const ip = requestIp(await headers(), Number(process.env.TRUST_PROXY ?? 0))
     const site = link ? (await projectOf(link))?.label : undefined
@@ -42,7 +87,9 @@ export async function signIn(previous: SignInState, form: FormData): Promise<Sig
   }
 
   const nickname = intent === 'nickname' ? String(form.get('nickname') ?? '') : undefined
-  const result = await membership.verifyCode(email, code, nickname)
+  const result = await membership.verifyCode(email, code, nickname, {
+    test: await operatorTries(),
+  })
   if (!result.ok) {
     if (result.error === 'nickname-required' && nickname === undefined) {
       return { step: 'nickname', email, code }
@@ -54,6 +101,30 @@ export async function signIn(previous: SignInState, form: FormData): Promise<Sig
   }
   ;(await cookies()).set(result.cookie)
   redirect(next)
+}
+
+/**
+ * True when this browser also has an operator session: an operator tries the member steps
+ * (the preview page, "Try it"). A member that this sign-in makes is a test member.
+ */
+async function operatorTries(): Promise<boolean> {
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: await headers() })
+  return user?.collection === 'users'
+}
+
+/** The text key of a failed invite sign-in. */
+function inviteError(error: RedeemInviteError, mode: SignInMode): SignInState['error'] {
+  switch (error) {
+    case 'wrong-code':
+      return 'invite-wrong-code'
+    case 'rate-limited':
+      return 'invite-rate-limited'
+    case 'email-verified':
+      return allowsEmail(mode) ? 'email-verified' : 'email-verified-no-mail'
+    default:
+      return error
+  }
 }
 
 /** End the session. `after` is a path of the member pages: the page shows its sign-in. */
@@ -68,8 +139,8 @@ export async function saveStory(_previous: SaveState, form: FormData): Promise<S
     start: String(form.get('start') ?? ''),
     end: String(form.get('end') ?? ''),
     text: String(form.get('text') ?? ''),
-    tags: form.getAll('tags').map(String),
     media: form.getAll('media').map(String),
+    answers: answerEntries(form),
   }
   const session = await membership.sessionFromRequest({ headers: await headers() })
   if (!session) return { values, error: { field: 'form', code: 'signed-out' } }
@@ -79,10 +150,14 @@ export async function saveStory(_previous: SaveState, form: FormData): Promise<S
     return { values, error: { field: 'form', code: 'unknown-instance' } }
   }
 
-  // A reply has no time range and no topics; the player opens its story at `t`.
+  // A reply has no time range and no answers; the widget opens its story at `t`.
   const place = link.replyTo
     ? { replyTo: link.replyTo }
-    : { start: parseClock(values.start), end: parseClock(values.end), tags: values.tags }
+    : {
+        start: parseClock(values.start),
+        end: parseClock(values.end),
+        values: inputsFrom(values.answers),
+      }
   const result = await stories.saveDraft(session, {
     id,
     project: link.project,
@@ -93,7 +168,13 @@ export async function saveStory(_previous: SaveState, form: FormData): Promise<S
     // `stories` keeps it only on a site of the project.
     toldOn: link.return,
   })
-  if (!result.ok) return { values, error: fieldOf(result.error) }
+  if (!result.ok) {
+    return {
+      values,
+      error: fieldOf(result.error),
+      ...(result.error.code === 'values-invalid' ? { valueErrors: result.error.errors } : {}),
+    }
+  }
   redirect(await afterSave(link, id, place.start ?? link.t, result.reviewState))
 }
 
@@ -102,7 +183,7 @@ async function projectOf(link: AnnotateLink) {
   return bySlug({ payload, origin: process.env.ANNOUDIO_ORIGIN || '' }, link.project)
 }
 
-/** Back to the checked `return` URL with the player fragment, else to the story (P5, P6). */
+/** Back to the checked `return` URL with the widget fragment, else to the story (P5, P6). */
 async function afterSave(
   link: AnnotateLink,
   id: string,
@@ -110,10 +191,12 @@ async function afterSave(
   reviewState: 'draft' | 'published',
 ): Promise<string> {
   const project = await projectOf(link)
-  const target = project ? returnTarget(project, link.return) : null
+  const self = process.env.ANNOUDIO_ORIGIN || ''
+  const target = project ? returnTarget(project, link.return, { self }) : null
   return target
     ? returnWithFragment(target, link, start, reviewState)
-    : annotatePath({ ...link, t: Math.floor(start), return: null, story: id }, { saved: '1' })
+    : // The page keeps `return` as given, so the done screen can say that it is not listed.
+      annotatePath({ ...link, t: Math.floor(start), story: id }, { saved: '1' })
 }
 
 /**
@@ -146,9 +229,8 @@ function fieldOf(error: SaveError): NonNullable<SaveState['error']> {
     case 'unknown-media':
     case 'media-failed':
       return { field: 'media', code: error.code }
-    case 'too-many-tags':
-    case 'unknown-concept':
-      return { field: 'tags', code: error.code }
+    case 'values-invalid':
+      return { field: 'values', code: error.code }
     default:
       return { field: 'form', code: error.code }
   }

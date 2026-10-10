@@ -44,9 +44,10 @@ export const mediaCollection: CollectionConfig = {
     // Reached from its story only (design/ia.md §3).
     group: false,
     hideAPIURL: true,
+      components: { beforeListTable: ['/admin/ListEmpty#MediaEmpty'] },
     defaultColumns: ['kind', 'state', 'member', 'size', 'createdAt'],
     description:
-      'Voice notes, photos and videos that members attach to stories. Delete a row to remove the file from every story.',
+      'A voice note, photo or video is one part of a story, next to its text. A delete here removes the file from its story.',
   },
   graphQL: false,
   access: { read: operator, delete: operator, create: nobody, update: nobody },

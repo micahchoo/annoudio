@@ -95,40 +95,41 @@ export const mails = {
     )
   },
 
-  /** M3. */
-  published(input: { project: string; line: StoryLine; link: string }): Mail {
+  /** M3. `onSite`: the link opens the host page (the story has a `toldOn`), else Your stories. */
+  published(input: { project: string; line: StoryLine; link: string; onSite: boolean }): Mail {
     const kind = noun(input.line)
     return compose(
       'published',
       input.project,
       `Your ${kind} is published`,
       [
-        `${capital(about(input.line))} is published. Visitors see it in the player now.`,
+        `${capital(about(input.line))} is published. Visitors see it in the widget on the site within one minute.`,
         'To stop these mails, change your choice on Your account.',
       ],
-      { label: 'Listen on the site', url: input.link },
+      { label: input.onSite ? 'Listen on the site' : 'Open your stories', url: input.link },
       team(input.project),
     )
   },
 
-  /** M4. `excerpt`: the first 200 characters of the reply. */
+  /** M4. `excerpt`: the first 200 characters of the reply. `onSite`: as M3. */
   replied(input: {
     project: string
     line: StoryLine
     replier: string
     excerpt: string
     link: string
+    onSite: boolean
   }): Mail {
     return compose(
       'replied',
       input.project,
-      'Someone replied to your story',
+      `${input.replier} replied to your story`,
       [
         `${input.replier} replied to ${about(input.line)}:`,
         `“${input.excerpt}”`,
         'To stop these mails, change your choice on Your account.',
       ],
-      { label: 'Read the reply', url: input.link },
+      { label: input.onSite ? 'Read the reply' : 'Open your stories', url: input.link },
       team(input.project),
     )
   },
@@ -156,7 +157,7 @@ export const mails = {
       input.project,
       `Your ${kind} is removed`,
       paragraphs,
-      { label: 'Your stories', url: input.link },
+      { label: 'Open your stories', url: input.link },
       team(input.project),
     )
   },
@@ -190,7 +191,7 @@ export const mails = {
       'Annoudio',
       'Reset your Annoudio password',
       [
-        'Somebody asked to reset the password of your Annoudio account.',
+        'Someone asked to reset the password of your Annoudio account.',
         `To set a new password, open the link. It works for ${input.hours === 1 ? '1 hour' : `${input.hours} hours`}.`,
         'If you did not ask for it, do nothing. Your password does not change.',
       ],

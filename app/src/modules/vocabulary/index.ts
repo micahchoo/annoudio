@@ -10,6 +10,7 @@
 //   `stories` instance: a label change calls its `conceptChanged`, and a delete asks its
 //   `tagCounts`.
 
+import type { Quad } from 'n3'
 import {
   commitTransaction,
   createLocalReq,
@@ -21,11 +22,248 @@ import {
 
 import { bySlug } from '@/modules/projects'
 
-import { CONCEPTS } from './collection'
+import { CONCEPTS, FIELDS, LISTS } from './collection'
+import type { Iri, ListKind, ShowAs, ValueType } from './catalogue'
+import {
+  TERMS,
+  ontologies,
+  searchTerms,
+  type OntologySummary,
+  type Term,
+  type TermQuery,
+} from './ontologies'
+import {
+  addField,
+  addItem,
+  addList,
+  choices,
+  item,
+  labels,
+  lists,
+  moveField,
+  profile,
+  removeField,
+  updateField,
+  type Store,
+} from './profile'
+import { describe, exportProfile, type ProfileFormat } from './files'
+import { importFile, type FileOptions, type FileResult } from './importFile'
+import { inputsOf, resolve } from './resolve'
+import {
+  VOCABULARY_LIMITS,
+  type Choice,
+  type FieldPatch,
+  type FieldResult,
+  type FieldSpec,
+  type ItemError,
+  type ListSummary,
+  type OperatorSession,
+  type Profile,
+  type ProjectSlug,
+  type ResolveResult,
+  type ResolvedValue,
+  type ValueInput,
+  type VocabularyConfig,
+} from './types'
 import { SkosParseError, parse, serialise, type ParsedConcept, type SkosFormat } from './skos'
 
-export { conceptsCollection, type VocabularyDeps } from './collection'
+export {
+  conceptsCollection,
+  ontologiesCollection,
+  ontologyTermsCollection,
+  vocabFieldsCollection,
+  vocabListsCollection,
+  type VocabularyDeps,
+} from './collection'
 export type { SkosFormat } from './skos'
+export { CATALOGUE } from './catalogue'
+export type { CatalogueEntry, Iri, ListKind, ShowAs, ValueType } from './catalogue'
+export { BUNDLED, seedOntologies } from './ontologies'
+export type { OntologySummary, Term, TermQuery } from './ontologies'
+export { PREFIXES, writeQuads, type RdfOutput } from './rdf'
+export type { ProfileFormat } from './files'
+export type {
+  FileError,
+  FormFieldPreview,
+  FormPreview,
+  FileOptions,
+  FileReport,
+  FileResult,
+  ImportChoice,
+  ListPreview,
+  OntologyPreview,
+} from './importFile'
+
+export type {
+  Choice,
+  Field,
+  FieldList,
+  FieldPatch,
+  FieldResult,
+  FieldSpec,
+  ItemError,
+  ListSummary,
+  OperatorSession,
+  Profile,
+  ResolveResult,
+  ResolvedObject,
+  ResolvedValue,
+  ValueErrorCode,
+  ValueInput,
+  VocabularyConfig,
+  VocabularyLimits,
+  VocabularyStories,
+} from './types'
+export { VOCABULARY_LIMITS } from './types'
+
+/** The `vocabulary` instance (design/vocab.md §9.2). */
+export interface Vocabulary {
+  // The Annotate page, `stories`, the theme JSON.
+  /** The fields of a project in order. `forNewStories`: without the hidden fields. */
+  profile(project: ProjectSlug, options?: { forNewStories?: boolean }): Promise<Profile | null>
+  /** The items of a list: the tree (≤ 200 items), else a search by label. Hidden items are left out. */
+  choices(project: ProjectSlug, listKey: string, query?: string): Promise<Choice[]>
+  /** Check the answers and turn them into statements. `keep`: the stored values of the story. */
+  resolve(
+    project: ProjectSlug,
+    input: ValueInput[],
+    options?: { keep?: ResolvedValue[]; req?: PayloadRequest },
+  ): Promise<ResolveResult>
+  /** The form input that gives these values again. */
+  inputsOf(project: ProjectSlug, values: ResolvedValue[]): Promise<ValueInput[]>
+  /** The label and the widget display of each field, hidden fields too. */
+  labels(
+    project: ProjectSlug,
+  ): Promise<{ property: Iri; label: string; showAs: ShowAs; valueType: ValueType }[]>
+  /** One item or entity of the project. From a hook, pass its `req`. */
+  item(
+    project: ProjectSlug,
+    iri: Iri,
+    options?: { req?: PayloadRequest },
+  ): Promise<{ iri: Iri; label: string; language?: string; list: string } | null>
+
+  // Operators: fields.
+  addField(operator: OperatorSession, project: ProjectSlug, spec: FieldSpec): Promise<FieldResult>
+  updateField(
+    operator: OperatorSession,
+    project: ProjectSlug,
+    property: Iri,
+    patch: FieldPatch,
+  ): Promise<FieldResult>
+  moveField(
+    operator: OperatorSession,
+    project: ProjectSlug,
+    property: Iri,
+    to: number,
+  ): Promise<FieldResult>
+  removeField(operator: OperatorSession, project: ProjectSlug, property: Iri): Promise<FieldResult>
+  /** Properties or classes of the loaded ontologies, by words of the label or comment. */
+  searchTerms(query: TermQuery): Promise<Term[]>
+  /** The loaded ontologies of the organisation (Settings → Ontologies). */
+  ontologies(): Promise<OntologySummary[]>
+
+  // Operators: lists.
+  lists(project: ProjectSlug): Promise<ListSummary[]>
+  addList(
+    operator: OperatorSession,
+    project: ProjectSlug,
+    spec: { label: string; kind: ListKind; class?: Iri },
+  ): Promise<
+    | { ok: true; key: string }
+    | { ok: false; error: 'too-many' | 'bad-class' }
+    /** A list of the project has this name already (case and spaces do not count). */
+    | { ok: false; error: 'exists'; key: string; label: string }
+  >
+  addItem(
+    operator: OperatorSession,
+    project: ProjectSlug,
+    listKey: string,
+    spec: { label: string; parent?: Iri; sameAs?: string },
+  ): Promise<{ ok: true; iri: Iri } | { ok: false; error: ItemError }>
+
+  // Files.
+  /**
+   * Load a vocabulary file: an ontology, SKOS lists. `apply: false` is the preview and
+   * writes nothing; `apply: true` writes what `accept` names, in one transaction. The
+   * report has the same shape both times.
+   */
+  importFile(
+    operator: OperatorSession,
+    file: { name: string; bytes: Uint8Array },
+    options: FileOptions,
+  ): Promise<FileResult>
+  /**
+   * A file for other systems: the questions as SHACL (Turtle or JSON-LD) or as an Omeka S
+   * resource template, or one list as SKOS. Null for an unknown project or list. A file
+   * that this stack exports, it can import again with no change.
+   */
+  exportFile(project: ProjectSlug, what: ExportWhat): Promise<SkosFile | null>
+  /** Layer 3 of the linked data export (§3.4): the shape, own properties, lists, entities. */
+  describe(project: ProjectSlug): Promise<Quad[]>
+}
+
+export type ExportWhat =
+  | { kind: 'profile'; format: ProfileFormat }
+  | { kind: 'list'; listKey: string; format: 'turtle' | 'jsonld' }
+
+export function createVocabulary(config: VocabularyConfig): Vocabulary {
+  let pending: Promise<Payload> | undefined
+  const payload = () =>
+    (pending ??= Promise.resolve(
+      typeof config.payload === 'function' ? config.payload() : config.payload,
+    ).catch((error: unknown) => {
+      pending = undefined
+      throw error
+    }))
+  const limits = { ...VOCABULARY_LIMITS, ...config.limits }
+  const store = async (): Promise<Store> => ({
+    payload: await payload(),
+    origin: config.origin,
+    stories: config.stories,
+    limits,
+  })
+  const checked = (operator: OperatorSession) => {
+    if (typeof operator?.operatorId !== 'string' || operator.operatorId === '') {
+      throw new Error('vocabulary: forbidden')
+    }
+    return operator
+  }
+  return {
+    profile: async (project, options) => profile(await store(), project, options),
+    choices: async (project, listKey, query) => choices(await store(), project, listKey, query),
+    resolve: async (project, input, options) => resolve(await store(), project, input, options),
+    inputsOf: async (project, values) => inputsOf(await store(), project, values),
+    labels: async (project) => labels(await store(), project),
+    item: async (project, iri, options) => item(await store(), project, iri, options),
+    addField: async (operator, project, spec) =>
+      addField(await store(), checked(operator), project, spec),
+    updateField: async (operator, project, property, patch) =>
+      updateField(await store(), checked(operator), project, property, patch),
+    moveField: async (operator, project, property, to) =>
+      moveField(await store(), checked(operator), project, property, to),
+    removeField: async (operator, project, property) =>
+      removeField(await store(), checked(operator), project, property),
+    searchTerms: async (query) => searchTerms(await payload(), query),
+    ontologies: async () => ontologies(await payload()),
+    lists: async (project) => lists(await store(), project),
+    addList: async (operator, project, spec) =>
+      addList(await store(), checked(operator), project, spec),
+    addItem: async (operator, project, listKey, spec) =>
+      addItem(await store(), checked(operator), project, listKey, spec),
+    importFile: async (operator, file, options) =>
+      importFile(await store(), checked(operator), file, options),
+    exportFile: async (project, what) =>
+      what.kind === 'profile'
+        ? exportProfile(await store(), project, what.format)
+        : exportSkos(
+            { payload: await payload(), origin: config.origin },
+            project,
+            what.format === 'turtle' ? 'turtle' : 'json-ld',
+            what.listKey,
+          ),
+    describe: async (project) => describe(await store(), project),
+  }
+}
 
 export interface Concept {
   iri: string
@@ -61,7 +299,7 @@ export async function concept(
 }
 
 /**
- * Remove every concept of a project. The `projects` module calls this when it deletes a
+ * Remove the vocabulary of a project: its fields, items, lists and own properties. The `projects` module calls this when it deletes a
  * project that has no stories (a concept that a story uses refuses its delete). From a
  * hook, pass its `req`, so the removal is part of the project delete.
  */
@@ -78,13 +316,16 @@ export async function removeVocabulary(
     depth: 0,
     req: context.req,
   })
-  const { errors } = await context.payload.delete({
-    collection: CONCEPTS,
-    where,
-    depth: 0,
-    req: context.req,
-  })
-  if (errors.length > 0) throw new Error(errors[0].message)
+  // Fields point at lists and terms, items at lists: fields first, lists and terms last.
+  for (const collection of [FIELDS, CONCEPTS, LISTS, TERMS] as const) {
+    const { errors } = await context.payload.delete({
+      collection,
+      where,
+      depth: 0,
+      req: context.req,
+    })
+    if (errors.length > 0) throw new Error(errors[0].message)
+  }
 }
 
 /** One concept of a vocabulary, with the IRI of its parent concept. */
@@ -94,6 +335,9 @@ export interface ConceptNode extends Concept {
   parent?: string
   /** True when members cannot choose it for a new story. */
   hidden: boolean
+  /** The key of its list. */
+  list: string
+  sameAs?: string
 }
 
 /** All concepts of the project vocabulary, in label order. Empty for an unknown project. */
@@ -116,6 +360,8 @@ export async function conceptsOf(
     ...(doc.language ? { language: doc.language } : {}),
     ...(doc.parent && typeof doc.parent === 'object' ? { parent: doc.parent.iri } : {}),
     hidden: doc.hidden === true,
+    list: doc.list && typeof doc.list === 'object' ? doc.list.key : '',
+    ...(doc.sameAs ? { sameAs: doc.sameAs } : {}),
   }))
 }
 
@@ -139,27 +385,43 @@ export async function exportSkos(
   context: SiteContext,
   projectSlug: string,
   format: SkosFormat,
+  listKey = 'topics',
 ): Promise<SkosFile | null> {
   const project = await bySlug(context, projectSlug)
   if (!project) return null
-  const concepts = await conceptsOf(context, projectSlug)
+  const { docs } = await context.payload.find({
+    collection: LISTS,
+    where: { and: [{ project: { equals: project.id } }, { key: { equals: listKey } }] },
+    limit: 1,
+    depth: 1,
+  })
+  const list = docs[0]
+  if (!list && listKey !== 'topics') return null
+  const cls = list?.class && typeof list.class === 'object' ? list.class.iri : undefined
+  const concepts = (await conceptsOf(context, projectSlug)).filter(
+    (c) => c.list === listKey || (!list && !c.list),
+  )
   const body = serialise(
     {
-      iri: `${context.origin}/vocab/${project.slug}`,
-      label: project.label,
-      concepts: concepts.map(({ iri, label, language, parent, hidden }) => ({
+      // The list Topics keeps the scheme IRI and the name of the old one-list vocabulary.
+      iri: list?.iri ?? `${context.origin}/vocab/${project.slug}`,
+      label: listKey === 'topics' ? project.label : list!.label,
+      ...(list?.kind === 'entities' && cls ? { entities: { class: cls } } : {}),
+      concepts: concepts.map(({ iri, label, language, parent, hidden, sameAs }) => ({
         iri,
         label,
         hidden,
         ...(language ? { language } : {}),
         ...(parent ? { parent } : {}),
+        ...(sameAs ? { sameAs } : {}),
       })),
     },
     format,
   )
+  const name = listKey === 'topics' ? project.slug : `${project.slug}-${listKey}`
   return format === 'turtle'
-    ? { filename: `${project.slug}.ttl`, contentType: 'text/turtle; charset=utf-8', body }
-    : { filename: `${project.slug}.jsonld`, contentType: 'application/ld+json', body }
+    ? { filename: `${name}.ttl`, contentType: 'text/turtle; charset=utf-8', body }
+    : { filename: `${name}.jsonld`, contentType: 'application/ld+json', body }
 }
 
 /** Why the import leaves a concept out. */
@@ -170,6 +432,8 @@ export type SkipReason =
   | 'no-label'
   /** A concept of another project has this IRI. */
   | 'other-project'
+  /** An item of a different list of this project has this IRI. */
+  | 'other-list'
 
 export interface ImportReport {
   /** Concepts in the document. */
@@ -205,7 +469,7 @@ export async function importSkos(
   context: SiteContext,
   projectSlug: string,
   text: string,
-  options: { apply: boolean },
+  options: { apply: boolean; list?: string },
 ): Promise<ImportResult> {
   const project = await bySlug(context, projectSlug)
   if (!project) return { ok: false, error: 'unknown-project' }
@@ -227,7 +491,21 @@ export async function importSkos(
   const req = options.apply ? await createLocalReq({}, payload) : undefined
   if (req) await initTransaction(req)
   try {
-    const report = await merge({ payload, req }, project, parsed, options.apply)
+    const listId = options.list
+      ? (
+          await payload.find({
+            collection: LISTS,
+            where: {
+              and: [{ project: { equals: project.id } }, { key: { equals: options.list } }],
+            },
+            limit: 1,
+            depth: 0,
+            req,
+          })
+        ).docs[0]?.id
+      : undefined
+    if (options.list && listId === undefined) throw new Error(`No list ${options.list}`)
+    const report = await merge({ payload, req }, project, parsed, options.apply, listId)
     if (req) await commitTransaction(req)
     return { ok: true, applied: options.apply, report }
   } catch (error) {
@@ -243,18 +521,40 @@ interface Existing {
   language?: string
   parent?: string
   hidden: boolean
+  sameAs?: string
 }
 
-async function merge(
+/**
+ * Merge concepts into the vocabulary of a project by IRI: into one list (`listId`), or
+ * into the list Topics (no `listId`: the old one-list path). `importFile` uses it per list.
+ */
+export async function merge(
   context: VocabularyContext,
   project: { id: number | string; slug: string; language?: string },
   parsed: ParsedConcept[],
   apply: boolean,
+  listId?: number | string,
 ): Promise<ImportReport> {
   const { payload, req } = context
   const projectId = project.id
+  const all = await conceptsOf(context, project.slug)
+  const inList =
+    listId === undefined
+      ? null
+      : new Set(
+          (
+            await payload.find({
+              collection: CONCEPTS,
+              where: { list: { equals: listId } },
+              pagination: false,
+              depth: 0,
+              select: { iri: true },
+              req,
+            })
+          ).docs.map((doc) => doc.iri),
+        )
   const own = new Map<string, Existing>(
-    (await conceptsOf(context, project.slug)).map((c) => [c.iri, c]),
+    all.filter((c) => !inList || inList.has(c.iri)).map((c) => [c.iri, c]),
   )
   const report: ImportReport = {
     concepts: parsed.length,
@@ -285,16 +585,19 @@ async function merge(
         req,
       })
       if (totalDocs > 0) {
-        report.skipped.push({ iri: concept.iri, reason: 'other-project' })
+        const reason = all.some((c) => c.iri === concept.iri) ? 'other-list' : 'other-project'
+        report.skipped.push({ iri: concept.iri, reason })
         continue
       }
       const data = {
         // The Payload type says number: the id type of the Postgres adapter.
         project: projectId as number,
+        ...(listId === undefined ? {} : { list: listId as number }),
         iri: concept.iri,
         label: label.value,
         language: label.language ?? null,
         hidden: concept.hidden,
+        ...(concept.sameAs ? { sameAs: concept.sameAs } : {}),
       }
       const id = apply
         ? (await payload.create({ collection: CONCEPTS, data, depth: 0, req })).id
@@ -304,15 +607,22 @@ async function merge(
       continue
     }
     const hidden = current.hidden || concept.hidden
+    const sameAs = concept.sameAs ?? current.sameAs
     const same =
       current.label === label.value &&
       current.language === label.language &&
-      current.hidden === hidden
+      current.hidden === hidden &&
+      current.sameAs === sameAs
     if (!same && apply) {
       await payload.update({
         collection: CONCEPTS,
         id: current.id,
-        data: { label: label.value, language: label.language ?? null, hidden },
+        data: {
+          label: label.value,
+          language: label.language ?? null,
+          hidden,
+          sameAs: sameAs ?? null,
+        },
         depth: 0,
         req,
       })

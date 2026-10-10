@@ -25,11 +25,31 @@ export interface Reply {
   media: StoryMedia[];
 }
 
+/**
+ * One answer of a story: a value body, a `TextualBody` that is also an `rdf:Statement`
+ * (CONTRACT 6, rule 13). `text` is what a person reads.
+ */
+export interface StoryValue {
+  /** The `rdf:predicate` IRI. The theme JSON `fields` gives its label. */
+  property: string;
+  text: string;
+  language: string | null;
+  /** The `rdf:object` IRI when it is an http(s) address. A link only for a field of type link. */
+  href: string | null;
+  /** A date literal and its precision, for `Intl.DateTimeFormat`. */
+  date: { value: string; precision: "year" | "month" | "day" } | null;
+  /** `tagging`: an item of a list. */
+  tagging: boolean;
+}
+
 export interface Story extends Reply {
   start: number;
   /** null: the range goes to the end of the recording. */
   end: number | null;
+  /** Labels of the tag bodies of an older stack (a `SpecificResource` pair). */
   tags: StoryText[];
+  /** The value bodies, in body order. */
+  values: StoryValue[];
   /** In the order of the container. */
   replies: Reply[];
 }
@@ -181,16 +201,40 @@ function parseStory(item: unknown): Story | null {
     // A reply targets its story. Anything else in the list is not a reply of this story.
     if (!isObject(reply) || !list(reply.motivation).includes("replying")) return [];
     if (!list(reply.target).some((t) => t === item.id || (isObject(t) && t.id === item.id))) return [];
-    const { tags: _tags, ...content } = parseContent(reply);
+    const { tags: _tags, values: _values, ...content } = parseContent(reply);
     return [content];
   });
   return { ...parseContent(item), ...range, replies };
 }
 
+const XSD = "http://www.w3.org/2001/XMLSchema#";
+const DATES = { gYear: "year", gYearMonth: "month", date: "day" } as const;
+
+/** A value body as the player shows it, or null when it has no text. */
+function parseValue(body: Json): StoryValue | null {
+  const predicate = isObject(body["rdf:predicate"]) ? str(body["rdf:predicate"].id) : null;
+  if (!predicate || typeof body.value !== "string") return null;
+  const object = isObject(body["rdf:object"]) ? body["rdf:object"] : {};
+  const type = str(object.type);
+  const datatype = type?.startsWith("xsd:") ? type.slice(4) : type?.startsWith(XSD) ? type.slice(XSD.length) : null;
+  const precision = datatype && datatype in DATES ? DATES[datatype as keyof typeof DATES] : null;
+  const tagging = list(body.purpose).includes("tagging");
+  return {
+    property: predicate,
+    text: body.value,
+    language: str(body.language),
+    // The theme JSON says which fields are links (valueType "link"): only those show `href`.
+    href: typeof object.id === "string" ? mediaUrl(object.id) : null,
+    date: precision && typeof object["@value"] === "string" ? { value: object["@value"], precision } : null,
+    tagging,
+  };
+}
+
 /** The id, creator, date and bodies of a story or a reply. */
-function parseContent(item: Json): Reply & { tags: StoryText[] } {
+function parseContent(item: Json): Reply & { tags: StoryText[]; values: StoryValue[] } {
   const texts: StoryText[] = [];
   const tags: StoryText[] = [];
+  const values: StoryValue[] = [];
   const media: StoryMedia[] = [];
   const bodies = [...list(item.body)];
   if (typeof item.bodyValue === "string") bodies.push({ type: "TextualBody", value: item.bodyValue });
@@ -201,6 +245,11 @@ function parseContent(item: Json): Reply & { tags: StoryText[] } {
     const url = mediaKind ? mediaUrl(body.id) : null;
     if (mediaKind && url) {
       media.push({ kind: mediaKind, url, format: str(body.format) });
+      continue;
+    }
+    if (kind.includes("rdf:Statement")) {
+      const value = parseValue(body);
+      if (value) values.push(value);
       continue;
     }
     const isText = kind.includes("TextualBody") || (kind.length === 0 && typeof body.value === "string");
@@ -216,6 +265,7 @@ function parseContent(item: Json): Reply & { tags: StoryText[] } {
     created: str(item.created),
     texts,
     tags,
+    values,
     media,
   };
 }

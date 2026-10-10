@@ -45,6 +45,7 @@ describe('clockExact and parseClock: the times of the Annotate form', () => {
   })
 
   it('a shown time reads back as the same time', () => {
-    for (const t of [0, 1.5, 62, 62.125, 3599.999, 3725.5]) expect(parseClock(clockExact(t))).toBe(t)
+    for (const t of [0, 1.5, 62, 62.125, 3599.999, 3725.5])
+      expect(parseClock(clockExact(t))).toBe(t)
   })
 })

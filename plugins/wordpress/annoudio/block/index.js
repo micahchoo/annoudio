@@ -1,5 +1,5 @@
 /**
- * Editor of the "Annoudio player" block.
+ * Editor of the "Annoudio widget" block.
  *
  * Plain ES5 with wp.element.createElement, no JSX: the plugin has no build step, so a
  * site maintainer can read and change the shipped file. The block is dynamic: save()
@@ -136,8 +136,8 @@
 		return el( 'div', useBlockProps(),
 			el( c.Placeholder, {
 				icon: 'format-audio',
-				label: __( 'Annoudio player', 'annoudio' ),
-				instructions: __( 'Open the recording in the Annoudio admin. Type the number of "Recording ID:" from its Snippet panel. Or paste the full snippet.', 'annoudio' ),
+				label: __( 'Annoudio widget', 'annoudio' ),
+				instructions: __( 'Open the recording in the Annoudio admin. Type the number of "Recording number:" from its Snippet panel. Or paste the full snippet.', 'annoudio' ),
 				className: 'annoudio-player-editor',
 			},
 			el( 'div', { style: { width: '100%' } },
@@ -145,7 +145,7 @@
 				el( c.TextControl, {
 					__nextHasNoMarginBottom: true,
 					__next40pxDefaultSize: true,
-					label: __( 'Recording ID', 'annoudio' ),
+					label: __( 'Recording number', 'annoudio' ),
 					help: __( 'A number, for example 1. The block gets the title and the audio address from the Annoudio admin.', 'annoudio' ),
 					inputMode: 'numeric',
 					value: attributes.recording,
@@ -157,7 +157,7 @@
 				el( c.TextareaControl, {
 					__nextHasNoMarginBottom: true,
 					label: __( 'Or paste the snippet', 'annoudio' ),
-					help: __( 'The block reads the recording ID and the audio address from it. It keeps no other part of the text.', 'annoudio' ),
+					help: __( 'The block reads the recording number and the audio address from it. It keeps no other part of the text.', 'annoudio' ),
 					value: pasted[ 0 ],
 					rows: 3,
 					onChange: function ( text ) {

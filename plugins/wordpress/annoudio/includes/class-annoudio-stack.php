@@ -115,19 +115,19 @@ final class Annoudio_Stack {
 	/**
 	 * Reads one recording of the catalogue (CONTRACT.md 5.2). One request, no cache.
 	 *
-	 * @param string $recording The recording number from the Annoudio admin ("Recording ID: 1").
+	 * @param string $recording The recording number from the Annoudio admin ("Recording number: 1").
 	 * @return array{id:string, title:string, url:string}|WP_Error
 	 */
 	public function recording( string $recording ) {
 		$recording = trim( $recording );
 		if ( '' === $recording ) {
-			return new WP_Error( 'annoudio_no_recording', __( 'Type the recording ID.', 'annoudio' ) );
+			return new WP_Error( 'annoudio_no_recording', __( 'Type the recording number.', 'annoudio' ) );
 		}
 		if ( ! ctype_digit( $recording ) ) {
 			return new WP_Error(
 				'annoudio_bad_recording',
 				/* translators: %s: the text that the editor typed. */
-				sprintf( __( '"%s" is not a recording ID. The ID is a number, for example 1. The Snippet panel of the Annoudio admin shows it: "Recording ID: 1".', 'annoudio' ), $recording )
+				sprintf( __( '"%s" is not a recording number. Type a number, for example 1. The Snippet panel of the Annoudio admin shows it: "Recording number: 1".', 'annoudio' ), $recording )
 			);
 		}
 		return $this->read_recording( $recording, 5 );
@@ -174,7 +174,7 @@ final class Annoudio_Stack {
 			return new WP_Error(
 				'annoudio_no_recording',
 				/* translators: 1: recording id, 2: project slug. */
-				sprintf( __( 'The project "%2$s" has no recording with the ID "%1$s". Copy the number after "Recording ID:" in the Snippet panel of the Annoudio admin.', 'annoudio' ), $recording, $this->project )
+				sprintf( __( 'The project "%2$s" has no recording with the number "%1$s". Copy the number after "Recording number:" in the Snippet panel of the Annoudio admin.', 'annoudio' ), $recording, $this->project )
 			);
 		}
 		if ( 200 !== $response['code'] ) {

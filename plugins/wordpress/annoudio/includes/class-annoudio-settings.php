@@ -91,7 +91,7 @@ final class Annoudio_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Annoudio', 'annoudio' ); ?></h1>
-			<p><?php esc_html_e( 'Copy these values from the Annoudio admin. The "Annoudio player" block uses them on every page of this site.', 'annoudio' ); ?></p>
+			<p><?php esc_html_e( 'Copy these values from the Annoudio admin. The "Annoudio widget" block uses them on every page of this site.', 'annoudio' ); ?></p>
 			<?php self::status( $stack ); ?>
 			<form action="options.php" method="post">
 				<?php settings_fields( self::GROUP ); ?>

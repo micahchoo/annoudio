@@ -9,9 +9,9 @@ Sources: `ia-C-journey-centred.md` (the spine: lifecycle, who sees what, mails, 
 1. One story lifecycle with six names (Processing, Waiting for review, Returned, Published, Published · change waiting, Removed) on every surface: admin, Annotate page, player note, mail.
 2. **Unpublish** goes. A story leaves the player by **Return to the member** (with a reason) or **Remove**. A return of a change keeps the published version visible.
 3. The operator home is **Today**: a setup checklist on an empty stack, then the work that waits.
-4. The sidebar names jobs in ≤ 3 words: Today, Review stories, Add a player, Concepts, Members; then Settings: Projects, Recordings, Operators, Your account.
+4. The sidebar names jobs in ≤ 3 words: Today, Review stories, Add a widget, Vocabulary, Members; then Settings: Projects, Recordings, Operators, Your account. (Vocabulary replaced Concepts on 2026-10-09: `design/vocab.md` §1.)
 5. **Publish** opens a dialog with the visitor preview; after it, the next waiting story opens. **Next story** replaces "Keep as draft".
-6. **Put a recording on a site** has 3 steps: Recording, Site (the project), Snippet. A new public route `GET /embed/v1/recordings/{project}/{id}.json` serves the CMS plugins.
+6. **Add a widget to a site** has 3 steps: Recording, Site (the project), Snippet. A new public route `GET /embed/v1/recordings/{project}/{id}.json` serves the CMS plugins.
 7. Members get a home, **Your stories**, and **Your account** (name, mail choice, sign out). Six mails close every handoff; each has one link.
 8. The project frame (name, theme, rights line) shows on the Annotate page; the player shows theme and rights line. The theme JSON gets three additive keys: `name`, `rightsLine`, `rightsIri`.
 9. Schema: five new fields (story `toldOn`, `changedBy`, `lastAction`, `rejection.automatic`; member `mailNotices`; operator `reviewMail`). One migration.
@@ -128,7 +128,7 @@ Nobody outside the admin sees Instance, Catalogue, IRI, Container, Body or Media
 ┌ Annoudio ─────────────┬──────────────────────────────────────────────┐
 │ ● Today               │                                              │
 │   Review stories   3  │  (content)                                   │
-│   Add a player        │                                              │
+│   Add a widget        │                                              │
 │   Concepts            │                                              │
 │   Members             │                                              │
 │ SETTINGS              │                                              │
@@ -155,7 +155,7 @@ Today, empty stack and normal day:
 │ [ ] 3 Put the snippet on a site        │  │ 1 story is processing.                     │
 │       [ I pasted it ]                  │  │ 2 stories are returned. Members must       │
 │ [ ] 4 Publish the first story          │  │   change them. 1 is automatic (file).      │
-│ Optional: add concepts, so members     │  │ Other jobs: [ Add a player ] [ Concepts ]  │
+│ Optional: add concepts, so members     │  │ Other jobs: [ Add a widget ] [ Concepts ]  │
 │ can choose topics.                     │  │ Last 7 days: 12 in, 9 published,           │
 │              [ Add a recording ] ←next │  │   2 returned, 1 removed.                   │
 └────────────────────────────────────────┘  └────────────────────────────────────────────┘
@@ -188,10 +188,10 @@ Review screen (Waiting for review) and the Publish dialog:
 
 After **Publish the story**: toast "Published. Visitors see it within one minute." and the next waiting story opens; at the end, the empty Waiting tab. In Processing, **Publish** is off with "The voice note is still processing." For a reply, the parent story shows above, read-only.
 
-Put a recording on a site (`/admin/add-player`):
+Add a widget to a site (`/admin/add-widget`):
 
 ```
-┌ Put a recording on a site ── 1 Recording ─ 2 Site ─ 3 Snippet ─────────┐
+┌ Add a widget to a site ── 1 Recording ─ 2 Site ─ 3 Snippet ─────────┐
 │ 1 Recording                                                           │
 │ ( ) Choose a recording  [ search the recordings… ]                    │
 │ (•) New recording   Title [Ferry crossing, 1962      ]                │
@@ -220,7 +220,7 @@ Put a recording on a site (`/admin/add-player`):
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
-How the project is chosen: step 2 lists the projects. With one project, it is selected and step 2 shows one line, "Site: River Voices. [Change]". With no project, step 2 shows the inline form (name, website address); the other project settings get defaults. The snippet holds the three values: `project` (step 2 slug), `recording` (step 1 id), `src` (step 1 audio address). **Done** goes to Today. The wizard and the recording page call the same `catalogue` functions; the Recordings list has no create button of its own: its button is **Add a player**.
+How the project is chosen: step 2 lists the projects. With one project, it is selected and step 2 shows one line, "Site: River Voices. [Change]". With no project, step 2 shows the inline form (name, website address); the other project settings get defaults. The snippet holds the three values: `project` (step 2 slug), `recording` (step 1 id), `src` (step 1 audio address). **Done** goes to Today. The wizard and the recording page call the same `catalogue` functions; the Recordings list has no create button of its own: its button is **Add a widget**.
 
 The recording JSON route `GET /embed/v1/recordings/{project}/{id}.json` → `{ id, title, url, duration }` (CORS `*`, anonymous, 404 for an unknown project or recording). Callers: the WordPress block and the Omeka S module (the editor check fills `src` from the number; Phase 7a request 1), and step 3's line "type the recording number 1", which is true only because of this route. Step 3 itself reads `catalogue.recording(id)` in process, the same function that the route serves.
 
@@ -292,16 +292,16 @@ Marks: NEW, CHANGED, UNCHANGED against the Phase 5b code.
 | O2 | Forgot / set password | request; sent; new password; link expired | **Send the link**, **Set the password** | CHANGED (mail works) |
 | O3 | Today | setup checklist; work waits; nothing waits; a count failed ("We could not count the stories. Reload the page.") | **Start reviewing**, or the next checklist step | CHANGED (replaces Dashboard) |
 | O4 | Review stories (list) | tabs Waiting for review · Processing · Returned · Published · All, each with a count and its own empty text; search on excerpt and name | **Start reviewing** (opens the oldest) | CHANGED (Processing tab, empty texts, search) |
-| O5 | Review one story | one view per lifecycle state; reply variant (parent above); publish error | **Publish**, **Return to the member**, **Next story**, ⋮ **Remove**; **Open on the site**; **Add a concept to River Voices** | CHANGED (no Unpublish, no Keep as draft) |
+| O5 | Review one story | one view per lifecycle state; reply variant (parent above); publish error; the answers in field order as "Label: value", an own answer as "Ravi (new)" (`design/vocab.md` §8) | **Publish**, **Return to the member**, **Next story**, ⋮ **Remove**; **Open on the site**; **Add "Ravi" to People**; "No item fits?" **Add an item to Places** | CHANGED (no Unpublish, no Keep as draft; answers 2026-10-09) |
 | O5a | Publish dialog | preview; publishing; error | **Publish the story**, **Cancel** | NEW |
 | O5b | Return dialog | reason empty ("Write the reason. The member sees it."); filled; for a Published story: "Visitors stop seeing this story." | **Return the story**, **Cancel** | CHANGED (text) |
 | O5c | Remove dialog | optional reason; with replies: "Its 2 replies are removed too." | **Remove the story**, **Cancel** | NEW |
 | O6 | History (story tab) | lines "Published by Ravi, 9 Oct 14:02", "Changed by Asha (member)", "Returned by Ravi: reason", "Returned automatically: file failed"; one line | none | NEW |
-| O7 | Put a recording on a site, steps 1–3 | step 1: choose / new, checking, plays, cannot play (save allowed), not https; step 2: one project, many, none (inline form), website address missing; step 3: copied, copy refused (select-all fallback) | **Next**, **Copy the snippet**, **Done** | NEW |
-| O8 | Recordings (Settings) | empty "No recordings yet."; list: Title, Length, Stories `3 (2)` | **Add a player** | CHANGED (button, no create view) |
+| O7 | Add a widget to a site, steps 1–3 | step 1: choose / new, checking, plays, cannot play (save allowed), not https; step 2: one project, many, none (inline form), website address missing; step 3: copied, copy refused (select-all fallback) | **Next**, **Copy the snippet**, **Done** | NEW |
+| O8 | Recordings (Settings) | empty "No recordings yet."; list: Title, Length, Stories `3 (2)` | **Add a widget** | CHANGED (button, no create view) |
 | O9 | Recording page | edit; snippet panel per project; "Stories on this recording" link | **Save**, **Copy the snippet** | UNCHANGED |
-| O10 | Concepts (tree page) | empty "No concepts yet. Members see no topics."; project picker when > 1 project; tree with counts; "Members see concepts as topics." | **Add a concept**, **Download as SKOS**, **Upload SKOS file** | NEW (reuses `VocabularyPanel`, `SkosTools`) |
-| O11 | Concept form | new; in use "12 stories use this concept"; hidden | **Save**, **Hide from new stories** | UNCHANGED |
+| O10 | Lists and the page of one list (`/admin/concepts/{project}[?list=]`) | Lists: "Members pick from these lists when they answer a question.", rows with counts and **Open**; a list: its tree, or rows Label · Same as · stories for an entity list; empty "Places is empty. Members can choose nothing from it yet." | **Add a list**, **Add an item**, **Download the list (SKOS)**, **Load a SKOS file** | CHANGED 2026-10-09 (`design/vocab.md` §8 O10l) |
+| O11 | Item form | new; in use "12 stories use this item"; hidden; **Same as** | **Save**, **Hide from new stories** | CHANGED 2026-10-09 (item words, list, Same as) |
 | O12 | SKOS import preview | parsed; refused file | **Import these changes** | UNCHANGED |
 | O13 | Members list | empty "No members yet. Members sign up on the Annotate page."; list | row | CHANGED (empty text) |
 | O14 | Member page | active; blocked ("This member cannot sign in. Their published stories stay."); stories by state | **Block this member**, **Unblock** | CHANGED (stories by state) |
@@ -353,7 +353,7 @@ Mail screens M1–M7: section 2.3 (M1 CHANGED: project name in the subject; M2�
 
 **F4 Returned and sent again.** 1. O5 **Return to the member** → O5b reason → **Return the story**. The next story opens; the row moves to Returned. 2. M2 (H6) → **Change your story** → P6 with the reason banner (P1–P2 first if signed out). 3. Member changes it → **Send for review**. The rejection clears. 4. O5 shows "Sent again after a return"; History keeps the reason. **Publish** → F3 step 7. Variant: a change to a Published story; the published version stays visible during the whole flow. Variant: a failed file gives the same flow with "Returned (automatic)" and no operator step 1.
 
-**F5 Concept added and used.** 1. O5: no topic fits → **Add a concept to River Voices** → O11 with the project set → label "Strike", parent "River" → **Save**. 2. Members see "Strike" in P4 at the next page load. Operators do not change stories: the operator can return the story with "Add the topic Strike". 3. After the next publish, the player shows the `tag` "Strike". 4. A later rename runs `conceptChanged`; O11 says "12 stories use this concept".
+**F5 Item added and used.** 1. O5: no item fits → **Add an item to Places** → the page of the list → **Add an item** → O11 with the project and the list set → label "Strike" → **Save**. Or O5: an own answer "Ravi (new)" → **Add "Ravi" to People** (the story keeps its own answer). 2. Members see "Strike" in P4 at the next page load. Operators do not change stories: the operator can return the story with "Choose Strike as the place". 3. After the next publish, the widget shows "Place: Strike". 4. A later rename runs `conceptChanged`; O11 says "12 stories use this item".
 
 **F6 Reply.** 1. Visitor opens a story (V4) → **Reply** → Annotate page with `replyTo`. 2. Sign in as F3 → P4r → **Send for review**. 3. O4 row "Reply to: My father worked…"; O5 shows the parent above. **Publish**. 4. M3 to the replier, M4 to the parent's member (H9). Visitors see the thread under the parent.
 
@@ -365,8 +365,9 @@ Mail screens M1–M7: section 2.3 (M1 CHANGED: project name in the subject; M2�
 |---|---|---|---|
 | Story | all | comment, note, annotation (UI), post, submission | CONTEXT term |
 | Reply | all | comment, response | CONTEXT term |
-| Topic | Annotate page, player, member mails | tag, category | CONTEXT: public word for Concept |
-| Concept | admin only; O10 says "Members see concepts as topics." | term, tag | CONTEXT: operator word; SKOS |
+| Question, answer | Annotate page ("About this part"), review panel | field, property, value (code words) | `design/vocab.md` §1; CONTEXT: Field, Value |
+| Widget | all UI text, mails, ARIA labels (concept-map W1) | player (UI), embed | CONTEXT term; the tag stays `annoudio-player` |
+| Item, list | admin (Lists, O10, O11); "Topics" is the name of one list | concept, tag, term (SKOS and code only) | CONTEXT: Item, List; `design/vocab.md` §1 |
 | Tell a story | player link, P4 title | Add a story (today), Annotate, Contribute | the member's own words for the job; no time in the link (the page says the time) |
 | Send for review | P4, P4r with `review` | Save the story (today), Submit | names what happens next |
 | Publish / Publish the story | O5, O5a; P4 with `publish-at-once` | Approve, Publish changes, Go live | one verb on both sides |
@@ -375,8 +376,8 @@ Mail screens M1–M7: section 2.3 (M1 CHANGED: project name in the subject; M2�
 | Next story | O5 | Keep as draft | the button saves nothing; it moves on |
 | Processing · Waiting for review · Published · change waiting | all | Pending, Draft (outside History), Waits for review (today), In moderation | one lifecycle (2.1) |
 | Time range `1:02–1:35` | all; en dash, m:ss, h:mm:ss over one hour | `42 s to 51 s`, `t=62,95`, "Start (seconds)" | one format, human time |
-| Today · Review stories · Add a player · Concepts · Members | sidebar (≤ 3 words) | Put a recording on a site, Tidy the vocabulary, Look after members (A's long verbs) | short and translatable; the page title keeps the full job name |
-| Put a recording on a site | O7 title only | Embed wizard | names the whole job once |
+| Today · Review stories · Add a widget · Vocabulary · Members | sidebar (≤ 3 words) | Add a player, Put a recording on a site (renamed 2026-10-09, concept-map W2), Tidy the vocabulary, Look after members (A's long verbs) | short and translatable; the page title keeps the full job name |
+| Add a widget to a site | O7 title only | Embed wizard, Put a recording on a site | names the whole job once |
 | Website address · Audio address · Length | admin | origin, URL, duration | Phase 5 words |
 | Rights line | admin field; the text itself on public surfaces | licence field | CONTEXT term |
 | Snippet | admin | embed code | CONTEXT term |
@@ -422,7 +423,7 @@ Payload default = no code beyond labels. Customised = Payload slots and API. Cus
 | O4 | customised | `baseFilter`, tab links (exist), `beforeListTable` empty texts, `listSearchableFields` | Payload's global "No Results" text: hide it; test it |
 | O5, O5a–c | customised | `ui` panel (exists), `Status`, `edit.PublishButton` (dialog + next story), `SaveDraftButton` → Next story, `editMenuItems` (Remove), `UnpublishButton` off | verify that the custom PublishButton keeps Payload's error toast |
 | O6 | customised | `views.edit.versions` replacement, `tab: { label: 'History' }` | needs `changedBy`, `lastAction` |
-| O7 | custom page | `/admin/add-player`; Server Actions over `catalogue`, `projects`; reuses `DurationField`, `SnippetCopy`, `ThemePreview` | — |
+| O7 | custom page | `/admin/add-widget`; Server Actions over `catalogue`, `projects`; reuses `DurationField`, `SnippetCopy`, `ThemePreview` | — |
 | O8, O9, O11–O15, O17, O18 | default / customised | exist; labels and `beforeListTable` | O8 hides Create New |
 | O10 | custom page | `/admin/concepts/:project?` reusing `VocabularyPanel`, `SkosTools` | — |
 | O16 Overview | customised | `views.edit.overview` document tab | — |
@@ -445,7 +446,7 @@ Each slice ≤ 5 files. Each slice keeps `test:int`, `test:e2e`, `tsc`, `lint` g
 | 6 | Sidebar and Today | `admin/Today.tsx`, `admin/NavLinks.tsx`, `payload.config.ts`, collection `group` changes, e2e | Empty stack shows the 4-step checklist; each step ticks from data; the badge equals the Waiting count. |
 | 7 | Review screen | `admin/stories/PublishButton.tsx`, `NextStory.tsx` (replaces `KeepAsDraft`), `RemoveItem.tsx`, `Status.tsx`, `review.e2e` | Publish shows the preview, then the next story opens; no Unpublish anywhere; Remove removes; Processing tab and empty texts show. |
 | 8 | History | `admin/stories/History.tsx`, collection view config, e2e | History reads "Published by …", "Returned automatically …" in browser time. |
-| 9 | Put a recording on a site | `admin/addPlayer/View.tsx`, `actions.ts`, `catalogue/index.ts`, `projects/index.ts`, e2e | An e2e test goes Today → 3 steps → copied snippet with the right `project`, `recording`, `src`; the inline project form works with 0 projects. |
+| 9 | Add a widget to a site | `admin/addWidget/View.tsx`, `actions.ts`, `catalogue/index.ts`, `projects/index.ts`, e2e | An e2e test goes Today → 3 steps → copied snippet with the right `project`, `recording`, `src`; the inline project form works with 0 projects. |
 | 10 | Concepts page and project Overview | `admin/vocabulary/ConceptsView.tsx`, `admin/projects/Overview.tsx`, config, e2e | Sidebar **Concepts** opens the tree (picker with 2 projects); Overview counts match `stories.counts`. |
 | 11 | Public routes and contract | theme route, `projects/theme.ts`, recording route, `CONTRACT.md`, int spec | Theme JSON has `name`, `rightsLine`, `rightsIri`; recording JSON gives 200/404 with CORS `*`; CONTRACT lists every addition with the date. |
 | 12 | Player | `embed/src/text.ts`, `player.ts`, `stories.ts`, contract spec, fixture (new, not changed) | Empty text, "Tell a story", `rights` part, `annoudio-saved=published` note and `annoudio-story` pass in 3 browsers. |

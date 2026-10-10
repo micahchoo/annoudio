@@ -15,4 +15,4 @@ folder together with the new `v1.js`.
 
 The cache and CORS headers of these files come from `app/next.config.ts` `headers()`.
 The bundle rule matches only 12-hex folders, so `/embed/v1/themes/*.json` (a route in
-the `projects` module) keeps its own 300 s rule. Do not widen that pattern.
+the `projects` module) keeps its own `no-cache` rule (`publicJson`). Do not widen that pattern.

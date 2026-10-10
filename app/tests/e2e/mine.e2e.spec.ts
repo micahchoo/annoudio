@@ -41,7 +41,7 @@ test('signed out, Your stories asks for a sign-in; then it says there are no sto
   await signIn(page, 'asha@example.org', 'Asha')
   await expect(page).toHaveURL(/\/annotate\/mine$/)
   await expect(
-    page.getByText('You have no stories yet. On a site, select "Tell a story".'),
+    page.getByText('You have no stories yet. On a site, select "Tell a story" in the widget.'),
   ).toBeVisible()
 })
 
@@ -120,7 +120,7 @@ test('the stories show in groups, in order: Returned, Processing, Waiting, Publi
     new RegExp(`story=${story(1)}`),
   )
   await expect(group('processing').locator('li.card')).toContainText('Processing')
-  await expect(group('waiting').locator('li.card')).toContainText('Waits for review')
+  await expect(group('waiting').locator('li.card')).toContainText('Waiting for review')
   const published = group('published').locator('li.card')
   await expect(published).toContainText('Published')
   await expect(published.getByRole('link', { name: /^Listen on the site/ })).toHaveAttribute(

@@ -72,11 +72,19 @@ export interface Config {
     projects: Project;
     recordings: Recording;
     concepts: Concept;
+    ontologies: Ontology;
+    'ontology-terms': OntologyTerm;
+    'vocab-lists': VocabList;
+    'vocab-fields': VocabField;
     members: Member;
     users: User;
     'story-representations': StoryRepresentation;
+    'story-values': StoryValue;
     'member-sessions': MemberSession;
     'login-codes': LoginCode;
+    'invite-codes': InviteCode;
+    'invite-uses': Inviteus;
+    'invite-tries': InviteTry;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -89,11 +97,19 @@ export interface Config {
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     recordings: RecordingsSelect<false> | RecordingsSelect<true>;
     concepts: ConceptsSelect<false> | ConceptsSelect<true>;
+    ontologies: OntologiesSelect<false> | OntologiesSelect<true>;
+    'ontology-terms': OntologyTermsSelect<false> | OntologyTermsSelect<true>;
+    'vocab-lists': VocabListsSelect<false> | VocabListsSelect<true>;
+    'vocab-fields': VocabFieldsSelect<false> | VocabFieldsSelect<true>;
     members: MembersSelect<false> | MembersSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'story-representations': StoryRepresentationsSelect<false> | StoryRepresentationsSelect<true>;
+    'story-values': StoryValuesSelect<false> | StoryValuesSelect<true>;
     'member-sessions': MemberSessionsSelect<false> | MemberSessionsSelect<true>;
     'login-codes': LoginCodesSelect<false> | LoginCodesSelect<true>;
+    'invite-codes': InviteCodesSelect<false> | InviteCodesSelect<true>;
+    'invite-uses': InviteUsesSelect<false> | InviteUsesSelect<true>;
+    'invite-tries': InviteTriesSelect<false> | InviteTriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -134,7 +150,7 @@ export interface UserAuthOperations {
   };
 }
 /**
- * Stories and replies that members tell on the Annotate page. Read each one, then publish it or return it to the member.
+ * A story is a note that a member made on a time range of a recording. Read each story, then publish it or return it to the member.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "stories".
@@ -164,6 +180,8 @@ export interface Story {
     automatic?: boolean | null;
   };
   toldOn?: string | null;
+  toldOnUnlisted?: string | null;
+  sentAgain?: boolean | null;
   lastAction?: ('saved' | 'published' | 'returned' | 'returned-automatically') | null;
   changedBy?: string | null;
   processing?: boolean | null;
@@ -185,7 +203,7 @@ export interface Story {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Voice notes, photos and videos that members attach to stories. Delete a row to remove the file from every story.
+ * A voice note, photo or video is one part of a story, next to its text. A delete here removes the file from its story.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -207,80 +225,139 @@ export interface Media {
   createdAt: string;
 }
 /**
- * One project for each site or collection: its vocabulary, review rule, rights statement and player theme.
+ * A project holds the rules for the stories of one site: the lists, the look of the widget, the review rule and the rights line. Open a project to change it.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "projects".
  */
 export interface Project {
   id: number;
+  /**
+   * The name that members see at the top of the Annotate page and in mails.
+   */
   name: string;
   /**
-   * Part of the snippet and of every story address. Use lowercase letters, digits and hyphens, for example river-voices. Do not change it after the first story.
+   * Part of the snippet and of every story address. Use lowercase letters, digits and hyphens. Do not change it after the first story.
    */
   slug: string;
   /**
-   * The web sites that show this project. Example: https://www.example.org. The Annotate page sends members back only to these sites.
+   * The sites that show the widgets of this project. After a story, the Annotate page sends members back only to these sites.
    */
   siteOrigins?:
     | {
+        /**
+         * The scheme and the host only, with no path.
+         */
         origin: string;
         id?: string | null;
       }[]
     | null;
   /**
-   * A language tag, for example en, ml or hi. The player uses it to show the text correctly.
+   * The recordings that you put on a site of this project. "Add a widget" adds one here. Stories can come for other recordings too.
+   */
+  recordings?: (number | Recording)[] | null;
+  /**
+   * A language tag. The widget uses it to show the text of the stories correctly. Choose one, or type a different tag.
    */
   language?: string | null;
   /**
-   * With "Publish each story at once", visitors see a story when the member saves it. A story with a voice note, photo or video still waits until the file is ready and an operator publishes it.
+   * Who decides when visitors see a new story. With "Visitors see each story at once", a story with a voice note, photo or video becomes public by itself when its file is ready.
    */
   reviewRule?: ('review' | 'publish-at-once') | null;
   /**
-   * The rights statement shown under each story. Members see it before they save.
+   * The licence of the stories. The widget and the Annotate page show it under the stories as one sentence.
    */
   rights?: ('cc-by-4.0' | 'cc-by-nc-4.0' | 'all-rights-reserved' | 'other') | null;
   /**
-   * Example: © 2026 Kochi Heritage Trust. Shown under each story.
+   * Write the full sentence that visitors read.
    */
   rightsLine?: string | null;
   /**
-   * Optional. The web address of the licence, for example https://creativecommons.org/licenses/by-sa/4.0/.
+   * Optional. The web address of the licence. Each story keeps it in its data.
    */
   rightsIri?: string | null;
   /**
-   * How the player looks on host sites. Leave a field empty to use the default (shown in grey). A host site can change each value in its own CSS. A change shows on host sites within 5 minutes.
+   * A login code needs a mail server. An invite code does not: you give the codes to members, for example on paper at a workshop.
+   */
+  signIn?: ('email-code' | 'invite-code' | 'both') | null;
+  /**
+   * How the widget looks on your sites. An empty field uses the default, in grey. A saved change shows on your sites at the next page load.
    */
   themeTokens?: {
+    /**
+     * The colour behind the widget.
+     */
     colorSurface?: string | null;
+    /**
+     * The colour of the story text.
+     */
     colorText?: string | null;
+    /**
+     * The colour of names, times and the rights line.
+     */
     colorMuted?: string | null;
+    /**
+     * The colour of buttons and links, for example "Tell a story".
+     */
     colorAccent?: string | null;
+    /**
+     * The colour of the words on a button.
+     */
     colorOnAccent?: string | null;
+    /**
+     * The colour of lines around the widget and the stories.
+     */
     colorBorder?: string | null;
+    /**
+     * The colour of the drawn sound of the recording.
+     */
     colorWave?: string | null;
+    /**
+     * The colour that marks the time range of each story on the waveform.
+     */
     colorRegion?: string | null;
+    /**
+     * The ring around the control that the keyboard is on.
+     */
     colorFocus?: string | null;
+    /**
+     * Empty: the widget uses the font of your page.
+     */
     fontFamily?: string | null;
+    /**
+     * Empty: the widget uses the text size of your page.
+     */
     fontSize?: string | null;
+    /**
+     * How round the corners of the widget and its buttons are.
+     */
     radius?: string | null;
+    /**
+     * The space between the stories and the controls.
+     */
     space?: string | null;
+    /**
+     * The height of the waveform with the time ranges.
+     */
     timelineHeight?: string | null;
   };
   updatedAt: string;
   createdAt: string;
 }
 /**
- * The audio that members tell stories about. Open a recording to copy its snippet for a web page.
+ * A recording is the audio that stories are about: each story marks a time range on one recording. Open a recording to copy the snippet of its widget.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "recordings".
  */
 export interface Recording {
   id: number;
+  /**
+   * The name of the recording. Members see it at the top of the Annotate page.
+   */
   title: string;
   /**
-   * The web address of the audio file, for example https://media.example.org/fish-market.m4a.
+   * The web address of the audio file. The widget plays this file.
    */
   url: string;
   /**
@@ -292,13 +369,25 @@ export interface Recording {
         id?: string | null;
       }[]
     | null;
+  /**
+   * The browser reads it from the audio address. A story must end inside this length.
+   */
   duration?: number | null;
+  projects?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   stories?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * The terms that members choose as topics. Each project has its own vocabulary. To see a vocabulary as a tree, select Concepts in the menu.
+ * A list holds the items that members can choose as an answer, for example the places of your area. Add, rename or hide items here.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "concepts".
@@ -306,31 +395,109 @@ export interface Recording {
 export interface Concept {
   id: number;
   project: number | Project;
+  list?: (number | null) | VocabList;
   /**
-   * The word that members see in the list of topics.
+   * The word that members choose and visitors see on the story.
    */
   label: string;
   /**
-   * Optional. The concept that this concept is part of.
+   * Optional. The web address of the same thing in a different system, for example Wikidata, VIAF or an Omeka item.
+   */
+  sameAs?: string | null;
+  /**
+   * Optional. The item that this item is a part of.
    */
   parent?: (number | null) | Concept;
   /**
-   * Members cannot choose a hidden concept for a new story. Stories that use it keep it.
+   * Members cannot choose a hidden item for a new story. Stories that use it keep it.
    */
   hidden?: boolean | null;
   /**
-   * Optional. A language tag, for example en or ml.
+   * Optional. A language tag.
    */
   language?: string | null;
   /**
-   * The app makes this address when you save. It never changes.
+   * The app makes this address when you save. It never changes, so other systems can point at it.
    */
   iri: string;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * People who sign in with a login code to tell stories. Block a member to stop new stories.
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vocab-lists".
+ */
+export interface VocabList {
+  id: number;
+  project: number | Project;
+  key: string;
+  iri: string;
+  label: string;
+  kind: 'items' | 'entities';
+  class?: (number | null) | OntologyTerm;
+  hidden?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ontology-terms".
+ */
+export interface OntologyTerm {
+  id: number;
+  iri: string;
+  ontology?: (number | null) | Ontology;
+  project?: (number | null) | Project;
+  kind: 'property' | 'class';
+  label: string;
+  comment?: string | null;
+  rangeHint?: string | null;
+  gone?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Each answer that a member gives about a part of a recording is saved with a property of an ontology, for example the place with dcterms:spatial of Dublin Core. Eight ontologies come with Annoudio; load one here only when a question needs a different property.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ontologies".
+ */
+export interface Ontology {
+  id: number;
+  label: string;
+  namespace: string;
+  prefix: string;
+  source: 'bundled' | 'uploaded';
+  licence?: string | null;
+  fileHash?: string | null;
+  loadedAt?: string | null;
+  terms?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vocab-fields".
+ */
+export interface VocabField {
+  id: number;
+  project: number | Project;
+  property: number | OntologyTerm;
+  label: string;
+  help?: string | null;
+  valueType: 'text' | 'date' | 'number' | 'link' | 'list' | 'entity';
+  list?: (number | null) | VocabList;
+  required?: boolean | null;
+  max: number;
+  showAs: 'line' | 'tags' | 'none';
+  allowOwn?: boolean | null;
+  hidden?: boolean | null;
+  position: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * A member is a person who tells stories about your recordings, and visitors see the member's name on each story. Open a member to see their stories or to block them.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "members".
@@ -338,7 +505,7 @@ export interface Concept {
 export interface Member {
   id: number;
   /**
-   * Visitors never see it.
+   * The member signs in with it. Visitors never see it.
    */
   email: string;
   /**
@@ -346,9 +513,17 @@ export interface Member {
    */
   nickname: string;
   /**
-   * A blocked member cannot sign in or save stories.
+   * A blocked member cannot sign in or tell stories. Their published stories stay.
    */
   status: 'active' | 'blocked';
+  /**
+   * Checked after a login code. A member who signed in only with an invite code gets no mail.
+   */
+  emailVerified?: boolean | null;
+  /**
+   * An operator made this member to try the member steps. Member counts leave it out.
+   */
+  test?: boolean | null;
   /**
    * The member sets this on Your account.
    */
@@ -357,7 +532,7 @@ export interface Member {
   createdAt: string;
 }
 /**
- * Team members who sign in to this admin. Each operator has an email and a password.
+ * An operator decides which stories about your recordings visitors see. Select "Create new" to give a colleague access.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
@@ -369,7 +544,7 @@ export interface User {
    */
   name?: string | null;
   /**
-   * A mail tells you that stories wait for review.
+   * How often a mail tells you that stories wait for review.
    */
   reviewMail?: ('daily' | 'each' | 'never') | null;
   snippetPasted?: boolean | null;
@@ -409,6 +584,24 @@ export interface StoryRepresentation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "story-values".
+ */
+export interface StoryValue {
+  id: number;
+  story: string | Story;
+  project: string;
+  layer: 'newest' | 'published';
+  property: string;
+  objectIri?: string | null;
+  literal?: string | null;
+  datatype?: string | null;
+  language?: string | null;
+  own?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "member-sessions".
  */
 export interface MemberSession {
@@ -432,6 +625,45 @@ export interface LoginCode {
   expiresAt: string;
   attempts: number;
   usedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invite-codes".
+ */
+export interface InviteCode {
+  id: number;
+  project: string;
+  codeHash: string;
+  hint: string;
+  label?: string | null;
+  uses: number;
+  expiresAt?: string | null;
+  revokedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invite-uses".
+ */
+export interface Inviteus {
+  id: number;
+  invite: number | InviteCode;
+  member: number | Member;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invite-tries".
+ */
+export interface InviteTry {
+  id: number;
+  email: string;
+  ipHash?: string | null;
+  triedAt: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -480,6 +712,22 @@ export interface PayloadLockedDocument {
         value: number | Concept;
       } | null)
     | ({
+        relationTo: 'ontologies';
+        value: number | Ontology;
+      } | null)
+    | ({
+        relationTo: 'ontology-terms';
+        value: number | OntologyTerm;
+      } | null)
+    | ({
+        relationTo: 'vocab-lists';
+        value: number | VocabList;
+      } | null)
+    | ({
+        relationTo: 'vocab-fields';
+        value: number | VocabField;
+      } | null)
+    | ({
         relationTo: 'members';
         value: number | Member;
       } | null)
@@ -492,12 +740,28 @@ export interface PayloadLockedDocument {
         value: number | StoryRepresentation;
       } | null)
     | ({
+        relationTo: 'story-values';
+        value: number | StoryValue;
+      } | null)
+    | ({
         relationTo: 'member-sessions';
         value: number | MemberSession;
       } | null)
     | ({
         relationTo: 'login-codes';
         value: number | LoginCode;
+      } | null)
+    | ({
+        relationTo: 'invite-codes';
+        value: number | InviteCode;
+      } | null)
+    | ({
+        relationTo: 'invite-uses';
+        value: number | Inviteus;
+      } | null)
+    | ({
+        relationTo: 'invite-tries';
+        value: number | InviteTry;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -564,6 +828,8 @@ export interface StoriesSelect<T extends boolean = true> {
         automatic?: T;
       };
   toldOn?: T;
+  toldOnUnlisted?: T;
+  sentAgain?: T;
   lastAction?: T;
   changedBy?: T;
   processing?: T;
@@ -609,11 +875,13 @@ export interface ProjectsSelect<T extends boolean = true> {
         origin?: T;
         id?: T;
       };
+  recordings?: T;
   language?: T;
   reviewRule?: T;
   rights?: T;
   rightsLine?: T;
   rightsIri?: T;
+  signIn?: T;
   themeTokens?:
     | T
     | {
@@ -649,6 +917,7 @@ export interface RecordingsSelect<T extends boolean = true> {
         id?: T;
       };
   duration?: T;
+  projects?: T;
   stories?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -659,11 +928,80 @@ export interface RecordingsSelect<T extends boolean = true> {
  */
 export interface ConceptsSelect<T extends boolean = true> {
   project?: T;
+  list?: T;
   label?: T;
+  sameAs?: T;
   parent?: T;
   hidden?: T;
   language?: T;
   iri?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ontologies_select".
+ */
+export interface OntologiesSelect<T extends boolean = true> {
+  label?: T;
+  namespace?: T;
+  prefix?: T;
+  source?: T;
+  licence?: T;
+  fileHash?: T;
+  loadedAt?: T;
+  terms?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ontology-terms_select".
+ */
+export interface OntologyTermsSelect<T extends boolean = true> {
+  iri?: T;
+  ontology?: T;
+  project?: T;
+  kind?: T;
+  label?: T;
+  comment?: T;
+  rangeHint?: T;
+  gone?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vocab-lists_select".
+ */
+export interface VocabListsSelect<T extends boolean = true> {
+  project?: T;
+  key?: T;
+  iri?: T;
+  label?: T;
+  kind?: T;
+  class?: T;
+  hidden?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vocab-fields_select".
+ */
+export interface VocabFieldsSelect<T extends boolean = true> {
+  project?: T;
+  property?: T;
+  label?: T;
+  help?: T;
+  valueType?: T;
+  list?: T;
+  required?: T;
+  max?: T;
+  showAs?: T;
+  allowOwn?: T;
+  hidden?: T;
+  position?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -675,6 +1013,8 @@ export interface MembersSelect<T extends boolean = true> {
   email?: T;
   nickname?: T;
   status?: T;
+  emailVerified?: T;
+  test?: T;
   mailNotices?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -720,6 +1060,23 @@ export interface StoryRepresentationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "story-values_select".
+ */
+export interface StoryValuesSelect<T extends boolean = true> {
+  story?: T;
+  project?: T;
+  layer?: T;
+  property?: T;
+  objectIri?: T;
+  literal?: T;
+  datatype?: T;
+  language?: T;
+  own?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "member-sessions_select".
  */
 export interface MemberSessionsSelect<T extends boolean = true> {
@@ -741,6 +1098,42 @@ export interface LoginCodesSelect<T extends boolean = true> {
   expiresAt?: T;
   attempts?: T;
   usedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invite-codes_select".
+ */
+export interface InviteCodesSelect<T extends boolean = true> {
+  project?: T;
+  codeHash?: T;
+  hint?: T;
+  label?: T;
+  uses?: T;
+  expiresAt?: T;
+  revokedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invite-uses_select".
+ */
+export interface InviteUsesSelect<T extends boolean = true> {
+  invite?: T;
+  member?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invite-tries_select".
+ */
+export interface InviteTriesSelect<T extends boolean = true> {
+  email?: T;
+  ipHash?: T;
+  triedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

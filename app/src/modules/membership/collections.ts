@@ -5,6 +5,9 @@ import { checkNickname } from './rules'
 export const MEMBERS = 'members'
 export const SESSIONS = 'member-sessions'
 export const CODES = 'login-codes'
+export const INVITES = 'invite-codes'
+export const INVITE_USES = 'invite-uses'
+export const INVITE_TRIES = 'invite-tries'
 
 const nobody = () => false
 const operator: Access = ({ req }) => req.user?.collection === 'users'
@@ -23,12 +26,19 @@ export const membersCollection: CollectionConfig = {
     group: false,
     hideAPIURL: true,
     useAsTitle: 'nickname',
-    defaultColumns: ['nickname', 'email', 'status', 'createdAt'],
+      components: { beforeListTable: ['/admin/ListEmpty#MembersEmpty'] },
+    defaultColumns: ['nickname', 'email', 'status', 'test', 'createdAt'],
     description:
-      'People who sign in with a login code to tell stories. Block a member to stop new stories.',
+      'A member is a person who tells stories about your recordings, and visitors see the member\'s name on each story. Open a member to see their stories or to block them.',
   },
   access: { read: operator, update: operator, create: nobody, delete: nobody },
   fields: [
+    {
+      // The member's stories by state and invite codes (admin/members/MemberPanel.tsx).
+      name: 'memberPanel',
+      type: 'ui',
+      admin: { components: { Field: '/admin/members/MemberPanel#MemberPanel' } },
+    },
     // Trimmed and in lower case. Visitors never see it.
     {
       name: 'email',
@@ -37,7 +47,10 @@ export const membersCollection: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
-      admin: { readOnly: true, description: 'Visitors never see it.' },
+      admin: {
+        readOnly: true,
+        description: 'The member signs in with it. Visitors never see it.',
+      },
     },
     {
       // The only name that visitors see.
@@ -54,13 +67,45 @@ export const membersCollection: CollectionConfig = {
       name: 'status',
       label: 'Status',
       type: 'select',
-      admin: { description: 'A blocked member cannot sign in or save stories.' },
+      admin: {
+        description: 'A blocked member cannot sign in or tell stories. Their published stories stay.',
+        components: { Field: '/admin/ui/SelectField#SelectField' },
+      },
       required: true,
       defaultValue: 'active',
       options: [
         { label: 'Active', value: 'active' },
         { label: 'Blocked', value: 'blocked' },
       ],
+    },
+    {
+      // True after a login code: the member owns the email. An invite code proves no
+      // email, so such a member gets no mail (design/invite-codes.md).
+      name: 'emailVerified',
+      label: 'Email checked',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        readOnly: true,
+        description:
+          'Checked after a login code. A member who signed in only with an invite code gets no mail.',
+      },
+    },
+    {
+      // True for a member that an operator made to try the member steps: the sign-in came
+      // from a browser with an operator session (the preview page, "Try it"). Counts of
+      // members leave it out; the admin shows a "Test" badge.
+      name: 'test',
+      label: 'Test member (made by an operator)',
+      type: 'checkbox',
+      defaultValue: false,
+      index: true,
+      admin: {
+        readOnly: true,
+        description:
+          'An operator made this member to try the member steps. Member counts leave it out.',
+        components: { Cell: '/admin/members/TestCell#TestCell' },
+      },
     },
     {
       // The member's choice on Your account. M3 and M4 only; mails that ask for an action
@@ -105,5 +150,53 @@ export const loginCodesCollection: CollectionConfig = {
     { name: 'expiresAt', type: 'date', required: true },
     { name: 'attempts', type: 'number', required: true, defaultValue: 0 },
     { name: 'usedAt', type: 'date' },
+  ],
+}
+
+/**
+ * One row per invite code (design/invite-codes.md). Holds the HMAC of the code and its
+ * first 2 characters, never the code. `project` is the project slug, as in `stories`.
+ */
+export const inviteCodesCollection: CollectionConfig = {
+  slug: INVITES,
+  admin: { hidden: true },
+  graphQL: false,
+  access: { read: nobody, create: nobody, update: nobody, delete: nobody },
+  fields: [
+    { name: 'project', type: 'text', required: true, index: true },
+    { name: 'codeHash', type: 'text', required: true, unique: true, index: true },
+    { name: 'hint', type: 'text', required: true },
+    { name: 'label', type: 'text' },
+    { name: 'uses', type: 'number', required: true, defaultValue: 1 },
+    { name: 'expiresAt', type: 'date' },
+    { name: 'revokedAt', type: 'date' },
+  ],
+}
+
+/** One row per member who used an invite code. A member uses one code only once. */
+export const inviteUsesCollection: CollectionConfig = {
+  slug: INVITE_USES,
+  admin: { hidden: true },
+  graphQL: false,
+  access: { read: nobody, create: nobody, update: nobody, delete: nobody },
+  fields: [
+    { name: 'invite', type: 'relationship', relationTo: INVITES, required: true, index: true },
+    { name: 'member', type: 'relationship', relationTo: MEMBERS, required: true, index: true },
+  ],
+}
+
+/**
+ * One row per failed try of an invite code, for the rate limit. Holds the HMAC of the IP
+ * address, never the address. Rows live for about one hour.
+ */
+export const inviteTriesCollection: CollectionConfig = {
+  slug: INVITE_TRIES,
+  admin: { hidden: true },
+  graphQL: false,
+  access: { read: nobody, create: nobody, update: nobody, delete: nobody },
+  fields: [
+    { name: 'email', type: 'text', required: true, index: true },
+    { name: 'ipHash', type: 'text', index: true },
+    { name: 'triedAt', type: 'date', required: true, index: true },
   ],
 }

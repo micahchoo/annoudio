@@ -155,15 +155,18 @@ test("the page editor: an unknown ID is refused; an ID with an Omeka media and a
   await page.locator('#new-block button[value="annoudioPlayer"]').click();
   const block = page.locator('.block[data-block-layout="annoudioPlayer"]').last();
   await expect(block.getByLabel("Audio address")).toHaveCount(0);
-  await block.getByLabel("Recording ID").fill("999999");
+  await block.getByLabel("Recording number").fill("999999");
   await page.locator("#page-actions").getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText('Annoudio player: The project "river-voices" has no recording with the ID "999999".')).toBeVisible();
+  await expect(page.getByText('Annoudio widget: The project "river-voices" has no recording with the number "999999".')).toBeVisible();
 
   await page.goto(`${OMEKA}/admin/site/s/annoudio/page/${SLUG}/edit`);
   // Block 1: the ID and the Omeka media picker (the core attachments form, one attachment).
   await page.locator('#new-block button[value="annoudioPlayer"]').click();
   const withMedia = page.locator('.block[data-block-layout="annoudioPlayer"]').last();
-  await withMedia.getByLabel("Recording ID").fill(RECORDING);
+  await withMedia.getByLabel("Recording number").fill(RECORDING);
+  // The block checks the number when the field loses focus, before a save (audit, 18).
+  await withMedia.getByLabel("Recording number").press("Tab");
+  await expect(withMedia.locator(".annoudio-status")).toHaveText(`Recording found: ${recording.title}`);
   await withMedia.getByRole("button", { name: "Add attachment" }).click();
   await page.locator("#select-resource").getByText("Ferry crossing, 1962 (Annoudio test)").first().click();
   await page.locator("#attachment-options .media-list .media").first().click();
@@ -172,7 +175,7 @@ test("the page editor: an unknown ID is refused; an ID with an Omeka media and a
   // Block 2: only the ID. The block form comes by XHR: wait for it.
   await page.locator('#new-block button[value="annoudioPlayer"]').click();
   await expect(page.locator('.block[data-block-layout="annoudioPlayer"]')).toHaveCount(2);
-  await page.locator('.block[data-block-layout="annoudioPlayer"]').nth(1).getByLabel("Recording ID").fill(RECORDING);
+  await page.locator('.block[data-block-layout="annoudioPlayer"]').nth(1).getByLabel("Recording number").fill(RECORDING);
   await page.locator("#page-actions").getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Page successfully updated")).toBeVisible();
   await expect(page.locator(".annoudio-status")).toHaveText([`Recording found: ${recording.title}`, `Recording found: ${recording.title}`]);

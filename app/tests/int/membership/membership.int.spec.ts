@@ -172,6 +172,19 @@ describe('verifyCode', () => {
     expect(again.ok && again.session).toEqual(result.session)
   })
 
+  it('a sign-in with an operator session makes a test member; an existing member stays real', async () => {
+    await membership.requestCode(EMAIL)
+    const made = await membership.verifyCode(EMAIL, codeFor(EMAIL), 'Operator test', { test: true })
+    expect(made.ok).toBe(true)
+    await signIn('real@example.org', 'Asha')
+    const tests = await membership.testMembers()
+    expect(tests).toEqual([made.ok ? made.session.memberId : ''])
+    // The real member signs in later from an operator browser: still a real member.
+    await membership.requestCode('real@example.org')
+    await membership.verifyCode('real@example.org', codeFor('real@example.org'), undefined, { test: true })
+    expect(await membership.testMembers()).toEqual(tests)
+  })
+
   it('refuses a nickname that is empty, too long or has an @', async () => {
     await membership.requestCode(EMAIL)
     const code = codeFor(EMAIL)
@@ -374,6 +387,7 @@ describe('account, updateAccount and contact (Phase 5c)', () => {
       email: EMAIL,
       nickname: 'Leela',
       mailNotices: true,
+      emailVerified: true,
     })
   })
 
@@ -385,7 +399,7 @@ describe('account, updateAccount and contact (Phase 5c)', () => {
     })
     expect(result).toEqual({
       ok: true,
-      account: { email: EMAIL, nickname: 'Leela K', mailNotices: false },
+      account: { email: EMAIL, nickname: 'Leela K', mailNotices: false, emailVerified: true },
     })
     expect(await membership.contact(me.memberId)).toMatchObject({ mailNotices: false })
     const cookie = await signIn()

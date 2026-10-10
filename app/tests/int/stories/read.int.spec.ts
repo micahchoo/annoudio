@@ -378,8 +378,15 @@ describe('one story', () => {
           format: 'text/plain',
           language: 'ml',
         },
-        { type: 'SpecificResource', source: FERRY, purpose: 'tagging' },
-        { type: 'TextualBody', value: 'Ferry', purpose: 'tagging', language: 'en' },
+        {
+          type: ['TextualBody', 'rdf:Statement'],
+          purpose: 'tagging',
+          value: 'Ferry',
+          language: 'en',
+          'rdf:subject': { id: `${ORIGIN}/recordings/1#t=42,51` },
+          'rdf:predicate': { id: 'http://purl.org/dc/terms/subject' },
+          'rdf:object': { id: FERRY },
+        },
       ],
       target: {
         type: 'SpecificResource',

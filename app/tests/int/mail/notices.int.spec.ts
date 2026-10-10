@@ -186,10 +186,10 @@ describe('M3 published', () => {
     )
   })
 
-  it('gives Your stories when the story has no host page', async () => {
+  it('gives Open your stories when the story has no host page (workflow-audit 25)', async () => {
     await saved({ ...draft(), toldOn: null })
     await stories.publish(operator, storyId(1))
-    expect(ofKind('published')[0].text).toContain(`Listen on the site: ${ORIGIN}/annotate/mine`)
+    expect(ofKind('published')[0].text).toContain(`Open your stories: ${ORIGIN}/annotate/mine`)
   })
 
   it('a publish that is refused sends nothing', async () => {
@@ -254,7 +254,7 @@ describe('M4 replied', () => {
     await saved(reply(2), ravi)
     await stories.publish(operator, storyId(2))
     const [mail] = ofKind('replied')
-    expect(mail).toMatchObject({ to: 'asha@example.org', subject: 'Someone replied to your story' })
+    expect(mail).toMatchObject({ to: 'asha@example.org', subject: 'Ravi replied to your story' })
     expect(mail.text).toContain(
       'Ravi replied to your story about “Ferry crossing, 1962”, 0:42–0:51:',
     )
@@ -293,7 +293,7 @@ describe('M5 removed', () => {
     expect(mails[1]).toMatchObject({ subject: 'Your reply is removed' })
     expect(mails[1].text).toContain('The story that you replied to is removed.')
     expect(mails[1].text).not.toContain('A visitor asked us to.')
-    expect(mails[1].text).toContain(`Your stories: ${ORIGIN}/annotate/mine`)
+    expect(mails[1].text).toContain(`Open your stories: ${ORIGIN}/annotate/mine`)
   })
 })
 

@@ -13,10 +13,11 @@ import type {
   RecordingId,
   ReplyAnnotation,
   StoryAnnotation,
+  ResolvedValue,
   StoryId,
-  TagLabel,
-  TagResource,
   TextualBody,
+  ValueBody,
+  ValueObject,
 } from './types'
 
 const ANNO = 'http://www.w3.org/ns/anno.jsonld'
@@ -25,6 +26,8 @@ const MEDIA_TYPES = { sound: 'Sound', image: 'Image', video: 'Video' } as const
 const MEDIA_KINDS = { Sound: 'sound', Image: 'image', Video: 'video' } as const
 const SELECTOR = /^t=(\d+(?:\.\d{1,3})?),(\d+(?:\.\d{1,3})?)$/
 const SEGMENT = /^[^/?#]+$/
+const XSD = 'http://www.w3.org/2001/XMLSchema#'
+const VALUE_TYPE = ['TextualBody', 'rdf:Statement'] as const
 const EXCERPT = 80
 
 interface ParsedBase {
@@ -62,8 +65,8 @@ export interface StoryParts {
   creator: { iri: string; nickname: string }
   rights?: string
   bodies: ResolvedBody[]
-  /** Always empty for a reply. */
-  tags: (Label & { iri: ConceptIri })[]
+  /** In field order. Always empty for a reply. */
+  values: ResolvedValue[]
   place: Place
 }
 
@@ -77,19 +80,19 @@ export function storyIri(origin: string, project: string, recording: string, id:
 }
 
 export function buildAnnotation(parts: StoryParts): Annotation {
-  const body = [
-    ...parts.bodies.map((item) =>
-      item.kind === 'text'
-        ? textBody(item.value, item.language)
-        : mediaBody(item.url, MEDIA_TYPES[item.kind], item.format),
-    ),
-    ...parts.tags.flatMap((tag) => [tagResource(tag.iri), tagLabel(tag.label, tag.language)]),
-  ]
+  const contents = parts.bodies.map((item) =>
+    item.kind === 'text'
+      ? textBody(item.value, item.language)
+      : mediaBody(item.url, MEDIA_TYPES[item.kind], item.format),
+  )
   const { place } = parts
   if ('parentIri' in place) {
-    return annotation(parts.iri, 'replying', parts, body, place.parentIri)
+    return annotation(parts.iri, 'replying', parts, contents, place.parentIri)
   }
   const range = `t=${roundSeconds(place.start)},${roundSeconds(place.end)}`
+  // The statements are about the segment: the same part that the selector selects.
+  const segment = `${place.recordingIri}#${range}`
+  const body = [...contents, ...parts.values.map((value) => valueBody(segment, value))]
   return annotation(
     parts.iri,
     'commenting',
@@ -144,7 +147,8 @@ function annotation(
 
 /**
  * Parse a stored story or reply of this origin. Returns null if the value is not in the
- * shape that `buildAnnotation` makes: content bodies first, then tag pairs (a reply has none).
+ * shape that `buildAnnotation` makes: content bodies first, then value bodies about the
+ * segment of the story (a reply has none).
  */
 export function parseStory(value: unknown, origin: string): ParsedStory | null {
   if (!isObject(value)) return null
@@ -166,7 +170,7 @@ export function parseStory(value: unknown, origin: string): ParsedStory | null {
 
   if (value.motivation === 'replying') {
     const parent = isText(t) ? parseStoryIri(t, origin) : null
-    if (!parent || bodies.some((item) => 'purpose' in item)) return null
+    if (!parent || bodies.some(isValueBody)) return null
     const id = suffix(value.id, `${origin}/stories/${parent.project}/${parent.recording}/`)
     if (!id || id === parent.id) return null
     return {
@@ -190,6 +194,8 @@ export function parseStory(value: unknown, origin: string): ParsedStory | null {
   if (!range || !recording || !project) return null
   const id = suffix(value.id, `${origin}/stories/${project}/${recording}/`)
   if (!id) return null
+  const segment = `${t.source as string}#${t.selector.value as string}`
+  if (bodies.some((body) => isValueBody(body) && body['rdf:subject'].id !== segment)) return null
 
   return {
     id,
@@ -222,31 +228,47 @@ function parseStoryIri(
   return { project, recording, id }
 }
 
-/** The concept IRIs of the tags, in order. */
-export function tagsOf(annotation: Annotation): ConceptIri[] {
-  return annotation.body.flatMap((body) => (body.type === 'SpecificResource' ? [body.source] : []))
+export function isValueBody(body: Annotation['body'][number]): body is ValueBody {
+  return Array.isArray(body.type)
+}
+
+/** The values of a story, in order, as statements without their subject. */
+export function valuesOf(annotation: Annotation): ResolvedValue[] {
+  return annotation.body.filter(isValueBody).map(resolvedOf)
+}
+
+/** The item and entity IRIs that the values point at (not links, not own answers). */
+export function itemIrisOf(annotation: Annotation): ConceptIri[] {
+  return annotation.body.flatMap((body) =>
+    isValueBody(body) && 'id' in body['rdf:object'] ? [body['rdf:object'].id] : [],
+  )
 }
 
 /**
- * Give each tag its current label. A tag whose concept no longer exists
- * (label null) leaves the story.
+ * Give each value that points at an item its current label. An IRI that is not an item
+ * (a link, or an item that no longer exists: null) keeps the stored text.
  */
 export function relabel<A extends Annotation>(
   annotation: A,
   labels: Map<ConceptIri, Label | null>,
 ): A {
-  const body: Annotation['body'] = []
-  for (let i = 0; i < annotation.body.length; i++) {
-    const item = annotation.body[i]
-    if (item.type !== 'SpecificResource') {
-      body.push(item)
-      continue
-    }
-    const current = labels.get(item.source)
-    if (current) body.push(item, tagLabel(current.label, current.language))
-    i++ // skip the stored label of this tag
+  return {
+    ...annotation,
+    body: annotation.body.map((body) => {
+      if (!isValueBody(body) || !('id' in body['rdf:object'])) return body
+      const current = labels.get(body['rdf:object'].id)
+      if (!current) return body
+      return {
+        type: body.type,
+        purpose: body.purpose,
+        value: current.label,
+        ...lang(current.language),
+        'rdf:subject': body['rdf:subject'],
+        'rdf:predicate': body['rdf:predicate'],
+        'rdf:object': body['rdf:object'],
+      }
+    }),
   }
-  return { ...annotation, body }
 }
 
 /**
@@ -257,17 +279,18 @@ export function relabel<A extends Annotation>(
 export function toInput(
   annotation: Annotation,
   origin: string,
-): { bodies: BodyInput[]; tags: ConceptIri[] } {
+): { bodies: BodyInput[]; values: ResolvedValue[] } {
   const bodies: BodyInput[] = []
   for (const body of annotation.body) {
-    if (body.type === 'TextualBody' && !('purpose' in body)) {
+    if (isValueBody(body)) continue
+    if (body.type === 'TextualBody') {
       bodies.push({ kind: 'text', value: body.value, ...lang(body.language) })
-    } else if ('id' in body) {
+    } else {
       const media = mediaIdOf(origin, body.id)
       if (media) bodies.push({ kind: MEDIA_KINDS[body.type], media })
     }
   }
-  return { bodies, tags: tagsOf(annotation) }
+  return { bodies, values: valuesOf(annotation) }
 }
 
 /** Give each media body the format that `formatOf` gives for its URL. */
@@ -278,16 +301,14 @@ export function withMediaFormats<A extends Annotation>(
   return {
     ...annotation,
     body: annotation.body.map((body) =>
-      'id' in body ? mediaBody(body.id, body.type, formatOf(body.id)) : body,
+      !isValueBody(body) && 'id' in body ? mediaBody(body.id, body.type, formatOf(body.id)) : body,
     ),
   }
 }
 
 /** The text bodies, in order. */
 export function textsOf(annotation: Annotation): TextualBody[] {
-  return annotation.body.filter(
-    (body): body is TextualBody => body.type === 'TextualBody' && !('purpose' in body),
-  )
+  return annotation.body.filter((body): body is TextualBody => body.type === 'TextualBody')
 }
 
 /** The first 80 characters of the first text body, on one line. */
@@ -299,7 +320,7 @@ export function excerptOf(annotation: Annotation): string {
 
 /** The URLs of the sound, image and video bodies. */
 export function mediaUrls(annotation: Annotation): string[] {
-  return annotation.body.flatMap((body) => ('id' in body ? [body.id] : []))
+  return annotation.body.flatMap((body) => (!isValueBody(body) && 'id' in body ? [body.id] : []))
 }
 
 /** The annotation without `@context`, as an item of a page. */
@@ -313,21 +334,16 @@ export function asItem(
 function parseBodies(value: unknown): Annotation['body'] | null {
   if (!Array.isArray(value)) return null
   const out: Annotation['body'] = []
-  let inTags = false
-  for (let i = 0; i < value.length; i++) {
-    const body: unknown = value[i]
+  let inValues = false
+  for (const body of value as unknown[]) {
     if (!isObject(body)) return null
-    if (body.type === 'SpecificResource') {
-      const label: unknown = value[i + 1]
-      if (body.purpose !== 'tagging' || !isText(body.source)) return null
-      if (!isObject(label) || label.type !== 'TextualBody' || label.purpose !== 'tagging') {
-        return null
-      }
-      if (!isText(label.value) || !isOptionalText(label.language)) return null
-      out.push(tagResource(body.source), tagLabel(label.value, label.language))
-      inTags = true
-      i++
-    } else if (inTags) {
+    if (Array.isArray(body.type)) {
+      // A value body (design/vocab.md §3.2): all three `rdf:` keys, or the record is refused.
+      const parsed = parseValueBody(body)
+      if (!parsed) return null
+      out.push(parsed)
+      inValues = true
+    } else if (inValues) {
       return null
     } else if (body.type === 'TextualBody') {
       if (body.format !== 'text/plain' || body.purpose !== undefined) return null
@@ -343,20 +359,125 @@ function parseBodies(value: unknown): Annotation['body'] | null {
   return out
 }
 
+function parseValueBody(body: Record<string, unknown>): ValueBody | null {
+  const type = body.type as unknown[]
+  if (type.length !== 2 || type[0] !== VALUE_TYPE[0] || type[1] !== VALUE_TYPE[1]) return null
+  if (body.purpose !== 'tagging' && body.purpose !== 'describing') return null
+  if (!isText(body.value) || !isOptionalText(body.language)) return null
+  const subject = idObject(body['rdf:subject'])
+  const predicate = idObject(body['rdf:predicate'])
+  const object = valueObject(body['rdf:object'])
+  if (!subject || !predicate || !/^https?:\/\//.test(predicate) || !object) return null
+  return {
+    type: [...VALUE_TYPE],
+    purpose: body.purpose,
+    value: body.value,
+    ...lang(body.language),
+    'rdf:subject': { id: subject },
+    'rdf:predicate': { id: predicate },
+    'rdf:object': object,
+  }
+}
+
+/** The IRI of `{ "id": … }`, or null. */
+function idObject(value: unknown): string | null {
+  return isObject(value) && Object.keys(value).length === 1 && isText(value.id) ? value.id : null
+}
+
+function literalOf(value: unknown): { '@value': string; '@language'?: string } | null {
+  if (!isObject(value) || typeof value['@value'] !== 'string') return null
+  const keys = Object.keys(value)
+  if (keys.some((key) => key !== '@value' && key !== '@language')) return null
+  if (!isOptionalText(value['@language'])) return null
+  return { '@value': value['@value'], ...langTag(value['@language']) }
+}
+
+function valueObject(value: unknown): ValueObject | null {
+  if (!isObject(value)) return null
+  const iri = idObject(value)
+  if (iri) return { id: iri }
+  if (typeof value['@value'] === 'string' && isText(value.type)) {
+    if (Object.keys(value).length !== 2) return null
+    return { '@value': value['@value'], type: value.type }
+  }
+  if (typeof value['@value'] === 'string') return literalOf(value)
+  // An own answer: a blank node with the class of the list and a label.
+  const label = literalOf(value['rdfs:label'])
+  if (isText(value.type) && label && Object.keys(value).length === 2) {
+    return { type: value.type, 'rdfs:label': label }
+  }
+  return null
+}
+
+/** The value body of one value about `segment`, in the canonical key order. */
+function valueBody(segment: string, value: ResolvedValue): ValueBody {
+  const { object } = value
+  let rdfObject: ValueObject
+  if ('iri' in object) rdfObject = { id: object.iri }
+  else if ('own' in object) {
+    rdfObject = {
+      type: object.own.class,
+      'rdfs:label': { '@value': object.own.label, ...langTag(object.own.language) },
+    }
+  } else if (object.datatype) {
+    // `anno.jsonld` defines `xsd:`: the only CURIE in a stored body (§3.2 rule 3).
+    const type = object.datatype.startsWith(XSD)
+      ? `xsd:${object.datatype.slice(XSD.length)}`
+      : object.datatype
+    rdfObject = { '@value': object.literal, type }
+  } else rdfObject = { '@value': object.literal, ...langTag(object.language) }
+  return {
+    type: [...VALUE_TYPE],
+    purpose: value.purpose,
+    value: value.text,
+    ...lang(value.language),
+    'rdf:subject': { id: segment },
+    'rdf:predicate': { id: value.property },
+    'rdf:object': rdfObject,
+  }
+}
+
+function resolvedOf(body: ValueBody): ResolvedValue {
+  const object = body['rdf:object']
+  const base = {
+    property: body['rdf:predicate'].id,
+    purpose: body.purpose,
+    text: body.value,
+    ...lang(body.language),
+  }
+  if ('id' in object) return { ...base, object: { iri: object.id } }
+  if ('rdfs:label' in object) {
+    const label = object['rdfs:label']
+    return {
+      ...base,
+      object: {
+        own: {
+          label: label['@value'],
+          ...(label['@language'] ? { language: label['@language'] } : {}),
+          class: object.type,
+        },
+      },
+    }
+  }
+  if ('type' in object) {
+    const datatype = object.type.startsWith('xsd:') ? `${XSD}${object.type.slice(4)}` : object.type
+    return { ...base, object: { literal: object['@value'], datatype } }
+  }
+  return {
+    ...base,
+    object: {
+      literal: object['@value'],
+      ...(object['@language'] ? { language: object['@language'] } : {}),
+    },
+  }
+}
+
 function textBody(value: string, language?: string): TextualBody {
   return { type: 'TextualBody', value, format: 'text/plain', ...lang(language) }
 }
 
 function mediaBody(id: string, type: MediaResource['type'], format: string): MediaResource {
   return { id, type, format }
-}
-
-function tagResource(source: ConceptIri): TagResource {
-  return { type: 'SpecificResource', source, purpose: 'tagging' }
-}
-
-function tagLabel(value: string, language?: string): TagLabel {
-  return { type: 'TextualBody', value, purpose: 'tagging', ...lang(language) }
 }
 
 function target(source: string, scope: string, value: string): StoryAnnotation['target'] {
@@ -370,6 +491,10 @@ function target(source: string, scope: string, value: string): StoryAnnotation['
 
 function lang(language: string | undefined): { language?: string } {
   return language ? { language } : {}
+}
+
+function langTag(language: string | undefined): { '@language'?: string } {
+  return language ? { '@language': language } : {}
 }
 
 function suffix(value: unknown, prefix: string): string | null {

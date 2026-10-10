@@ -1,6 +1,6 @@
 // The frame of the member pages (design/ia.md §4.2): the project name, the title, the
 // member menu (Your stories, Your account, Sign out), one way back, and the rights line in
-// the footer. With a project, its theme tokens go on the root, so the page and the player
+// the footer. With a project, its theme tokens go on the root, so the page and the widget
 // look like the project.
 
 import type { CSSProperties, ReactNode } from 'react'
@@ -23,7 +23,8 @@ export function Frame(props: {
   /** The line under the title: the recording. */
   subtitle?: string
   project: ProjectFrame | null
-  back: { href: string; label: string } | null
+  /** The way back; `note` says why it is not the site (a `return` that is not listed). */
+  back: { href: string; label: string; note?: string } | null
   session: MemberSession | null
   /** Where Sign out goes. */
   after: string
@@ -51,10 +52,10 @@ export function Frame(props: {
           </a>
         </p>
       )}
+      {props.back?.note && <p className="back__note">{props.back.note}</p>}
       <main>{props.children}</main>
       {project?.rightsLine && (
         <footer className="rights">
-          {strings.rights}{' '}
           {project.rightsIri ? (
             <a href={project.rightsIri} rel="license">
               {project.rightsLine}

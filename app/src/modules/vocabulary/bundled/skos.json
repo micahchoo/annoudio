@@ -1,0 +1,206 @@
+{
+  "prefix": "skos",
+  "label": "SKOS",
+  "namespace": "http://www.w3.org/2004/02/skos/core#",
+  "url": "https://www.w3.org/2009/08/skos-reference/skos.rdf",
+  "licence": "W3C Software and Document Licence",
+  "terms": [
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#Collection",
+      "kind": "class",
+      "label": "Collection",
+      "comment": "A meaningful collection of concepts."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "kind": "class",
+      "label": "Concept",
+      "comment": "An idea or notion; a unit of thought."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "kind": "class",
+      "label": "Concept Scheme",
+      "comment": "A set of concepts, optionally including statements about semantic relationships between those concepts."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#OrderedCollection",
+      "kind": "class",
+      "label": "Ordered Collection",
+      "comment": "An ordered collection of concepts, where both the grouping and the ordering are meaningful."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#altLabel",
+      "kind": "property",
+      "label": "alternative label",
+      "comment": "The range of skos:altLabel is the class of RDF plain literals."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#broadMatch",
+      "kind": "property",
+      "label": "has broader match",
+      "comment": "skos:broadMatch is used to state a hierarchical mapping link between two conceptual resources in different concept schemes."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#broader",
+      "kind": "property",
+      "label": "has broader",
+      "comment": "Broader concepts are typically rendered as parents in a concept hierarchy (tree)."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#broaderTransitive",
+      "kind": "property",
+      "label": "has broader transitive",
+      "comment": "skos:broaderTransitive is a transitive superproperty of skos:broader."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#changeNote",
+      "kind": "property",
+      "label": "change note",
+      "comment": "A note about a modification to a concept."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#closeMatch",
+      "kind": "property",
+      "label": "has close match",
+      "comment": "skos:closeMatch is used to link two concepts that are sufficiently similar that they can be used interchangeably in some information retrieval applications. In order to avoid the possibility of \"compound errors\" when combining mappings across more than two concept schemes, skos:closeMatch is not declared to be a transitive property."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#definition",
+      "kind": "property",
+      "label": "definition",
+      "comment": "A statement or formal explanation of the meaning of a concept."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+      "kind": "property",
+      "label": "editorial note",
+      "comment": "A note for an editor, translator or maintainer of the vocabulary."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "kind": "property",
+      "label": "has exact match",
+      "comment": "skos:exactMatch is disjoint with each of the properties skos:broadMatch and skos:relatedMatch."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#example",
+      "kind": "property",
+      "label": "example",
+      "comment": "An example of the use of a concept."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+      "kind": "property",
+      "label": "has top concept",
+      "comment": "Relates, by convention, a concept scheme to a concept which is topmost in the broader/narrower concept hierarchies for that scheme, providing an entry point to these hierarchies.",
+      "rangeHint": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#hiddenLabel",
+      "kind": "property",
+      "label": "hidden label",
+      "comment": "The range of skos:hiddenLabel is the class of RDF plain literals."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#historyNote",
+      "kind": "property",
+      "label": "history note",
+      "comment": "A note about the past state/use/meaning of a concept."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "kind": "property",
+      "label": "is in scheme",
+      "comment": "Relates a resource (for example a concept) to a concept scheme in which it is included.",
+      "rangeHint": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#mappingRelation",
+      "kind": "property",
+      "label": "is in mapping relation with",
+      "comment": "These concept mapping relations mirror semantic relations, and the data model defined below is similar (with the exception of skos:exactMatch) to the data model defined for semantic relations. A distinct vocabulary is provided for concept mapping relations, to provide a convenient way to differentiate links within a concept scheme from links between concept schemes. However, this pattern of usage is not a formal requirement of the SKOS data model, and relies on informal definitions of best prac…"
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#member",
+      "kind": "property",
+      "label": "has member",
+      "comment": "Relates a collection to one of its members."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#memberList",
+      "kind": "property",
+      "label": "has member list",
+      "comment": "For any resource, every item in the list given as the value of the skos:memberList property is also a value of the skos:member property.",
+      "rangeHint": "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#narrowMatch",
+      "kind": "property",
+      "label": "has narrower match",
+      "comment": "skos:narrowMatch is used to state a hierarchical mapping link between two conceptual resources in different concept schemes."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#narrower",
+      "kind": "property",
+      "label": "has narrower",
+      "comment": "Narrower concepts are typically rendered as children in a concept hierarchy (tree)."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#narrowerTransitive",
+      "kind": "property",
+      "label": "has narrower transitive",
+      "comment": "skos:narrowerTransitive is a transitive superproperty of skos:narrower."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#notation",
+      "kind": "property",
+      "label": "notation",
+      "comment": "A notation, also known as classification code, is a string of characters such as \"T58.5\" or \"303.4833\" used to uniquely identify a concept within the scope of a given concept scheme."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#note",
+      "kind": "property",
+      "label": "note",
+      "comment": "A general note, for any purpose."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+      "kind": "property",
+      "label": "preferred label",
+      "comment": "A resource has no more than one value of skos:prefLabel per language tag, and no more than one value of skos:prefLabel without language tag."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#related",
+      "kind": "property",
+      "label": "has related",
+      "comment": "skos:related is disjoint with skos:broaderTransitive"
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+      "kind": "property",
+      "label": "has related match",
+      "comment": "skos:relatedMatch is used to state an associative mapping link between two conceptual resources in different concept schemes."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+      "kind": "property",
+      "label": "scope note",
+      "comment": "A note that helps to clarify the meaning and/or the use of a concept."
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#semanticRelation",
+      "kind": "property",
+      "label": "is in semantic relation with",
+      "comment": "Links a concept to a concept related by meaning.",
+      "rangeHint": "http://www.w3.org/2004/02/skos/core#Concept"
+    },
+    {
+      "iri": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+      "kind": "property",
+      "label": "is top concept in scheme",
+      "comment": "Relates a concept to the concept scheme that it is a top level concept of.",
+      "rangeHint": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    }
+  ]
+}

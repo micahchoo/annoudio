@@ -14,7 +14,8 @@ use Omeka\Site\BlockLayout\AbstractBlockLayout;
 use Omeka\Stdlib\ErrorStore;
 
 /**
- * The "Annoudio player" page block. It prints the snippet of CONTRACT.md 1.
+ * The "Annoudio widget" page block (the class keeps its old name: pages store the layout
+ * name `annoudioPlayer`). It prints the snippet of CONTRACT.md 1.
  *
  * The block stores data only (the recording id, a copy of the admin's audio address, an
  * optional attached Omeka media), never HTML. PHP renders the element and adds the loader
@@ -32,7 +33,7 @@ class Player extends AbstractBlockLayout
 
     public function getLabel()
     {
-        return 'Annoudio player'; // @translate
+        return 'Annoudio widget'; // @translate
     }
 
     public function form(PhpRenderer $view, SiteRepresentation $site,
@@ -40,11 +41,17 @@ class Player extends AbstractBlockLayout
     ) {
         $recording = new Element\Text('o:block[__blockIndex__][o:data][recording]');
         $recording->setOptions([
-            'label' => 'Recording ID', // @translate
-            'info' => 'A number, for example 1. The Snippet panel of the recording in the Annoudio admin shows it: "Recording ID: 1". The block gets the title and the audio address from the Annoudio admin.', // @translate
+            'label' => 'Recording number', // @translate
+            'info' => 'A number, for example 1. The Snippet panel of the recording in the Annoudio admin shows it: "Recording number: 1". The block gets the title and the audio address from the Annoudio admin.', // @translate
         ]);
         // An id makes the label and the description of each block unique.
-        $recording->setAttributes(['required' => true, 'id' => 'annoudio-recording-__blockIndex__', 'inputmode' => 'numeric']);
+        // `data-annoudio-check`: the address of the check, for the script below.
+        $recording->setAttributes([
+            'required' => true,
+            'id' => 'annoudio-recording-__blockIndex__',
+            'inputmode' => 'numeric',
+            'data-annoudio-check' => $view->url('admin/annoudio-recording'),
+        ]);
         $recording->setValue($block ? (string) $block->dataValue('recording', '') : '');
 
         // The stored copy of the admin's audio address goes back with the form, so that a
@@ -58,8 +65,44 @@ class Player extends AbstractBlockLayout
         $html .= '<h4>' . $view->escapeHtml($view->translate('Omeka media (optional)')) . '</h4>';
         $html .= '<p>' . $view->escapeHtml($view->translate('Attach the media only when it is the same audio file as the recording in the Annoudio admin. The block then plays the Omeka file.')) . '</p>';
         $html .= $view->blockAttachmentsForm($block, false, [], 1);
+        $html .= self::CHECK_SCRIPT;
         return $html;
     }
+
+    /**
+     * When the number field changes (on blur), ask the module's check and write the status
+     * line, so the block says "Recording found" before a save (recordings audit, 18). Once
+     * per page: a block form that comes later by XHR runs the script again, and the flag
+     * stops it. Plain ES5, as the WordPress block.
+     */
+    private const CHECK_SCRIPT = <<<'HTML'
+<script>
+(function () {
+    if (window.annoudioCheck) { return; }
+    window.annoudioCheck = true;
+    document.addEventListener('change', function (event) {
+        var input = event.target;
+        if (!input || !input.matches || !input.matches('input[data-annoudio-check]')) { return; }
+        var block = input.closest('.block');
+        var line = block && block.querySelector('.annoudio-status');
+        if (!line) { return; }
+        var value = input.value.trim();
+        if (value === '') { line.textContent = ''; return; }
+        fetch(input.getAttribute('data-annoudio-check') + '?recording=' + encodeURIComponent(value), {
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' }
+        }).then(function (response) { return response.json(); }).then(function (answer) {
+            if (input.value.trim() !== value) { return; }
+            var span = document.createElement('span');
+            span.className = answer['class'];
+            span.textContent = answer.text;
+            line.textContent = '';
+            line.appendChild(span);
+        })['catch'](function () {});
+    }, true);
+})();
+</script>
+HTML;
 
     public function onHydrate(SitePageBlock $block, ErrorStore $errorStore)
     {
@@ -71,14 +114,14 @@ class Player extends AbstractBlockLayout
         }
 
         if ($recording === '') {
-            $errorStore->addError('o:block', 'Annoudio player: type the recording ID.'); // @translate
+            $errorStore->addError('o:block', 'Annoudio widget: type the recording number.'); // @translate
         }
         $media = null;
         foreach ($block->getAttachments() as $attachment) {
             $media = $attachment->getMedia() ?? $media;
         }
         if ($media !== null && $media->hasOriginal() && !str_starts_with((string) $media->getMediaType(), 'audio/')) {
-            $errorStore->addError('o:block', 'Annoudio player: the attached media is not audio. Attach an audio media, or remove the attachment.'); // @translate
+            $errorStore->addError('o:block', 'Annoudio widget: the attached media is not audio. Attach an audio media, or remove the attachment.'); // @translate
         }
         // A recording that the stack does not know is a sure error. Other failures
         // (stack down, server cannot reach it) do not block the save: the stored copy stays.
@@ -87,7 +130,7 @@ class Player extends AbstractBlockLayout
                 $src = $this->stack->recording($recording)['url'];
             } catch (StackError $e) {
                 if ($e->kind === StackError::NOT_FOUND || $e->kind === StackError::BAD_RECORDING) {
-                    $errorStore->addError('o:block', 'Annoudio player: ' . $e->getMessage());
+                    $errorStore->addError('o:block', 'Annoudio widget: ' . $e->getMessage());
                 }
             }
         }
@@ -132,24 +175,38 @@ class Player extends AbstractBlockLayout
         return $found !== null ? $found['url'] : (string) $block->dataValue('src', '');
     }
 
-    /** One line above the form: the recording title from the stack, or the problem. */
+    /**
+     * One line above the form: the recording title from the stack, or the problem. The
+     * element is always there, so that the check of the page editor can fill it.
+     */
     private function status(PhpRenderer $view, ?SitePageBlockRepresentation $block): string
     {
         $recording = $block ? (string) $block->dataValue('recording', '') : '';
-        if (!$this->stack->isConfigured()) {
-            $text = $view->translate('Annoudio is not set up. A global administrator must type the stack address and the project in Modules, Annoudio, Configure.');
-            $class = 'error';
-        } elseif ($recording === '') {
-            return '';
-        } else {
-            try {
-                $text = sprintf($view->translate('Recording found: %s'), $this->stack->recording($recording)['title']);
-                $class = 'success';
-            } catch (StackError $e) {
-                $text = $e->getMessage();
-                $class = 'error';
-            }
+        [$class, $text] = self::check($this->stack, fn (string $s) => $view->translate($s), $recording)
+            ?? ['', ''];
+        $inner = $text === '' ? '' : sprintf('<span class="%s">%s</span>', $class, $view->escapeHtml($text));
+        return sprintf('<p class="annoudio-status messages">%s</p>', $inner);
+    }
+
+    /**
+     * The status of a recording number as [class, text]: "Recording found: …", the problem,
+     * or "not set up". Null for an empty number. The form and RecordingController use it.
+     *
+     * @param callable(string): string $translate
+     * @return array{0: string, 1: string}|null
+     */
+    public static function check(Stack $stack, callable $translate, string $recording): ?array
+    {
+        if (!$stack->isConfigured()) {
+            return ['error', $translate('Annoudio is not set up. A global administrator must type the stack address and the project in Modules, Annoudio, Configure.')];
         }
-        return sprintf('<p class="annoudio-status messages"><span class="%s">%s</span></p>', $class, $view->escapeHtml($text));
+        if ($recording === '') {
+            return null;
+        }
+        try {
+            return ['success', sprintf($translate('Recording found: %s'), $stack->recording($recording)['title'])];
+        } catch (StackError $e) {
+            return ['error', $e->getMessage()];
+        }
     }
 }

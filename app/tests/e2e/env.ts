@@ -20,3 +20,7 @@ process.env.DATABASE_URL = E2E_DATABASE_URL
 process.env.MEDIA_DIR = E2E_MEDIA_DIR
 process.env.ANNOUDIO_ORIGIN = E2E_ORIGIN
 delete process.env.SMTP_URL
+// The e2e server has the test mailbox on. The test process seeds projects with the same
+// config, so it must see the same: a new project then signs in with login codes
+// (design/invite-codes.md).
+process.env.ANNOUDIO_TEST_MAILBOX = '1'

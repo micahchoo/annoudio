@@ -62,6 +62,10 @@ Payload 3.90 reads one cookie, `${cookiePrefix}-token`, for every auth collectio
 
 The admin lists members (email, nickname, status, created). An operator can change `status` to `blocked` and back, and can edit the nickname. Operators cannot create or delete members in the admin; the login flow creates them.
 
+## Invite codes (added 2026-10-09)
+
+`redeemInvite(email, code, nickname?, { ip?, project? })` and `invites.create/list/revoke` sign members in without mail. `members.emailVerified` is false for a member that an invite code made, and `contact` then gives null, so no member mail goes. `MembershipConfig.signInOf(slug)` gives the project's mode. Design and trust model: `design/invite-codes.md`.
+
 ## Not in this module
 
 The Annotate page owns the forms and the strings. `projects` owns the check of the `return` URL.

@@ -12,7 +12,8 @@ import { lifecycle } from '@/modules/stories'
 import { operatorOf } from '../operator'
 import { strings } from '../strings'
 
-import { badgeOf } from './badge'
+import { badgesOf } from './badge'
+import { StateBadge } from '../ui/StateBadge'
 import { NextStoryButton, PublishDialog, RemoveDialog, ReturnDialog } from './Dialogs'
 
 const s = strings.review
@@ -22,7 +23,6 @@ type SlotProps = ServerProps & { id?: number | string }
 const reviewOf = cache((operatorId: string, name: string | undefined, id: string) =>
   stories.review({ operatorId, name }, id),
 )
-const historyOf = cache((operatorId: string, id: string) => stories.history({ operatorId }, id))
 
 async function load({ id, user }: SlotProps) {
   const operator = operatorOf(user)
@@ -33,22 +33,19 @@ async function load({ id, user }: SlotProps) {
 
 /**
  * The badge of the lifecycle state and its age: "Waiting for review since 2 days ago".
- * A save after a return says "Sent again after a return" (design/ia.md §6, F4).
+ * A save after a return also shows "Sent again" (design/ia.md §6, F4; `Lifecycle.again`).
  */
 export async function Status(props: SlotProps) {
   const found = await load(props)
   if (!found) return null
-  const badge = badgeOf(found.state)
-  const waits = (found.state.change ?? found.state.state) === 'waiting'
-  const operator = operatorOf(props.user)!
-  const lines = waits ? await historyOf(operator.operatorId, found.story.id) : []
-  const again =
-    lines[0]?.action === 'saved' && lines.some((line) => line.action.startsWith('returned'))
   return (
-    <p className="annoudio-status">
-      <span className={`annoudio-badge annoudio-badge--${badge.tone}`}>{badge.label}</span>{' '}
+    <p className="ao annoudio-status">
+      <span className="ao-badges">
+        {badgesOf(found.state).map((badge) => (
+          <StateBadge key={badge.label} badge={badge} />
+        ))}
+      </span>{' '}
       <span className="annoudio-status__age">{s.since(ago(found.story.modified, new Date()))}</span>
-      {again && <span className="annoudio-status__again">{strings.history.sentAgain}</span>}
     </p>
   )
 }
@@ -78,7 +75,7 @@ export async function PublishControl(props: SlotProps) {
           reply: story.replyTo !== undefined,
           parentNickname: story.replyTo?.nickname ?? null,
           texts: story.texts,
-          tags: story.tags.flatMap((tag) => tag.label ?? []),
+          tags: story.values.filter((v) => v.purpose === 'tagging').map((v) => v.text),
           media: story.media.map((body) => s.mediaKinds[body.kind]),
         }}
       />

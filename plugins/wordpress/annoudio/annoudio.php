@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:       Annoudio
- * Description:       The "Annoudio player" block. It shows a recording and its community stories from your Annoudio stack.
- * Version:           0.2.0
+ * Description:       The "Annoudio widget" block. It shows a recording and its community stories from your Annoudio stack.
+ * Version:           0.3.0
  * Requires at least: 6.5
  * Requires PHP:      8.2
  * License:           MIT

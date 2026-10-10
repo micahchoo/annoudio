@@ -4,6 +4,7 @@ namespace Annoudio;
 use Laminas\Form\Element;
 use Laminas\Form\Form;
 use Laminas\Mvc\Controller\AbstractController;
+use Laminas\Mvc\MvcEvent;
 use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Module\AbstractModule;
 
@@ -15,6 +16,14 @@ class Module extends AbstractModule
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
+    }
+
+    /** The check of the page editor is for the roles that edit site pages. */
+    public function onBootstrap(MvcEvent $event)
+    {
+        parent::onBootstrap($event);
+        $acl = $this->getServiceLocator()->get('Omeka\Acl');
+        $acl->allow(['site_admin', 'editor', 'reviewer', 'author'], Controller\RecordingController::class);
     }
 
     /** Modules, Annoudio, Configure. The status line shows the live check. */

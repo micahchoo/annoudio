@@ -79,7 +79,7 @@ test.describe("theme cascade (CONTRACT 3.1, rule 3)", () => {
     // Default: no theme, no host token.
     await mount(page, player({ ...defaults, project: "plain" }));
     await waitForEvent(page, "annoudio:ready");
-    expect(await accent(page)).toBe("rgb(11, 92, 173)"); // #0b5cad
+    expect(await accent(page)).toBe("rgb(11, 110, 153)"); // #0b6e99 (design-system §7)
 
     // Ancestor beats default.
     await mount(page, ANCESTOR + player({ ...defaults, project: "plain" }));
@@ -101,7 +101,7 @@ test.describe("theme cascade (CONTRACT 3.1, rule 3)", () => {
     const output = watchConsole(page);
     await mount(page, player({ ...defaults, project: "bad" }));
     await waitForEvent(page, "annoudio:ready");
-    expect(await accent(page)).toBe("rgb(11, 92, 173)");
+    expect(await accent(page)).toBe("rgb(11, 110, 153)");
     expect((await partStyle(page, "player", ["border-top-left-radius"]))["border-top-left-radius"]).toBe("12px");
     await expect(part(page, "player")).toBeVisible();
     const themeWarnings = output.warnings.filter((w) => w.includes("project theme"));
@@ -117,7 +117,7 @@ test.describe("the 500 ms rule (CONTRACT 3.2, rule 5)", () => {
     const readyAfter = Date.now() - start;
     expect(readyAfter).toBeLessThan(2000); // The theme takes 2500 ms.
     await expect(part(page, "play-button")).toBeVisible();
-    expect((await partStyle(page, "play-button", ["background-color"]))["background-color"]).toBe("rgb(11, 92, 173)");
+    expect((await partStyle(page, "play-button", ["background-color"]))["background-color"]).toBe("rgb(11, 110, 153)");
     await expect
       .poll(async () => (await partStyle(page, "play-button", ["background-color"]))["background-color"], { timeout: 6000 })
       .toBe("rgb(0, 100, 0)");
@@ -429,7 +429,7 @@ test.describe("motion and layout (CONTRACT 11)", () => {
     const ring = await partStyle(page, "play-button", ["outline-style", "outline-width", "outline-color"]);
     expect(ring["outline-style"]).toBe("solid");
     expect(Number.parseFloat(ring["outline-width"] ?? "0")).toBeGreaterThanOrEqual(2);
-    expect(ring["outline-color"]).toBe("rgb(11, 92, 173)");
+    expect(ring["outline-color"]).toBe("rgb(11, 110, 153)");
 
     // Open the story with replies, so that its thread and Reply link show.
     await part(page, "story").nth(2).getByRole("button").first().click();

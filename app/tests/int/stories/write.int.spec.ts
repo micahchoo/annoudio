@@ -23,6 +23,8 @@ import {
   seed,
   startPayload,
   storyId,
+  SUBJECT,
+  topic,
 } from './world'
 
 let payload: Payload
@@ -99,7 +101,7 @@ describe('saveDraft', () => {
 
   it('save that changes the project or the recording returns instance-changed', async () => {
     const first = await saved()
-    for (const change of [{ recording: '2' }, { project: 'hill-songs', tags: [] }]) {
+    for (const change of [{ recording: '2' }, { project: 'hill-songs', values: [] }]) {
       const result = await stories.saveDraft(leela, draft({ ...change, ifMatch: first.etag }))
       expect(result).toEqual({ ok: false, error: { code: 'instance-changed' } })
     }
@@ -131,14 +133,17 @@ describe('saveDraft', () => {
     expect((await stories.saveDraft(leela, draft({ recording: '2', end: 9999 }))).ok).toBe(true)
   })
 
-  it('zero bodies or an empty text returns no-body; too many bodies or tags are refused', async () => {
-    const small = makeStories(payload, { limits: { bodies: 2, tags: 1 } })
+  it('zero bodies or an empty text returns no-body; too many bodies or values are refused', async () => {
+    const small = makeStories(payload, { limits: { bodies: 2, values: 1 } })
     const text = (value: string) => ({ kind: 'text' as const, value })
     const cases: [Partial<DraftInput>, SaveError][] = [
       [{ bodies: [] }, { code: 'no-body' }],
       [{ bodies: [text('  ')] }, { code: 'no-body' }],
       [{ bodies: [text('a'), text('b'), text('c')] }, { code: 'too-many-bodies' }],
-      [{ tags: [FERRY, BOAT] }, { code: 'too-many-tags' }],
+      [
+        { values: [topic(FERRY), topic(BOAT)] },
+        { code: 'values-invalid', errors: [{ property: SUBJECT, code: 'too-many' }] },
+      ],
     ]
     for (const [change, error] of cases) {
       expect(await small.saveDraft(leela, draft(change))).toEqual({ ok: false, error })
@@ -172,9 +177,12 @@ describe('saveDraft', () => {
     expect(result).toEqual({ ok: false, error: { code: 'unknown-media', index: 1 } })
   })
 
-  it("concept from another project's vocabulary returns unknown-concept", async () => {
-    const result = await stories.saveDraft(leela, draft({ tags: [FERRY, GOAT] }))
-    expect(result).toEqual({ ok: false, error: { code: 'unknown-concept', iri: GOAT } })
+  it("an item of another project's list returns values-invalid with unknown-item", async () => {
+    const result = await stories.saveDraft(leela, draft({ values: [topic(FERRY), topic(GOAT)] }))
+    expect(result).toEqual({
+      ok: false,
+      error: { code: 'values-invalid', errors: [{ property: SUBJECT, code: 'unknown-item' }] },
+    })
   })
 
   it('text body with HTML is stored and served as plain text', async () => {
@@ -192,7 +200,7 @@ describe('saveDraft', () => {
 
 describe('ownDrafts', () => {
   it("returns only the caller's stories in the instance, with the input that refills the form", async () => {
-    await saved(draft({ id: storyId(1), tags: [FERRY, BOAT] }))
+    await saved(draft({ id: storyId(1), values: [topic(FERRY), topic(BOAT)] }))
     await saved(draft({ id: storyId(2) }), ravi)
     await saved(draft({ id: storyId(3), recording: '2' }))
     const own = await stories.ownDrafts(leela, instance)
@@ -203,10 +211,26 @@ describe('ownDrafts', () => {
         etag: expect.any(String),
         reviewState: 'draft',
         pendingRevision: false,
+        modified: expect.any(String),
         start: 42,
         end: 51,
         bodies: [{ kind: 'text', value: 'My grandmother sang this on the ferry.', language: 'ml' }],
-        tags: [FERRY, BOAT],
+        values: [
+          {
+            property: SUBJECT,
+            purpose: 'tagging',
+            text: 'Ferry',
+            language: 'en',
+            object: { iri: FERRY },
+          },
+          {
+            property: SUBJECT,
+            purpose: 'tagging',
+            text: 'Boat',
+            language: 'en',
+            object: { iri: BOAT },
+          },
+        ],
       },
     ])
     expect(await stories.ownDrafts(ravi, { project: PROJECT, recording: '2' })).toEqual([])
@@ -309,7 +333,10 @@ describe('review', () => {
 describe('coupling and export', () => {
   it('conceptChanged updates the tag label in every published story that uses the concept', async () => {
     await publishDraft(stories, draft({ id: storyId(1) }))
-    await publishDraft(stories, draft({ id: storyId(2), start: 1, end: 2, tags: [FERRY, BOAT] }))
+    await publishDraft(
+      stories,
+      draft({ id: storyId(2), start: 1, end: 2, values: [topic(FERRY), topic(BOAT)] }),
+    )
     const { docs } = await payload.find({
       collection: 'concepts',
       where: { iri: { equals: FERRY } },
@@ -319,16 +346,20 @@ describe('coupling and export', () => {
 
     const container = await readJson(stories, CONTAINER)
     const labels = container.first.items.map((item: Annotation) =>
-      item.body.filter((body) => 'purpose' in body && body.type === 'TextualBody'),
+      item.body.flatMap((body) =>
+        'rdf:object' in body
+          ? [{ value: body.value, purpose: body.purpose, language: body.language }]
+          : [],
+      ),
     )
     expect(labels).toEqual([
       [
-        { type: 'TextualBody', value: 'Ferry boat', purpose: 'tagging', language: 'en' },
-        { type: 'TextualBody', value: 'Boat', purpose: 'tagging', language: 'en' },
+        { value: 'Ferry boat', purpose: 'tagging', language: 'en' },
+        { value: 'Boat', purpose: 'tagging', language: 'en' },
       ],
-      [{ type: 'TextualBody', value: 'Ferry boat', purpose: 'tagging', language: 'en' }],
+      [{ value: 'Ferry boat', purpose: 'tagging', language: 'en' }],
     ])
-    expect((await readJson(stories, storyPath(1))).body[2].value).toBe('Ferry boat')
+    expect((await readJson(stories, storyPath(1))).body[1].value).toBe('Ferry boat')
   })
 
   it('exportStories with reviewState published yields only published stories in id order', async () => {
@@ -396,5 +427,32 @@ describe('toldOn: the host page of the story', () => {
     expect(own.toldOn).toBe(page)
     await saved({ ...draft({ start: 40, toldOn: null }), ifMatch: own.etag })
     expect((await stories.ownDrafts(leela, instance))[0].toldOn).toBe(page)
+  })
+
+  it('keeps a return URL that is not on the list for the operator only, until a listed one comes (workflow-audit 7)', async () => {
+    await saved(draft({ toldOn: 'http://localhost:8091/?pagename=demo#annoudio-t=4' }))
+    const first = await stories.review(operator, storyId(1))
+    expect(first).toMatchObject({ toldOnUnlisted: 'http://localhost:8091/?pagename=demo' })
+    expect(first).not.toHaveProperty('toldOn')
+    expect((await stories.ownDrafts(leela, instance))[0]).not.toHaveProperty('toldOnUnlisted')
+
+    await saved({
+      ...draft({ toldOn: page }),
+      ifMatch: (await stories.ownDrafts(leela, instance))[0].etag,
+    })
+    const second = await stories.review(operator, storyId(1))
+    expect(second).toMatchObject({ toldOn: page })
+    expect(second).not.toHaveProperty('toldOnUnlisted')
+
+    await stories.publish(operator, storyId(1))
+    const served = JSON.stringify(await readJson(stories, CONTAINER))
+    expect(served).not.toContain('localhost:8091')
+  })
+
+  it('never keeps a page that is not an http or https URL', async () => {
+    await saved(draft({ toldOn: 'javascript:alert(1)' }))
+    const review = await stories.review(operator, storyId(1))
+    expect(review).not.toHaveProperty('toldOnUnlisted')
+    expect(review).not.toHaveProperty('toldOn')
   })
 })

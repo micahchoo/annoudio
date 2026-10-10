@@ -1,431 +1,191 @@
-/* The member pages: the Annotate page, Your stories and Your account. The colours read
-   the theme tokens of the project (Frame.tsx sets them on the root), with these defaults. */
+/* The member pages: the Annotate page, Your stories and Your account, in the phone layout
+   of the design system (design/design-system.md §3, §5 "Phone form layout"). The --ao-*
+   tokens read the theme tokens of the project (Frame.tsx sets them on the root); their
+   defaults are the widget defaults (design-system.md §7). Sizes are the .ao-member scale:
+   16px field text (no iOS zoom), 44px targets. */
 
 .annotate {
-  --ink: var(--annoudio-color-text, #1b1b1b);
-  --paper: var(--annoudio-color-surface, #ffffff);
-  --muted: var(--annoudio-color-muted, #545454);
-  --line: var(--annoudio-color-border, #8a8a8a);
-  --accent: var(--annoudio-color-accent, #0b57d0);
-  --on-accent: var(--annoudio-color-on-accent, #ffffff);
-  --radius: var(--annoudio-radius, 4px);
-  --error: #b3261e;
+  --ao-bg: var(--annoudio-color-surface, #ffffff);
+  --ao-surface: var(--annoudio-color-surface, #ffffff);
+  --ao-surface-sunken: color-mix(in srgb, var(--ao-text) 4%, var(--ao-surface));
+  --ao-text: var(--annoudio-color-text, #1f1f1f);
+  --ao-text-muted: var(--annoudio-color-muted, #595959);
+  --ao-border: color-mix(in srgb, var(--ao-text) 14%, var(--ao-surface));
+  --ao-border-control: var(--annoudio-color-border, #767676);
+  --ao-accent: var(--annoudio-color-accent, #0b6e99);
+  --ao-on-accent: var(--annoudio-color-on-accent, #ffffff);
+  --ao-accent-subtle: color-mix(in srgb, var(--ao-accent) 10%, var(--ao-surface));
+  --ao-accent-text: var(--ao-accent);
+  --ao-focus: var(--annoudio-color-focus, #0b6e99);
+  --ao-danger: #b63636;
+  --ao-danger-text: #7b2927;
+  --ao-danger-subtle: #fce5e3;
+  --ao-radius-m: var(--annoudio-radius, 6px);
+  --ao-radius-l: calc(var(--ao-radius-m) + 4px);
+  --ao-radius-pill: 999px;
+  --ao-hit: 44px;
+  --ao-space-1: 0.25rem;
+  --ao-space-2: 0.5rem;
+  --ao-space-3: 0.75rem;
+  --ao-space-4: 1rem;
+  --ao-space-5: 1.5rem;
+  --ao-space-6: 2rem;
+  --ao-text-xs: 0.8125rem;
+  --ao-text-sm: 0.875rem;
+  --ao-text-md: 1rem;
+  --ao-text-lg: 1.125rem;
+  --ao-text-xl: 1.375rem;
+  --ao-text-2xl: 1.75rem;
+  /* Lifecycle colours (design-system.md §3.4): whose move it is. */
+  --ao-processing-bg: #ebebeb; --ao-processing-text: #2f2f2f;
+  --ao-waiting-bg: #f8e8db; --ao-waiting-text: #5a3713;
+  --ao-returned-bg: #f3e8f7; --ao-returned-text: #5b2a6e;
+  --ao-published-bg: #e2f2e6; --ao-published-text: #1d5530;
+  /* The short names of questions.css. */
+  --ink: var(--ao-text);
+  --paper: var(--ao-surface);
+  --muted: var(--ao-text-muted);
+  --line: var(--ao-border-control);
+  --accent: var(--ao-accent);
+  --on-accent: var(--ao-on-accent);
+  --radius: var(--ao-radius-m);
+  --error: var(--ao-danger);
 
+  box-sizing: border-box;
   max-width: 40rem;
   min-height: 100vh;
   margin: 0 auto;
-  padding: 1rem 1rem 3rem;
-  background: var(--paper);
-  color: var(--ink);
+  padding: var(--ao-space-4) var(--ao-space-4) 0;
+  background: var(--ao-bg);
+  color: var(--ao-text);
   font-family: var(--annoudio-font-family, system-ui, sans-serif);
-  font-size: 1rem;
+  font-size: var(--ao-text-md);
   line-height: 1.5;
 }
+.annotate *, .annotate *::before, .annotate *::after { box-sizing: inherit; }
 
-.annotate .top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-}
+/* The top: project, title, recording, the member menu, one way back. */
+.annotate .top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--ao-space-2) var(--ao-space-4); }
+.annotate .top__project { margin: 0; color: var(--ao-text-muted); font-size: var(--ao-text-sm); font-weight: 600; }
+.annotate h1 { margin: 0 0 var(--ao-space-1); font-size: var(--ao-text-2xl); line-height: 1.2; text-wrap: balance; }
+.annotate h2 { margin: var(--ao-space-6) 0 var(--ao-space-3); font-size: var(--ao-text-xl); line-height: 1.3; text-wrap: balance; }
+.annotate p { margin: var(--ao-space-2) 0; text-wrap: pretty; }
+.annotate .instance, .annotate .hint { color: var(--ao-text-muted); }
+.annotate .back { margin: var(--ao-space-3) 0 0; }
+.annotate .back a { display: inline-flex; align-items: center; min-height: var(--ao-hit); }
+.annotate .back__note { margin: 0; color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
 
-.annotate .top__project {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.annotate .back {
-  margin: 0.75rem 0 0;
-}
-
-.annotate .back a {
-  display: inline-block;
-  min-height: 24px;
-}
-
-.annotate .member-menu {
-  position: relative;
-}
-
-.annotate .member-menu summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 44px;
-  padding: 0 0.75rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  cursor: pointer;
-  list-style: none;
-}
-
-.annotate .member-menu summary::-webkit-details-marker {
-  display: none;
-}
-
-.annotate .member-menu ul {
-  position: absolute;
-  right: 0;
-  z-index: 1;
-  min-width: 12rem;
-  margin: 0.25rem 0 0;
-  padding: 0.25rem 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-  list-style: none;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
-}
-
+.annotate .member-menu { position: relative; }
+.annotate .member-menu summary { display: inline-flex; align-items: center; gap: var(--ao-space-1); min-height: var(--ao-hit); padding: 0 var(--ao-space-3); border-radius: var(--ao-radius-m); box-shadow: inset 0 0 0 1px var(--ao-border-control); cursor: pointer; list-style: none; }
+.annotate .member-menu summary::-webkit-details-marker { display: none; }
+.annotate .member-menu ul { position: absolute; inset-inline-end: 0; z-index: 2; min-width: 12rem; margin: var(--ao-space-1) 0 0; padding: var(--ao-space-1) 0; border-radius: var(--ao-radius-l); background: var(--ao-surface); list-style: none; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 8px 24px rgb(0 0 0 / 0.16); }
 .annotate .member-menu li a,
-.annotate .member-menu li button {
-  display: block;
-  width: 100%;
-  min-height: 44px;
-  margin: 0;
-  padding: 0.6rem 1rem;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-}
+.annotate .member-menu li button { display: block; width: 100%; min-height: var(--ao-hit); margin: 0; padding: var(--ao-space-3) var(--ao-space-4); border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--ao-text); font: inherit; font-weight: 400; text-align: start; text-decoration: none; }
+@media (hover: hover) { .annotate .member-menu li :is(a, button):hover { background: var(--ao-accent-subtle); } }
+.annotate .member-menu form { margin: 0; }
 
-.annotate .member-menu li a:hover,
-.annotate .member-menu li button:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
+/* The moment line: which part of the recording the story is about. */
+.annotate .moment, .annotate .ao-moment { display: flex; align-items: center; gap: var(--ao-space-2); margin: var(--ao-space-3) 0; padding: var(--ao-space-2) var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-accent-subtle); color: var(--ao-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.annotate .intro { color: var(--ao-text-muted); max-width: 65ch; }
 
-.annotate .member-menu form {
-  margin: 0;
-}
-
-.annotate .status {
-  margin: 1.5rem 0 0;
-  padding: 0.75rem 1rem;
-  border-left: 4px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--paper));
-}
-
-.annotate .status--returned {
-  border-left-color: var(--error);
-  background: color-mix(in srgb, var(--error) 8%, var(--paper));
-}
-
-.annotate .status h2 {
-  margin: 0;
-}
-
-.annotate .badge {
-  display: inline-block;
-  margin-left: 0.25rem;
-  padding: 0 0.5rem;
-  border: 1px solid currentColor;
-  border-radius: 1rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-.annotate .moment {
-  font-weight: 600;
-}
-
-.annotate footer.rights {
-  margin-top: 3rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
-}
-
-.annotate h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.75rem;
-  line-height: 1.2;
-}
-
-.annotate h2 {
-  margin: 2rem 0 0.75rem;
-  font-size: 1.25rem;
-  line-height: 1.3;
-}
-
-.annotate p {
-  margin: 0.5rem 0;
-}
-
-.annotate .instance,
-.annotate .hint {
-  color: var(--muted);
-}
-
-.annotate label {
-  display: block;
-  margin-top: 1rem;
-  font-weight: 600;
-}
-
-.annotate input:not([type='checkbox']),
-.annotate textarea {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  font: inherit;
-  color: inherit;
-  background: var(--paper);
-}
-
+/* Fields */
+.annotate label { display: block; margin-top: var(--ao-space-4); font-weight: 600; }
+.annotate input:not([type='checkbox'], [type='radio'], [type='file']),
+.annotate textarea { width: 100%; min-height: var(--ao-hit); padding: var(--ao-space-2) var(--ao-space-3); border: 1px solid var(--ao-border-control); border-radius: var(--ao-radius-m); font: inherit; font-size: var(--ao-text-md); color: inherit; background: var(--ao-surface); }
 .annotate input[aria-invalid='true'],
-.annotate textarea[aria-invalid='true'] {
-  border: 2px solid var(--error);
-}
+.annotate textarea[aria-invalid='true'] { border-color: var(--ao-danger); box-shadow: inset 0 0 0 1px var(--ao-danger); }
+.annotate .error { display: flex; align-items: center; gap: var(--ao-space-1); color: var(--ao-danger); font-weight: 600; font-size: var(--ao-text-sm); }
 
-.annotate button {
-  margin: 1rem 0.5rem 0 0;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  background: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  cursor: pointer;
+/* Buttons: one filled button per view (the primary); the others outline. */
+.annotate button { display: inline-flex; align-items: center; justify-content: center; gap: var(--ao-space-2); min-height: var(--ao-hit); margin: var(--ao-space-4) var(--ao-space-2) 0 0; padding: 0 var(--ao-space-4); border: 0; border-radius: var(--ao-radius-m); background: var(--ao-accent); color: var(--ao-on-accent); font: inherit; font-weight: 600; cursor: pointer; }
+.annotate button[type='button'] { background: var(--ao-surface); color: var(--ao-accent-text); box-shadow: inset 0 0 0 1px var(--ao-border-control); }
+.annotate button:disabled { background: var(--ao-surface-sunken); color: var(--ao-text-muted); box-shadow: inset 0 0 0 1px var(--ao-border); cursor: not-allowed; }
+.annotate .button-link { display: inline-flex; align-items: center; justify-content: center; gap: var(--ao-space-2); min-height: var(--ao-hit); padding: 0 var(--ao-space-4); border-radius: var(--ao-radius-m); font-weight: 600; text-decoration: none; box-shadow: inset 0 0 0 1px var(--ao-border-control); color: var(--ao-accent-text); background: var(--ao-surface); }
+.annotate .button-link--primary { background: var(--ao-accent); color: var(--ao-on-accent); box-shadow: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .annotate button:active:not(:disabled), .annotate .button-link:active { scale: 0.96; }
+  .annotate button, .annotate .button-link { transition: scale 120ms cubic-bezier(0.2, 0, 0, 1), background-color 120ms cubic-bezier(0.2, 0, 0, 1); }
 }
+.annotate :focus-visible { outline: 2px solid var(--ao-focus); outline-offset: 2px; }
+.annotate a { color: var(--ao-accent-text); text-underline-offset: 0.2em; }
 
-.annotate button[type='button'] {
-  background: var(--paper);
-  color: var(--accent);
-}
+/* The widget with the range, and the two times side by side when there is room. */
+.annotate .widget { margin: var(--ao-space-4) 0; }
+.annotate .widget figcaption { color: var(--ao-text-muted); font-size: var(--ao-text-sm); margin-bottom: var(--ao-space-1); }
+.annotate .widget annoudio-player { display: block; }
+/* The other stories of the recording stay in a short box with its own scroll, so Start, End
+   and the story field follow the waveform closely on a phone (recordings audit, 10). This
+   page owns both sides; host pages keep the full list. */
+.annotate .widget annoudio-player::part(stories) { max-height: 8rem; overflow-y: auto; overscroll-behavior: contain; }
+/* The page says what a story is (its intro line); the widget's own intro would repeat it. */
+.annotate .widget annoudio-player::part(intro) { display: none; }
+.annotate .range { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0 var(--ao-space-4); }
+.annotate .time button { margin: var(--ao-space-2) 0 0; width: 100%; font-variant-numeric: tabular-nums; }
+.annotate fieldset { margin: var(--ao-space-5) 0 0; padding: var(--ao-space-3) var(--ao-space-4); border: 1px solid var(--ao-border); border-radius: var(--ao-radius-m); }
+.annotate legend { font-weight: 600; }
 
-.annotate button:disabled {
-  opacity: 0.6;
-}
+/* The sticky bar: the primary button and one line of what happens next, above the safe area. */
+.annotate .send-bar { position: sticky; bottom: 0; z-index: 1; display: grid; gap: var(--ao-space-1); margin: var(--ao-space-5) calc(-1 * var(--ao-space-4)) 0; padding: var(--ao-space-3) var(--ao-space-4) max(var(--ao-space-3), env(safe-area-inset-bottom)); background: var(--ao-bg); box-shadow: 0 -1px 0 var(--ao-border); }
+.annotate .send-bar button { margin: 0; width: 100%; }
+.annotate .send-bar p { margin: 0; color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
 
-.annotate :focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
+/* A lifecycle state: one word and one colour on every surface (design-system.md §3.4). */
+.annotate .status { margin: var(--ao-space-5) 0 0; padding: var(--ao-space-3) var(--ao-space-4); border-radius: var(--ao-radius-l); background: var(--ao-surface-sunken); }
+.annotate .status h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-2); }
+.annotate .status--returned { background: var(--ao-returned-bg); color: var(--ao-returned-text); }
+.annotate .badge, .annotate .state { display: inline-flex; align-items: center; padding: 2px var(--ao-space-2); border-radius: var(--ao-radius-pill); font-size: var(--ao-text-xs); font-weight: 600; white-space: nowrap; background: var(--ao-processing-bg); color: var(--ao-processing-text); vertical-align: middle; }
+.annotate [data-state='waiting'] .badge, .annotate .state[data-state='waiting'] { background: var(--ao-waiting-bg); color: var(--ao-waiting-text); }
+.annotate [data-state='returned'] .badge, .annotate .state[data-state='returned'] { background: var(--ao-returned-bg); color: var(--ao-returned-text); }
+.annotate [data-state='published'] .badge, .annotate .state[data-state='published'] { background: var(--ao-published-bg); color: var(--ao-published-text); }
+.annotate .returned { color: inherit; }
+.annotate .saved { color: var(--ao-text-muted); font-size: var(--ao-text-sm); white-space: nowrap; }
 
-.annotate a {
-  color: var(--accent);
-}
+/* The done screen after a save with no way back to the site (P5, workflow-audit 19). */
+.annotate .done { display: grid; gap: var(--ao-space-3); margin-top: var(--ao-space-5); padding: var(--ao-space-5) var(--ao-space-4); border-radius: var(--ao-radius-l); background: var(--ao-surface-sunken); }
+.annotate .done h2 { margin: 0; }
+.annotate .done p { margin: 0; }
+.annotate .done__links { display: flex; flex-wrap: wrap; gap: var(--ao-space-3); }
+.annotate .done__note { padding: var(--ao-space-2) var(--ao-space-3); border-radius: var(--ao-radius-m); background: var(--ao-waiting-bg); color: var(--ao-waiting-text); }
 
-.annotate .error {
-  color: var(--error);
-  font-weight: 600;
-}
-
-.annotate .player {
-  margin: 1rem 0;
-}
-
-.annotate .range {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1.5rem;
-}
-
-.annotate .time {
-  flex: 1 1 12rem;
-}
-
-.annotate fieldset {
-  margin: 1.5rem 0 0;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-
-.annotate legend {
-  font-weight: 600;
-}
-
-.annotate .topics {
-  margin: 0;
-  padding-left: 1.25rem;
-  list-style: none;
-}
-
-.annotate .topics > li > label {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  font-weight: 400;
-}
-
-.annotate .rights {
-  margin-top: 1.5rem;
-  color: var(--muted);
-  font-size: 0.875rem;
-}
-
-.annotate .returned {
-  color: var(--ink);
-}
-
-.annotate .own ul {
-  padding: 0;
-  list-style: none;
-}
-
-.annotate .own li {
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--line);
-}
-
-.annotate .state {
-  color: var(--muted);
-}
-
-.annotate .visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.annotate .attachments {
-  padding: 0;
-  list-style: none;
-}
-
-.annotate .attachments li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--line);
-}
-
-.annotate .attachments img {
-  max-width: 6rem;
-  max-height: 6rem;
-  object-fit: cover;
-}
-
-.annotate .media audio {
-  max-width: 100%;
-}
-
-.annotate .pick input {
-  display: block;
-  margin-top: 0.25rem;
-}
+/* Lists of own stories (this recording, Your stories). */
+.annotate .own ul { padding: 0; list-style: none; }
+.annotate .own li { padding: var(--ao-space-3) 0; border-top: 1px solid var(--ao-border); }
+.annotate .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.annotate .attachments { padding: 0; list-style: none; }
+.annotate .attachments li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ao-space-2); padding: var(--ao-space-2) 0; border-top: 1px solid var(--ao-border); }
+.annotate .attachments img { max-width: 6rem; max-height: 6rem; object-fit: cover; border-radius: var(--ao-radius-m); outline: 1px solid rgb(0 0 0 / 0.1); outline-offset: -1px; }
+.annotate .media audio { max-width: 100%; }
+.annotate .pick input { display: block; margin-top: var(--ao-space-1); }
 
 /* The story that a reply answers. */
-.annotate .parent blockquote {
-  margin: 0.5rem 0;
-  padding: 0.25rem 0 0.25rem 1rem;
-  border-left: 4px solid var(--line);
-  white-space: pre-wrap;
-}
+.annotate .parent blockquote { margin: var(--ao-space-2) 0; padding: var(--ao-space-1) 0 var(--ao-space-1) var(--ao-space-4); border-inline-start: 4px solid var(--ao-border-control); white-space: pre-wrap; }
 
-/* The page shows the rights line of the project itself; the player here does not repeat it. */
-.annotate annoudio-player::part(rights) {
-  display: none;
-}
+/* The page shows the rights line of the project itself; the widget here does not repeat it. */
+.annotate annoudio-player::part(rights) { display: none; }
+.annotate footer.rights { margin-top: var(--ao-space-6); padding: var(--ao-space-4) 0 var(--ao-space-5); border-top: 1px solid var(--ao-border); color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
 
 /* Your stories (P7) and Your account (P8). */
-.annotate .group h2 {
-  margin-top: 1.75rem;
-}
+.annotate .group h2 { margin-top: var(--ao-space-5); }
+.annotate .count { color: var(--ao-text-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.annotate .cards { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--ao-space-3); }
+.annotate .card { padding: var(--ao-space-3) var(--ao-space-4); border-radius: var(--ao-radius-l); background: var(--ao-surface); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.06); }
+.annotate .card h3 { margin: 0; font-size: var(--ao-text-md); line-height: 1.4; }
+.annotate .card__meta { margin: var(--ao-space-1) 0; color: var(--ao-text-muted); font-size: var(--ao-text-sm); }
+.annotate .card__text { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.annotate .card__links { display: flex; flex-wrap: wrap; gap: var(--ao-space-1) var(--ao-space-5); margin-bottom: 0; }
+.annotate .card__links a { display: inline-flex; align-items: center; min-height: var(--ao-hit); }
+.annotate .empty { margin-top: var(--ao-space-6); padding: var(--ao-space-5) var(--ao-space-4); border-radius: var(--ao-radius-l); background: var(--ao-surface-sunken); font-size: var(--ao-text-lg); }
+.annotate .field { display: flex; flex-direction: column; margin-top: var(--ao-space-4); }
+.annotate .field .label { font-weight: 600; }
+.annotate .field .hint { font-size: var(--ao-text-sm); }
+.annotate label.check { display: flex; align-items: flex-start; gap: var(--ao-space-2); font-weight: 400; min-height: var(--ao-hit); }
+.annotate label.check input { width: 1.25rem; height: 1.25rem; margin-top: 0.15rem; flex: none; accent-color: var(--ao-accent); }
+.annotate .saved-note { margin-inline-start: var(--ao-space-2); font-weight: 600; }
+.annotate .sign-out button { background: var(--ao-surface); color: var(--ao-accent-text); box-shadow: inset 0 0 0 1px var(--ao-border-control); }
 
-.annotate .count {
-  color: var(--muted);
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
-}
+/* "Have an invite code?" and "Get a login code by email instead": a way to the other form. */
+.annotate button.link-button { display: block; margin-top: var(--ao-space-5); padding: var(--ao-space-2) 0; min-height: var(--ao-hit); border: 0; background: none; box-shadow: none; color: var(--ao-accent-text); font-weight: 400; text-decoration: underline; }
 
-.annotate .cards {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.annotate .card {
-  margin: 0.75rem 0;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.annotate .card h3 {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.4;
-}
-
-.annotate .card__meta {
-  margin: 0.25rem 0;
-  color: var(--muted);
-  font-size: 0.875rem;
-}
-
-.annotate .card__text {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.annotate .card__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
-  margin-bottom: 0;
-}
-
-.annotate .card__links a {
-  display: inline-block;
-  min-height: 24px;
-}
-
-.annotate .empty {
-  margin-top: 2rem;
-  font-size: 1.1rem;
-}
-
-.annotate .field {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1rem;
-}
-
-.annotate .field .label {
-  font-weight: 600;
-}
-
-.annotate .field .hint {
-  font-size: 0.875rem;
-}
-
-.annotate label.check {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  font-weight: 400;
-}
-
-.annotate label.check input {
-  width: 1.25rem;
-  height: 1.25rem;
-  margin-top: 0.15rem;
-  flex: none;
-}
-
-.annotate .saved-note {
-  margin-left: 0.5rem;
-  font-weight: 600;
-}
-
-.annotate .sign-out button {
-  background: var(--paper);
-  color: var(--accent);
+@media (forced-colors: active) {
+  .annotate .badge, .annotate .state, .annotate .card, .annotate .status, .annotate .done { border: 1px solid CanvasText; }
 }

@@ -1,7 +1,7 @@
 // The Annotate link (CONTRACT.md §7): `/annotate?project&recording&t&return`, and the
-// Reply link of the player, which adds `replyTo`.
+// Reply link of the widget, which adds `replyTo`.
 
-import { withPlayerFragment } from '@/fragment'
+import { withWidgetFragment } from '@/fragment'
 
 export { seconds } from '@/fragment'
 
@@ -55,9 +55,9 @@ export function annotatePath(link: AnnotateLink, extra: Record<string, string> =
 }
 
 /**
- * `return` plus the fragment that the player reads (CONTRACT.md §7.2): `annoudio-saved`
+ * `return` plus the fragment that the widget reads (CONTRACT.md §7.2): `annoudio-saved`
  * is `draft` (it waits for review) or `published` (the project publishes at once). After a
- * reply, `annoudio-reply` makes the player open the story that it answers.
+ * reply, `annoudio-reply` makes the widget open the story that it answers.
  */
 export function returnWithFragment(
   target: string,
@@ -65,7 +65,7 @@ export function returnWithFragment(
   start: number,
   reviewState: 'draft' | 'published',
 ): string {
-  return withPlayerFragment(target, {
+  return withWidgetFragment(target, {
     project: link.project,
     recording: link.recording,
     t: start,

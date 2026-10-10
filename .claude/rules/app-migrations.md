@@ -24,7 +24,13 @@ Postgres, run `NODE_ENV=production pnpm migrate`, then `pnpm migrate:status`.
 
 Hazards found in Phase 5:
 - `migrate:create` asks "created or renamed?" in an interactive prompt for each new
-  table or column. It needs a terminal; without one it waits for ever.
+  table or column. It needs a terminal; without one it waits for ever. Workaround (used
+  for `vocab_profile`): give it a pseudo terminal and press Enter (the first choice,
+  "create") a few times:
+  `(for i in $(seq 1 40); do sleep 1.5; printf '\r'; done) | script -qec "DATABASE_URL=… pnpm migrate:create <name>" /dev/null`.
+  Read the SQL after: a rename needs the second choice, which this gives never.
+- The generated `down` drops a table with `CASCADE` and then drops the foreign keys of
+  other tables to it, which fail. Use `DROP CONSTRAINT IF EXISTS` (as `vocab_profile`).
 - The generated SQL never moves data. A changed field shape (for example an array
   that became a field) drops the old table before anything copies it. Add the data
   copy by hand, before the DROP, and test up and down with rows in the old shape.

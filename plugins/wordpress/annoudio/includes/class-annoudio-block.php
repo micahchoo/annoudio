@@ -1,6 +1,6 @@
 <?php
 /**
- * The "Annoudio player" block: a dynamic block that prints the snippet of CONTRACT.md 1.
+ * The "Annoudio widget" block: a dynamic block that prints the snippet of CONTRACT.md 1.
  *
  * The post stores only two attributes (recording, src) in the block comment, never HTML.
  * So the block works for authors without the unfiltered_html capability.

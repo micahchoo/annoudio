@@ -1,0 +1,484 @@
+{
+  "prefix": "dcterms",
+  "label": "Dublin Core",
+  "namespace": "http://purl.org/dc/terms/",
+  "url": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_terms.ttl",
+  "licence": "CC BY 4.0 (DCMI)",
+  "terms": [
+    {
+      "iri": "http://purl.org/dc/terms/Agent",
+      "kind": "class",
+      "label": "Agent",
+      "comment": "A resource that acts or has the power to act."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/AgentClass",
+      "kind": "class",
+      "label": "Agent Class",
+      "comment": "A group of agents."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/BibliographicResource",
+      "kind": "class",
+      "label": "Bibliographic Resource",
+      "comment": "A book, article, or other documentary resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/FileFormat",
+      "kind": "class",
+      "label": "File Format",
+      "comment": "A digital resource format."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/Frequency",
+      "kind": "class",
+      "label": "Frequency",
+      "comment": "A rate at which something recurs."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/Jurisdiction",
+      "kind": "class",
+      "label": "Jurisdiction",
+      "comment": "The extent or range of judicial, law enforcement, or other authority."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/LicenseDocument",
+      "kind": "class",
+      "label": "License Document",
+      "comment": "A legal document giving official permission to do something with a resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/LinguisticSystem",
+      "kind": "class",
+      "label": "Linguistic System",
+      "comment": "A system of signs, symbols, sounds, gestures, or rules used in communication."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/Location",
+      "kind": "class",
+      "label": "Location",
+      "comment": "A spatial region or named place."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/LocationPeriodOrJurisdiction",
+      "kind": "class",
+      "label": "Location, Period, or Jurisdiction",
+      "comment": "A location, period of time, or jurisdiction."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/MediaType",
+      "kind": "class",
+      "label": "Media Type",
+      "comment": "A file format or physical medium."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/MediaTypeOrExtent",
+      "kind": "class",
+      "label": "Media Type or Extent",
+      "comment": "A media type or extent."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/MethodOfAccrual",
+      "kind": "class",
+      "label": "Method of Accrual",
+      "comment": "A method by which resources are added to a collection."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/MethodOfInstruction",
+      "kind": "class",
+      "label": "Method of Instruction",
+      "comment": "A process that is used to engender knowledge, attitudes, and skills."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/PeriodOfTime",
+      "kind": "class",
+      "label": "Period of Time",
+      "comment": "An interval of time that is named or defined by its start and end dates."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/PhysicalMedium",
+      "kind": "class",
+      "label": "Physical Medium",
+      "comment": "A physical material or carrier."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/PhysicalResource",
+      "kind": "class",
+      "label": "Physical Resource",
+      "comment": "A material thing."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/Policy",
+      "kind": "class",
+      "label": "Policy",
+      "comment": "A plan or course of action by an authority, intended to influence and determine decisions, actions, and other matters."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/ProvenanceStatement",
+      "kind": "class",
+      "label": "Provenance Statement",
+      "comment": "Any changes in ownership and custody of a resource since its creation that are significant for its authenticity, integrity, and interpretation."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/RightsStatement",
+      "kind": "class",
+      "label": "Rights Statement",
+      "comment": "A statement about the intellectual property rights (IPR) held in or over a resource, a legal document giving official permission to do something with a resource, or a statement about access rights."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/SizeOrDuration",
+      "kind": "class",
+      "label": "Size or Duration",
+      "comment": "A dimension or extent, or a time taken to play or execute."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/Standard",
+      "kind": "class",
+      "label": "Standard",
+      "comment": "A reference point against which other things can be evaluated or compared."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/abstract",
+      "kind": "property",
+      "label": "Abstract",
+      "comment": "A summary of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/accessRights",
+      "kind": "property",
+      "label": "Access Rights",
+      "comment": "Information about who access the resource or an indication of its security status."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/accrualMethod",
+      "kind": "property",
+      "label": "Accrual Method",
+      "comment": "The method by which items are added to a collection."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/accrualPeriodicity",
+      "kind": "property",
+      "label": "Accrual Periodicity",
+      "comment": "The frequency with which items are added to a collection."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/accrualPolicy",
+      "kind": "property",
+      "label": "Accrual Policy",
+      "comment": "The policy governing the addition of items to a collection."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/alternative",
+      "kind": "property",
+      "label": "Alternative Title",
+      "comment": "An alternative name for the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/audience",
+      "kind": "property",
+      "label": "Audience",
+      "comment": "A class of agents for whom the resource is intended or useful."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/available",
+      "kind": "property",
+      "label": "Date Available",
+      "comment": "Date that the resource became or will become available.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/bibliographicCitation",
+      "kind": "property",
+      "label": "Bibliographic Citation",
+      "comment": "A bibliographic reference for the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/conformsTo",
+      "kind": "property",
+      "label": "Conforms To",
+      "comment": "An established standard to which the described resource conforms."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/contributor",
+      "kind": "property",
+      "label": "Contributor",
+      "comment": "An entity responsible for making contributions to the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/coverage",
+      "kind": "property",
+      "label": "Coverage",
+      "comment": "The spatial or temporal topic of the resource, spatial applicability of the resource, or jurisdiction under which the resource is relevant."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/created",
+      "kind": "property",
+      "label": "Date Created",
+      "comment": "Date of creation of the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/creator",
+      "kind": "property",
+      "label": "Creator",
+      "comment": "An entity responsible for making the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/date",
+      "kind": "property",
+      "label": "Date",
+      "comment": "A point or period of time associated with an event in the lifecycle of the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/dateAccepted",
+      "kind": "property",
+      "label": "Date Accepted",
+      "comment": "Date of acceptance of the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/dateCopyrighted",
+      "kind": "property",
+      "label": "Date Copyrighted",
+      "comment": "Date of copyright of the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/dateSubmitted",
+      "kind": "property",
+      "label": "Date Submitted",
+      "comment": "Date of submission of the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/description",
+      "kind": "property",
+      "label": "Description",
+      "comment": "An account of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/educationLevel",
+      "kind": "property",
+      "label": "Audience Education Level",
+      "comment": "A class of agents, defined in terms of progression through an educational or training context, for which the described resource is intended."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/extent",
+      "kind": "property",
+      "label": "Extent",
+      "comment": "The size or duration of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/format",
+      "kind": "property",
+      "label": "Format",
+      "comment": "The file format, physical medium, or dimensions of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/hasFormat",
+      "kind": "property",
+      "label": "Has Format",
+      "comment": "A related resource that is substantially the same as the pre-existing described resource, but in another format."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/hasPart",
+      "kind": "property",
+      "label": "Has Part",
+      "comment": "A related resource that is included either physically or logically in the described resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/hasVersion",
+      "kind": "property",
+      "label": "Has Version",
+      "comment": "A related resource that is a version, edition, or adaptation of the described resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/identifier",
+      "kind": "property",
+      "label": "Identifier",
+      "comment": "An unambiguous reference to the resource within a given context.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/instructionalMethod",
+      "kind": "property",
+      "label": "Instructional Method",
+      "comment": "A process, used to engender knowledge, attitudes and skills, that the described resource is designed to support."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/isFormatOf",
+      "kind": "property",
+      "label": "Is Format Of",
+      "comment": "A pre-existing related resource that is substantially the same as the described resource, but in another format."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/isPartOf",
+      "kind": "property",
+      "label": "Is Part Of",
+      "comment": "A related resource in which the described resource is physically or logically included."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/isReferencedBy",
+      "kind": "property",
+      "label": "Is Referenced By",
+      "comment": "A related resource that references, cites, or otherwise points to the described resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/isReplacedBy",
+      "kind": "property",
+      "label": "Is Replaced By",
+      "comment": "A related resource that supplants, displaces, or supersedes the described resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/isRequiredBy",
+      "kind": "property",
+      "label": "Is Required By",
+      "comment": "A related resource that requires the described resource to support its function, delivery, or coherence."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/isVersionOf",
+      "kind": "property",
+      "label": "Is Version Of",
+      "comment": "A related resource of which the described resource is a version, edition, or adaptation."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/issued",
+      "kind": "property",
+      "label": "Date Issued",
+      "comment": "Date of formal issuance of the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/language",
+      "kind": "property",
+      "label": "Language",
+      "comment": "A language of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/license",
+      "kind": "property",
+      "label": "License",
+      "comment": "A legal document giving official permission to do something with the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/mediator",
+      "kind": "property",
+      "label": "Mediator",
+      "comment": "An entity that mediates access to the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/medium",
+      "kind": "property",
+      "label": "Medium",
+      "comment": "The material or physical carrier of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/modified",
+      "kind": "property",
+      "label": "Date Modified",
+      "comment": "Date on which the resource was changed.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/provenance",
+      "kind": "property",
+      "label": "Provenance",
+      "comment": "A statement of any changes in ownership and custody of the resource since its creation that are significant for its authenticity, integrity, and interpretation."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/publisher",
+      "kind": "property",
+      "label": "Publisher",
+      "comment": "An entity responsible for making the resource available."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/references",
+      "kind": "property",
+      "label": "References",
+      "comment": "A related resource that is referenced, cited, or otherwise pointed to by the described resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/relation",
+      "kind": "property",
+      "label": "Relation",
+      "comment": "A related resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/replaces",
+      "kind": "property",
+      "label": "Replaces",
+      "comment": "A related resource that is supplanted, displaced, or superseded by the described resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/requires",
+      "kind": "property",
+      "label": "Requires",
+      "comment": "A related resource that is required by the described resource to support its function, delivery, or coherence."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/rights",
+      "kind": "property",
+      "label": "Rights",
+      "comment": "Information about rights held in and over the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/rightsHolder",
+      "kind": "property",
+      "label": "Rights Holder",
+      "comment": "A person or organization owning or managing rights over the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/source",
+      "kind": "property",
+      "label": "Source",
+      "comment": "A related resource from which the described resource is derived."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/spatial",
+      "kind": "property",
+      "label": "Spatial Coverage",
+      "comment": "Spatial characteristics of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/subject",
+      "kind": "property",
+      "label": "Subject",
+      "comment": "A topic of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/tableOfContents",
+      "kind": "property",
+      "label": "Table Of Contents",
+      "comment": "A list of subunits of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/temporal",
+      "kind": "property",
+      "label": "Temporal Coverage",
+      "comment": "Temporal characteristics of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/title",
+      "kind": "property",
+      "label": "Title",
+      "comment": "A name given to the resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://purl.org/dc/terms/type",
+      "kind": "property",
+      "label": "Type",
+      "comment": "The nature or genre of the resource."
+    },
+    {
+      "iri": "http://purl.org/dc/terms/valid",
+      "kind": "property",
+      "label": "Date Valid",
+      "comment": "Date (often a range) of validity of a resource.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    }
+  ]
+}

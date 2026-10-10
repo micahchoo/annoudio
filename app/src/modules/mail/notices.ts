@@ -4,7 +4,7 @@
 // lookups come in as functions, so this module reads no collection of another module.
 
 import { ago, clockRange } from '@/clock'
-import { withPlayerFragment } from '@/fragment'
+import { withWidgetFragment } from '@/fragment'
 import type { StoryEvent, StoryRef, Tally } from '@/modules/stories'
 
 import type { Mailer } from './mailer'
@@ -65,13 +65,13 @@ export function createNotices(config: NoticesConfig): Notices {
   }
 
   /**
-   * The host page at the story, so the player opens it (CONTRACT §7.2, `annoudio-story`).
+   * The host page at the story, so the widget opens it (CONTRACT §7.2, `annoudio-story`).
    * A reply opens the story that it answers. With no host page: Your stories.
    */
   function listenLink(story: StoryRef): string {
     if (!story.toldOn) return mine
     const open = story.parent ?? { id: story.id, start: story.start ?? 0 }
-    return withPlayerFragment(story.toldOn, {
+    return withWidgetFragment(story.toldOn, {
       project: story.project,
       recording: story.recording,
       t: open.start,
@@ -143,7 +143,12 @@ export function createNotices(config: NoticesConfig): Notices {
       case 'published': {
         await send(story.memberId, async (contact) =>
           contact.mailNotices
-            ? mails.published({ project, line: await lineOf(story), link: listenLink(story) })
+            ? mails.published({
+                project,
+                line: await lineOf(story),
+                link: listenLink(story),
+                onSite: Boolean(story.toldOn),
+              })
             : null,
         )
         const parent = story.parent
@@ -162,6 +167,7 @@ export function createNotices(config: NoticesConfig): Notices {
                   excerpt:
                     text.length > EXCERPT ? `${text.slice(0, EXCERPT).join('')}…` : story.text,
                   link: listenLink(story),
+                  onSite: Boolean(story.toldOn),
                 })
               : null,
           )

@@ -18,10 +18,13 @@ import {
   makeStories,
   operator,
   publishDraft,
+  ravi,
   readJson,
   seed,
   startPayload,
   storyId,
+  SUBJECT,
+  topic,
   tallies,
 } from './world'
 
@@ -129,7 +132,7 @@ describe('reject', () => {
 
 describe('review', () => {
   it('gives the newest version in plain parts: text, tags with labels, range, member, instance', async () => {
-    await saved(draft({ tags: [FERRY, BOAT] }))
+    await saved(draft({ values: [topic(FERRY), topic(BOAT)] }))
     expect(await stories.review(operator, storyId(1))).toEqual({
       id: storyId(1),
       reviewState: 'draft',
@@ -142,9 +145,21 @@ describe('review', () => {
       texts: [{ value: 'My grandmother sang this on the ferry.', language: 'ml' }],
       media: [],
       replies: 0,
-      tags: [
-        { iri: FERRY, label: 'Ferry' },
-        { iri: BOAT, label: 'Boat' },
+      values: [
+        {
+          property: SUBJECT,
+          purpose: 'tagging',
+          text: 'Ferry',
+          language: 'en',
+          object: { iri: FERRY },
+        },
+        {
+          property: SUBJECT,
+          purpose: 'tagging',
+          text: 'Boat',
+          language: 'en',
+          object: { iri: BOAT },
+        },
       ],
       project: { slug: PROJECT, name: 'River Voices' },
       recording: { id: '1', title: 'Ferry crossing, 1962', url: 'https://media.example/ferry.mp3' },
@@ -169,7 +184,22 @@ describe('review', () => {
   })
 })
 
-describe('counts and tagCounts', () => {
+describe('counts and valueCounts', () => {
+  it('projectReach: the recordings with stories and the members; leaveOut skips test members', async () => {
+    await saved(draft({ id: storyId(1) }))
+    await saved(draft({ id: storyId(2), start: 1, end: 2 }))
+    const byRavi = await stories.saveDraft(ravi, draft({ id: storyId(3), start: 3, end: 4 }))
+    expect(byRavi.ok).toBe(true)
+    expect(await stories.projectReach(PROJECT)).toEqual({
+      recordings: [{ id: '1', stories: 3 }],
+      members: 2,
+    })
+    expect(await stories.projectReach(PROJECT, { leaveOut: [ravi.memberId] })).toEqual({
+      recordings: [{ id: '1', stories: 3 }],
+      members: 1,
+    })
+  })
+
   it('count the stories of one recording by review state', async () => {
     await publishDraft(stories, draft({ id: storyId(1) }))
     await saved(draft({ id: storyId(2), start: 1, end: 2 }))
@@ -185,16 +215,19 @@ describe('counts and tagCounts', () => {
   })
 
   it('count each concept once per story, in drafts and published versions', async () => {
-    await publishDraft(stories, draft({ id: storyId(1), tags: [FERRY, BOAT] }))
-    await saved(draft({ id: storyId(2), start: 1, end: 2, tags: [FERRY] }))
+    await publishDraft(stories, draft({ id: storyId(1), values: [topic(FERRY), topic(BOAT)] }))
+    await saved(draft({ id: storyId(2), start: 1, end: 2, values: [topic(FERRY)] }))
     // A newer draft without BOAT: the published version still uses it.
     const own = (await stories.ownDrafts(leela, instance)).find((s) => s.id === storyId(1))!
     await stories.saveDraft(leela, {
-      ...draft({ id: storyId(1), tags: [FERRY] }),
+      ...draft({ id: storyId(1), values: [topic(FERRY)] }),
       ifMatch: own.etag,
     })
-    expect(Object.fromEntries(await stories.tagCounts(PROJECT))).toEqual({ [FERRY]: 2, [BOAT]: 1 })
-    expect((await stories.tagCounts('hill-songs')).size).toBe(0)
+    expect(Object.fromEntries(await stories.valueCounts(PROJECT))).toEqual({
+      [FERRY]: 2,
+      [BOAT]: 1,
+    })
+    expect((await stories.valueCounts('hill-songs')).size).toBe(0)
   })
 })
 

@@ -1,4 +1,9 @@
+import type { Quad } from 'n3'
 import type { Payload, PayloadRequest } from 'payload'
+
+import type { ResolvedValue, ValueErrorCode, ValueInput, Vocabulary } from '@/modules/vocabulary'
+
+export type { ResolvedValue, ValueErrorCode, ValueInput }
 
 export type StoryId = string // UUIDv7, made by the Annotate page when it opens
 export type ProjectSlug = string
@@ -32,8 +37,13 @@ export interface StoriesConfig {
   pageSize?: number
   /** Seconds in Cache-Control max-age. Default 60. */
   maxAge?: number
-  /** Default 5 bodies, 10 tags, 5000 characters per text body. */
-  limits?: { bodies?: number; tags?: number; text?: number }
+  /** Default 5 bodies, 30 values, 5000 characters per text body. */
+  limits?: { bodies?: number; values?: number; text?: number }
+  /**
+   * The `vocabulary` instance: `resolve` checks the values of a save, and `item` gives the
+   * current label of an item for the served stories.
+   */
+  vocabulary: Pick<Vocabulary, 'resolve' | 'item'>
   /** Default: the system clock. Tests give a fixed clock. */
   now?: () => Date
   /**
@@ -84,7 +94,7 @@ export type BodyInput =
 
 /**
  * A story has a time range: `start` and `end`. A reply has `replyTo` in place of the range:
- * the id of a published story of the same instance. A reply has no tags.
+ * the id of a published story of the same instance. A reply has no values.
  */
 export interface DraftInput {
   /** The same id on every save of this story updates it. */
@@ -96,17 +106,18 @@ export interface DraftInput {
   end?: number
   /** The story that this reply answers. Replies to a reply are refused (`reply-depth`). */
   replyTo?: StoryId
-  /** 1 to `limits.bodies`. Tags do not count. */
+  /** 1 to `limits.bodies`. Values do not count. */
   bodies: BodyInput[]
-  /** 0 to `limits.tags` concepts of this project's vocabulary. Not on a reply. */
-  tags?: ConceptIri[]
+  /** The answers to the fields of the project (`vocabulary.resolve` checks them). Not on a reply. */
+  values?: ValueInput[]
   /** The ETag from the previous save. Omit it on the first save. */
   ifMatch?: string
   /**
    * The `return` URL of the Annotate link: the host page where the member tells the
-   * story. Kept only when its origin is a site of the project (`projects.returnTarget`);
-   * a save without a valid one keeps the earlier value. Operators see it; it is never in
-   * the WADM record.
+   * story. Kept as `toldOn` only when its origin is a site of the project
+   * (`projects.returnTarget`); a save without a valid one keeps the earlier value. Any other
+   * http(s) page is kept for the operator as `toldOnUnlisted`. Operators see both; neither
+   * is ever in the WADM record.
    */
   toldOn?: string | null
 }
@@ -116,22 +127,22 @@ export type SaveError =
   | { code: 'invalid-range'; field: 'start' | 'end' }
   /** The input has `replyTo` and a time range. */
   | { code: 'reply-and-range' }
-  /** The input has `replyTo` and tags. */
-  | { code: 'reply-and-tags' }
+  /** The input has `replyTo` and values. */
+  | { code: 'reply-and-values' }
   /** `replyTo` is not a published story of this instance. */
   | { code: 'unknown-parent' }
   /** `replyTo` is a reply. A thread has one level. */
   | { code: 'reply-depth' }
   | { code: 'no-body' }
   | { code: 'too-many-bodies' }
-  | { code: 'too-many-tags' }
+  /** `vocabulary.resolve` refused values: one code per field. */
+  | { code: 'values-invalid'; errors: { property: string; code: ValueErrorCode }[] }
   | { code: 'text-too-long'; index: number }
   | { code: 'unknown-media'; index: number }
   /** The worker could not use this upload (state `failed`). */
   | { code: 'media-failed'; index: number }
   /** A sound, image or video body needs a text body in the same story. */
   | { code: 'media-needs-text' }
-  | { code: 'unknown-concept'; iri: ConceptIri }
   /** The save moves the story to a different instance, or the reply to a different story. */
   | { code: 'instance-changed' }
   | { code: 'not-owner' }
@@ -152,13 +163,18 @@ export interface OwnDraft {
   reviewState: 'draft' | 'published'
   /** True when a published version exists and a newer draft waits for review. */
   pendingRevision: boolean
+  /** ISO 8601: the last save by the member (the WADM `modified`). */
+  modified: string
+  /** True when the member changed the story after a return, and nobody published or returned it since. */
+  sentAgain?: boolean
   /** A story has `start` and `end`. A reply has `replyTo`. */
   start?: number
   end?: number
   replyTo?: StoryId
   /** Media bodies give their `MediaId`, so a save of the same input keeps them. */
   bodies: BodyInput[]
-  tags: ConceptIri[]
+  /** The stored values, in field order. `vocabulary.inputsOf` turns them into form input. */
+  values: ResolvedValue[]
   /** Set when an operator or the system returned this draft to the member. A new save clears it. */
   rejection?: Rejection
   /** The worst state of the media bodies of the newest version. Absent with no media body. */
@@ -203,6 +219,8 @@ export interface LifecycleRow {
   rejection?: { automatic: boolean }
   /** Absent when the newest version has no media body. */
   mediaState?: MediaState
+  /** True when the member changed the story after a return, and it was not published or returned since. */
+  sentAgain?: boolean
 }
 
 /**
@@ -215,6 +233,8 @@ export interface Lifecycle {
   state: 'processing' | 'waiting' | 'returned' | 'published'
   change: 'processing' | 'waiting' | 'returned' | null
   automatic: boolean
+  /** Present when the member sent the story again after a return and it waits (or processes). */
+  again?: true
 }
 
 /** The story as an operator reviews it. Built from the newest version. */
@@ -226,8 +246,16 @@ export interface StoryReview {
   rejection?: Rejection
   /** The worst state of `media`. Absent with no media body. */
   mediaState?: MediaState
+  /** True when the member changed the story after a return, and nobody published or returned it since. */
+  sentAgain?: boolean
   /** The host page where the member told the story, if a save had a valid `return`. */
   toldOn?: string
+  /**
+   * The page of the newest `return` that was not on the website list of the project (or
+   * the admin preview page), when no save had a listed one since. Operators only: the
+   * review screen offers "Add this website" (workflow-audit 7).
+   */
+  toldOnUnlisted?: string
   member: { id: string; nickname: string }
   /** ISO 8601 */
   created: string
@@ -247,8 +275,8 @@ export interface StoryReview {
     url: string
     state: 'ready' | 'processing' | 'failed'
   }[]
-  /** Each tag with its current label. A tag whose concept is gone has no label. */
-  tags: { iri: ConceptIri; label?: string }[]
+  /** The values, in field order, with the current label of each item. The admin joins the field labels. */
+  values: ResolvedValue[]
   project: { slug: ProjectSlug; name?: string }
   recording: { id: RecordingId; title?: string; url?: string }
 }
@@ -336,16 +364,22 @@ export interface MediaResource {
   type: 'Sound' | 'Image' | 'Video'
   format: string
 }
-export interface TagResource {
-  type: 'SpecificResource'
-  source: ConceptIri
-  purpose: 'tagging'
-}
-export interface TagLabel {
-  type: 'TextualBody'
+/** The `rdf:object` of a value body (design/vocab.md §3.1). */
+export type ValueObject =
+  | { id: string }
+  | { '@value': string; '@language'?: string }
+  | { '@value': string; type: string }
+  | { type: string; 'rdfs:label': { '@value': string; '@language'?: string } }
+
+/** One value: a `TextualBody` that is also an `rdf:Statement` (design/vocab.md §3.2). */
+export interface ValueBody {
+  type: ['TextualBody', 'rdf:Statement']
+  purpose: 'tagging' | 'describing'
   value: string
-  purpose: 'tagging'
   language?: string
+  'rdf:subject': { id: string }
+  'rdf:predicate': { id: string }
+  'rdf:object': ValueObject
 }
 
 // Type aliases, not interfaces: Payload's `json` field needs an implicit index signature.
@@ -357,7 +391,7 @@ type AnnotationBase = {
   modified: string
   creator: { id: string; type: 'Person'; nickname: string }
   rights?: string
-  body: (TextualBody | MediaResource | TagResource | TagLabel)[]
+  body: (TextualBody | MediaResource | ValueBody)[]
 }
 
 /** A story: a time range of a recording, in a project. */
@@ -375,7 +409,7 @@ export type StoryAnnotation = AnnotationBase & {
   }
 }
 
-/** A reply: its target is the IRI of the story that it answers. It has no tags. */
+/** A reply: its target is the IRI of the story that it answers. It has no values. */
 export type ReplyAnnotation = AnnotationBase & {
   motivation: 'replying'
   target: string
@@ -415,8 +449,8 @@ export interface Stories {
   remove(operator: OperatorSession, id: StoryId, reason?: string): Promise<void>
   /**
    * The next story of the Waiting for review tab, oldest first: the first one after
-   * `afterId` (which can have left the tab), or the oldest when `afterId` is absent. Null
-   * when no story is after it.
+   * `afterId` (which can have left the tab), else the oldest other one; the oldest when
+   * `afterId` is absent or unknown. Null when no other story waits.
    */
   nextWaiting(afterId?: StoryId): Promise<StoryId | null>
   /** All stories and replies of the member, in every project, newest first. */
@@ -431,6 +465,12 @@ export interface Stories {
   /** All stories that match, in id order, as WADM. Operator only. */
   exportStories(operator: OperatorSession, filter?: ExportFilter): AsyncIterable<Annotation>
   /**
+   * The published stories as RDF quads (design/vocab.md §3.4): layer 1, the WADM, in the
+   * default graph; layer 2, the asserted statements of each story in the named graph of
+   * the story IRI. `filter.reviewState` is ignored: only published stories. Operator only.
+   */
+  exportQuads(operator: OperatorSession, filter?: ExportFilter): AsyncIterable<Quad>
+  /**
    * Return a story to its member with a reason. The story becomes a draft and leaves the
    * review queue; a published story stops being visible. The member sees the reason on
    * the Annotate page. The next save of the member clears it. A blank reason throws
@@ -442,16 +482,19 @@ export interface Stories {
   /** The newest version of one story for the review screen, or null. Operator only. */
   review(operator: OperatorSession, id: StoryId): Promise<StoryReview | null>
   /** Stories and replies by lifecycle state: of the stack, of one project or of one recording. */
-  counts(filter?: { project?: ProjectSlug; recording?: RecordingId }): Promise<StoryCounts>
-  /** The recordings and members with stories in one project. */
-  projectReach(project: ProjectSlug): Promise<ProjectReach>
+  /** `member`: the stories and replies of one member (the member page). */
+  counts(filter?: { project?: ProjectSlug; recording?: RecordingId; member?: string }): Promise<StoryCounts>
+  /**
+   * The recordings and members with stories in one project. `leaveOut`: member ids that
+   * the member count skips (the test members of `membership.testMembers`).
+   */
+  projectReach(project: ProjectSlug, options?: { leaveOut?: string[] }): Promise<ProjectReach>
   /** What happened since `since`, for the Today page. */
   recent(since: Date): Promise<RecentCounts>
-  /**
-   * For each concept of the project that stories use: the number of stories that use it,
-   * in the newest version or in the published version.
-   */
-  tagCounts(project: ProjectSlug): Promise<Map<ConceptIri, number>>
+  /** For each item or entity IRI of the project: the stories whose values point at it. */
+  valueCounts(project: ProjectSlug): Promise<Map<string, number>>
+  /** For each property IRI: the stories with a value for it. More than 0 locks the field. */
+  fieldUsage(project: ProjectSlug): Promise<Map<string, number>>
   /**
    * The `vocabulary` module calls this after a label change or a removal. From a hook,
    * pass its `req`: the rebuild then reads inside the transaction of the change.

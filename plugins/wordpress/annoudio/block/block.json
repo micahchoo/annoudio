@@ -2,13 +2,15 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "annoudio/player",
-	"version": "0.2.0",
-	"title": "Annoudio player",
+	"version": "0.3.0",
+	"title": "Annoudio widget",
 	"category": "media",
 	"icon": "format-audio",
-	"description": "A recording and its community stories, from your Annoudio stack.",
+	"description": "The Annoudio widget: a recording and its community stories, from your Annoudio stack.",
 	"keywords": [
+		"widget",
 		"audio",
+		"story",
 		"stories",
 		"annotation"
 	],

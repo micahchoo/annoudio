@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 # Installs the Annoudio WordPress plugin and Omeka S module (plugins/) into the test hosts,
-# points them at the demo stack, and makes the test pages. Safe to run again.
+# points them at the demo stack, and makes the test pages and the demo pages. Safe to run again.
+#
+# The demo pages (deploy/DEMO.md) hold the two lines that the admin's Snippet panel gives,
+# pasted by an administrator into an HTML block, one widget per page:
+#   http://localhost:8091/?pagename=demo        WordPress, Custom HTML block
+#   http://localhost:8092/s/annoudio/page/demo  Omeka S, HTML block
+# The Phase 2 pages "player" (setup.sh) stay as they are: embed/tests/hosts.spec.ts needs
+# them on the embed fixture server (port 4510, recording rec-0042).
+#
+# The script also adds the host origins to the project's websites (REST, as the operator),
+# so that the Annotate page sends members back to these pages.
 #
 # Needs: the stack of this folder (setup.sh ran once), the demo stack `annoudio-demo`
 # (deploy/DEMO.md), and the media fixture server on port 4610 (the demo recording's audio).
@@ -22,6 +32,12 @@ RECORDING="${RECORDING:-1}"
 AUDIO="${AUDIO:-http://127.0.0.1:4610/media/tone.m4a}"
 # An address that plays but is not the admin's: the stored copy of the fallback pages.
 STORED="${STORED:-http://127.0.0.1:4610/media/tone-nolength.m4a}"
+OPERATOR_EMAIL="${OPERATOR_EMAIL:-operator@example.org}"
+OPERATOR_PASSWORD="${OPERATOR_PASSWORD:-demo-operator-pass-1}"
+HOST_ORIGINS=(http://localhost:8091 http://127.0.0.1:8091 http://localhost:8092 http://127.0.0.1:8092)
+# The snippet of the admin's Snippet panel (app/src/modules/catalogue snippet()).
+demo_snippet="<script async src=\"$ORIGIN/embed/v1.js\"></script>
+<annoudio-player project=\"$PROJECT\" recording=\"$RECORDING\" src=\"$AUDIO\"></annoudio-player>"
 
 "$root/plugins/build.sh" >/dev/null
 
@@ -60,9 +76,25 @@ post annoudio-block-by-author "Annoudio block by an author" "$only_id
 
 $only_id"
 post annoudio-block-fallback "Annoudio block with a stored copy" "$with_copy"
+# The demo page: the snippet, pasted by the administrator (unfiltered_html) in a Custom HTML block.
+demo_content="<!-- wp:html -->
+${demo_snippet}
+<!-- /wp:html -->"
+id=$(wp post list --post_type=page --name=demo --field=ID --format=ids)
+if [ -z "$id" ]; then
+  wp post create --post_type=page --post_status=publish --post_title="Ferry crossing, 1962" \
+    --post_name=demo --user=admin --post_content="$demo_content" >/dev/null
+else
+  wp post update "$id" --user=admin --post_content="$demo_content" >/dev/null
+fi
+echo "WordPress demo page: http://localhost:8091/?pagename=demo"
 
 echo "== Omeka S"
 omeka() { "${compose[@]}" exec -T omeka "$@"; }
+# The demo page: the snippet in an HTML block. Omeka purifies at save, so the save runs with
+# the purifier off; omeka-plugins.php below turns it on again.
+printf '%s' "$demo_snippet" | omeka php /opt/annoudio/omeka-page.php demo off >/dev/null
+echo "Omeka S demo page: http://localhost:8092/s/annoudio/page/demo"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 unzip -q "$root/plugins/dist/Annoudio-omeka-s.zip" -d "$tmp"
@@ -77,3 +109,15 @@ omeka chown -R www-data:www-data /var/www/html/volume/modules/Annoudio /var/www/
 "${compose[@]}" exec -T -u www-data omeka php /tmp/omeka-plugins.php "$ORIGIN" "$PROJECT" "$SERVER_ORIGIN" "$RECORDING" \
   http://localhost/annoudio-tone.m4a "$STORED"
 omeka rm -f /var/www/html/annoudio-tone.m4a /tmp/omeka-plugins.php
+
+echo "== Demo stack: the host origins on the websites of $PROJECT"
+token=$(curl -fsS -X POST "$ORIGIN/api/users/login" -H 'content-type: application/json' \
+  -d "$(jq -n --arg e "$OPERATOR_EMAIL" --arg p "$OPERATOR_PASSWORD" '{email: $e, password: $p}')" | jq -r .token)
+project=$(curl -gfsS "$ORIGIN/api/projects?where[slug][equals]=$PROJECT&depth=0&limit=1" \
+  -H "Authorization: JWT $token" | jq '.docs[0]')
+# Keep the rows that are there (with their ids); add the missing origins at the end.
+rows=$(jq -c '(.siteOrigins // []) as $have
+  | $have + ($ARGS.positional - [$have[].origin] | map({origin: .}))' \
+  --args "${HOST_ORIGINS[@]}" <<<"$project")
+curl -fsS -X PATCH "$ORIGIN/api/projects/$(jq -r .id <<<"$project")" -H "Authorization: JWT $token" \
+  -H 'content-type: application/json' -d "{\"siteOrigins\": $rows}" | jq -r '"Websites: " + ([.doc.siteOrigins[].origin] | join(" "))'

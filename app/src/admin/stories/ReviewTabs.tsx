@@ -3,7 +3,6 @@
 // no filter in the address: the collection's `baseFilter` gives it (stories/collection.ts).
 
 import { stories } from '@payload-config'
-import { Button } from '@payloadcms/ui'
 import Link from 'next/link'
 import type { ServerProps } from 'payload'
 
@@ -12,6 +11,7 @@ import type { StoryCounts } from '@/modules/stories'
 
 import { PATHS } from '../paths'
 import { strings } from '../strings'
+import { Icon } from '../ui/Icon'
 
 const s = strings.review
 
@@ -68,34 +68,41 @@ export async function ReviewTabs({ searchParams }: ServerProps) {
   const searching = typeof searchParams?.search === 'string' && searchParams.search !== ''
   const next = active === 'waiting' && each.waiting > 0 ? await stories.nextWaiting() : null
   return (
-    <>
-      <nav aria-label={s.tabs} className="annoudio-tabs">
+    <div className="ao annoudio-review-tabs">
+      <nav aria-label={s.tabs} className="ao-tabs">
         {(Object.keys(TABS) as Tab[]).map((tab) => (
           <Link
             key={tab}
             href={`${PATHS.review}${tab === 'waiting' ? '' : `?${new URLSearchParams(TABS[tab])}`}`}
             aria-current={active === tab ? 'page' : undefined}
-            className="annoudio-tabs__tab"
           >
-            {s.tab[tab]} <span className="annoudio-tabs__count">{each[tab]}</span>
+            {s.tab[tab]} <span className="ao-chip__count">{each[tab]}</span>
           </Link>
         ))}
       </nav>
       {next && (
         <p className="annoudio-tabs__start">
-          <Button el="link" url={`${PATHS.review}/${next}`} buttonStyle="primary" size="medium">
+          <a className="ao-btn ao-btn--primary" href={`${PATHS.review}/${next}`}>
             {s.start}
-          </Button>
+            <Icon name="go" />
+          </a>
         </p>
       )}
       {active && each[active] === 0 && !searching && (
-        <div className="annoudio-empty" role="status">
+        <div className="ao-empty" role="status">
+          <Icon name={active === 'all' ? 'story' : active} />
           <p>
             {s.empty[active]}{' '}
             {active === 'waiting' && counts.newest && s.lastStory(ago(counts.newest, new Date()))}
           </p>
+          {each.all === 0 && (
+            <a className="ao-btn ao-btn--primary" href={PATHS.addWidget}>
+              <Icon name="widget" />
+              {strings.addWidget.title}
+            </a>
+          )}
         </div>
       )}
-    </>
+    </div>
   )
 }

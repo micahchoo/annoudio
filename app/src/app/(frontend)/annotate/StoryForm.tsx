@@ -1,10 +1,12 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 
-import { clockExact } from '@/clock'
+import { clock, clockExact, clockRange, parseClock } from '@/clock'
+import type { WidgetElement } from '@/widget-element'
 
 import { saveStory } from './actions'
+import { FieldControls, type FormQuestion, type KeptAnswer } from './FieldControls'
 import { keepText, takeKeptText } from './keptText'
 import { annotatePath, type AnnotateLink } from './link'
 import { MediaField, type Attachment, type MediaKind } from './MediaField'
@@ -14,12 +16,6 @@ import { strings } from './strings'
 
 const s = strings.form
 
-export interface TopicNode {
-  iri: string
-  label: string
-  children: TopicNode[]
-}
-
 export interface StoryDraft {
   id: string
   /** The ETag of the saved story. Absent for a new story. */
@@ -27,57 +23,52 @@ export interface StoryDraft {
   start: number
   end: number
   text: string
-  tags: string[]
+  /** The form entries of the stored answers (`answers.ts`). */
+  answers: [string, string][]
   media: Attachment[]
-}
-
-/** The part of the `<annoudio-player>` interface that this form uses (CONTRACT.md §4). */
-type PlayerElement = HTMLElement & { currentTime?: number; seek?: (seconds: number) => void }
-
-declare module 'react' {
-  // React declares its JSX types in a namespace. An augmentation must use the same form.
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      'annoudio-player': React.DetailedHTMLProps<
-        React.HTMLAttributes<PlayerElement>,
-        PlayerElement
-      > & {
-        project: string
-        recording: string
-        src: string
-        origin: string
-        annotate: 'link' | 'none'
-      }
-    }
-  }
 }
 
 interface Props {
   link: AnnotateLink
-  /** ANNOUDIO_ORIGIN: where the player reads the published stories. */
+  /** ANNOUDIO_ORIGIN: where the widget reads the published stories. */
   origin: string
   audio: string
   story: StoryDraft
-  topics: TopicNode[]
+  /** The questions of the project for new stories, in field order. */
+  questions: FormQuestion[]
+  /** Answers of hidden questions that this story has. */
+  kept: KeptAnswer[]
   /** "Send for review", or "Publish the story" when the project publishes at once. */
   submit: string
+  /** What happens after the send, in one line under the button. */
+  next: string
   /** The largest upload of each kind, in bytes. */
   limits: Record<MediaKind, number>
   pickerTypes: string[]
 }
 
+/** The range of the widget (`range` attribute, CONTRACT.md §2.1), or none for bad times. */
+function rangeOf(start: string, end: string): string | undefined {
+  const from = parseClock(start)
+  const to = parseClock(end)
+  return Number.isFinite(from) && Number.isFinite(to) && to > from ? `${from},${to}` : undefined
+}
+
 /**
- * The player, the time range, the text and the topics of one story. The fields are
- * uncontrolled. After an error, React resets the form to the default values, which
- * are then the values that the member sent.
+ * The widget with the time range, the times, the text, the media and the questions of one
+ * story. The member marks the range by a drag on the waveform (the widget draws it, and
+ * `annoudio:range` gives the new times), or types the times; the widget then moves the
+ * range. The fields are uncontrolled: without JavaScript the form still works, and after
+ * an error React resets them to the values that the member sent.
  */
 export function StoryForm(props: Props) {
-  const { link, origin, audio, story, topics } = props
+  const { link, origin, audio, story } = props
   const [state, action, pending] = useActionState<SaveState, FormData>(saveStory, {})
   const [uploading, setUploading] = useState(false)
-  const player = useRef<PlayerElement>(null)
+  const widget = useRef<WidgetElement>(null)
   const textarea = useRef<HTMLTextAreaElement>(null)
+  const startInput = useRef<HTMLInputElement>(null)
+  const endInput = useRef<HTMLInputElement>(null)
   const signedOut = state.error?.code === 'signed-out'
   // P9: keep the text when the session ended; take it back after the next sign-in. A new
   // story gets a new id on each page load, so it keeps its text under its instance.
@@ -95,49 +86,79 @@ export function StoryForm(props: Props) {
     start: clockExact(story.start),
     end: clockExact(story.end),
     text: story.text,
-    tags: story.tags,
     media: story.media.map((a) => `${a.kind}:${a.id}`),
+    answers: story.answers,
   }
   // Without JavaScript, a refused save renders the form again: keep the bodies it sent.
   const attached = story.media.filter((a) => values.media.includes(`${a.kind}:${a.id}`))
-  const checked = new Set(values.tags)
+
+  // The range that the widget draws, and the time that "Use …" puts in a field.
+  const [range, setRange] = useState(() => rangeOf(values.start, values.end))
+  const [now, setNow] = useState<number | null>(null)
+  const syncRange = useCallback(() => {
+    setRange(rangeOf(startInput.current?.value ?? '', endInput.current?.value ?? ''))
+  }, [])
 
   const errorOf = (field: NonNullable<SaveState['error']>['field']) =>
     state.error?.field === field ? strings.saveErrors[state.error.code] : null
-  // `currentTime` is NaN until the player is ready, and absent if its bundle did not load.
-  const fromPlayer = (input: HTMLInputElement | null) => {
-    const time = player.current?.currentTime
-    if (input && typeof time === 'number' && Number.isFinite(time)) {
-      input.value = clockExact(Math.round(time * 1000) / 1000)
-    }
-  }
 
-  // Start the player at `t`. A seek before the duration is known waits for it (CONTRACT.md §4.2).
+  // Start the widget at `t`. A seek before the duration is known waits for it (CONTRACT.md
+  // §4.2). Then follow its time for "Use …", and its range for the two fields.
   useEffect(() => {
     let live = true
+    const element = widget.current
+    const onTime = (event: Event) => {
+      const time = (event as CustomEvent<{ currentTime: number }>).detail.currentTime
+      if (Number.isFinite(time)) setNow(time)
+    }
+    const onRange = (event: Event) => {
+      const { start, end } = (event as CustomEvent<{ start: number; end: number }>).detail
+      // Whole seconds, as the member types them (workflow-audit 17). End stays after Start.
+      const from = Math.floor(start)
+      const to = Math.max(from + 1, Math.round(end))
+      if (startInput.current) startInput.current.value = clock(from)
+      if (endInput.current) endInput.current.value = clock(to)
+      setRange(`${from},${to}`)
+    }
+    element?.addEventListener('annoudio:timeupdate', onTime)
+    element?.addEventListener('annoudio:range', onRange)
     customElements.whenDefined('annoudio-player').then(() => {
-      const element = player.current
-      if (live && typeof element?.seek === 'function') element.seek(link.t)
+      if (!live || typeof element?.seek !== 'function') return
+      element.seek(link.t)
+      setNow(link.t)
     })
     return () => {
       live = false
+      element?.removeEventListener('annoudio:timeupdate', onTime)
+      element?.removeEventListener('annoudio:range', onRange)
     }
   }, [link.t])
 
+  const takeNow = (field: 'start' | 'end') => {
+    const input = field === 'start' ? startInput.current : endInput.current
+    const time = widget.current?.currentTime
+    if (!input || typeof time !== 'number' || !Number.isFinite(time)) return
+    input.value = clock(Math.round(time))
+    syncRange()
+  }
+  const [from, to] = range ? range.split(',').map(Number) : [NaN, NaN]
+
   return (
     <>
-      <figure className="player">
-        <figcaption>{strings.player}</figcaption>
+      <p className="intro">{s.intro}</p>
+      <figure className="widget">
+        <figcaption>{strings.recordingLabel}</figcaption>
         {/* The snippet of CONTRACT.md §1, with the loader of this stack. The link shows
             until the loader runs, and without JavaScript. */}
         <script async src="/embed/v1.js" />
         <annoudio-player
-          ref={player}
+          ref={widget}
           project={link.project}
           recording={link.recording}
           src={audio}
           origin={origin}
           annotate="none"
+          range={range}
         >
           <a href={audio}>{strings.listen}</a>
         </annoudio-player>
@@ -156,25 +177,35 @@ export function StoryForm(props: Props) {
           </p>
         )}
 
-        <p id="time-hint" className="hint">
-          {s.timeHint}
+        <p className="moment" aria-live="polite">
+          {range ? s.moment(clockRange(from, to)) : s.timeHint}
         </p>
         <div className="range">
           <TimeField
             name="start"
             label={s.start}
             value={values.start}
-            fromPlayer={fromPlayer}
+            ref={startInput}
+            now={now}
+            onChange={syncRange}
+            onUseNow={takeNow}
             error={errorOf('start')}
           />
           <TimeField
             name="end"
             label={s.end}
             value={values.end}
-            fromPlayer={fromPlayer}
+            ref={endInput}
+            now={now}
+            onChange={syncRange}
+            onUseNow={takeNow}
             error={errorOf('end')}
           />
         </div>
+        {/* After the fields: on a phone, Start and End follow the waveform closely. */}
+        <p id="time-hint" className="hint">
+          {s.timeHint}
+        </p>
 
         <label htmlFor="text">{s.text}</label>
         <p id="text-hint" className="hint">
@@ -191,12 +222,6 @@ export function StoryForm(props: Props) {
         />
         <ErrorText id="text-error" text={errorOf('text')} />
 
-        <fieldset aria-describedby={errorOf('tags') ? 'tags-error' : undefined}>
-          <legend>{s.tags}</legend>
-          {topics.length === 0 ? <p>{s.noTags}</p> : <Topics nodes={topics} checked={checked} />}
-          <ErrorText id="tags-error" text={errorOf('tags')} />
-        </fieldset>
-
         <MediaField
           initial={attached}
           limits={props.limits}
@@ -205,67 +230,67 @@ export function StoryForm(props: Props) {
           onBusyChange={setUploading}
         />
 
-        <button type="submit" disabled={pending || uploading}>
-          {pending ? s.saving : props.submit}
-        </button>
-        {uploading && <p className="hint">{s.waitForUpload}</p>}
+        {/* Questions follow the story text and the media (design/vocab.md §7.1). */}
+        <FieldControls
+          questions={props.questions}
+          answers={values.answers}
+          errors={state.valueErrors ?? []}
+          kept={props.kept}
+        />
+
+        <div className="send-bar">
+          <button type="submit" disabled={pending || uploading}>
+            {pending ? s.saving : props.submit}
+          </button>
+          <p>{uploading ? s.waitForUpload : props.next}</p>
+        </div>
       </form>
     </>
   )
 }
 
-function TimeField(props: {
+function TimeField({
+  ref,
+  ...props
+}: {
+  ref: React.Ref<HTMLInputElement>
   name: 'start' | 'end'
   label: string
   value: string
-  fromPlayer: (input: HTMLInputElement | null) => void
+  /** The time of the widget, for "Use 0:05". Null before it is known. */
+  now: number | null
+  onChange: () => void
+  onUseNow: (field: 'start' | 'end') => void
   error: string | null
 }) {
-  const input = useRef<HTMLInputElement>(null)
   const errorId = `${props.name}-error`
+  const time = props.now === null ? null : clock(Math.round(props.now))
   return (
     <div className="time">
       <label htmlFor={props.name}>{props.label}</label>
       <input
-        ref={input}
+        ref={ref}
         id={props.name}
         name={props.name}
         type="text"
+        inputMode="decimal"
         autoComplete="off"
         spellCheck={false}
         defaultValue={props.value}
+        onChange={props.onChange}
         aria-invalid={props.error ? true : undefined}
         aria-describedby={props.error ? `time-hint ${errorId}` : 'time-hint'}
       />
-      <button
-        type="button"
-        onClick={() => props.fromPlayer(input.current)}
-        aria-label={`${props.label}: ${s.setFromPlayer}`}
-      >
-        {s.setFromPlayer}
-      </button>
+      {time !== null && (
+        <button
+          type="button"
+          onClick={() => props.onUseNow(props.name)}
+          aria-label={s.useTimeLabel(props.label, time)}
+        >
+          {s.useTime(time)}
+        </button>
+      )}
       <ErrorText id={errorId} text={props.error} />
     </div>
-  )
-}
-
-function Topics(props: { nodes: TopicNode[]; checked: Set<string> }) {
-  return (
-    <ul className="topics">
-      {props.nodes.map((node) => (
-        <li key={node.iri}>
-          <label>
-            <input
-              type="checkbox"
-              name="tags"
-              value={node.iri}
-              defaultChecked={props.checked.has(node.iri)}
-            />
-            {node.label}
-          </label>
-          {node.children.length > 0 && <Topics {...props} nodes={node.children} />}
-        </li>
-      ))}
-    </ul>
   )
 }

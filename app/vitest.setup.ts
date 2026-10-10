@@ -1,3 +1,6 @@
+// The test mailbox makes the stack 'able to mail', so projects default to login codes.
+// Without it, one membership test depends on the shell's SMTP_URL.
+process.env.ANNOUDIO_TEST_MAILBOX ??= '1'
 // Load .env files. Values that vitest.config.mts sets win.
 import 'dotenv/config'
 

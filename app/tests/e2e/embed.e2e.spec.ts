@@ -123,7 +123,8 @@ test.describe('response headers (CONTRACT.md §5.1)', () => {
       name: 'River Voices',
     })
     expect(theme.headers()).toMatchObject({
-      'cache-control': 'public, max-age=300, stale-while-revalidate=86400',
+      // Kept, but checked with the ETag on each page load (a saved theme shows at once).
+      'cache-control': 'public, no-cache',
       'access-control-allow-origin': '*',
       'cross-origin-resource-policy': 'cross-origin',
       'x-content-type-options': 'nosniff',
@@ -206,4 +207,30 @@ test('the snippet on a host page shows the published story from the real routes,
     new RegExp(`^${E2E_ORIGIN}/annotate\\?project=${PROJECT}&recording=${recording}&t=0&return=`),
   )
   expect(errors).toEqual([])
+})
+
+test('a saved theme shows on the next page load of the host page', async ({ page }) => {
+  const { default: config } = await import('../../src/payload.config')
+  const { getPayload } = await import('payload')
+  const payload = await getPayload({ config })
+  const play = page.locator('annoudio-player [part~="play-button"]')
+  await page.goto(`${HOST}/player.html`)
+  await expect(play).toHaveCSS('background-color', 'rgb(138, 28, 43)')
+
+  const { docs } = await payload.find({ collection: 'projects', where: { slug: { equals: PROJECT } } })
+  const project = docs[0]
+  const set = (colorAccent: string) =>
+    payload.update({
+      collection: 'projects',
+      id: project.id,
+      data: { themeTokens: { ...project.themeTokens, colorAccent } },
+    })
+  await set('#0b6e4f')
+  try {
+    // A plain reload: the browser has the theme file in its cache and asks again (ETag).
+    await page.reload()
+    await expect(play).toHaveCSS('background-color', 'rgb(11, 110, 79)')
+  } finally {
+    await set('#8a1c2b')
+  }
 })

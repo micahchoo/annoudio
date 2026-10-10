@@ -10,7 +10,13 @@ import { strings } from '../strings'
 
 const s = strings.account
 
-export function AccountForm(props: { email: string; nickname: string; mailNotices: boolean }) {
+/** `unverified`: the member signed in with an invite code only (design/invite-codes.md). */
+export function AccountForm(props: {
+  email: string
+  nickname: string
+  mailNotices: boolean
+  unverified?: { canVerify: boolean }
+}) {
   const [state, action, pending] = useActionState<AccountState, FormData>(saveAccount, {})
   const values = state.values ?? { nickname: props.nickname, mailNotices: props.mailNotices }
   const error = state.error ? s.errors[state.error] : null
@@ -41,6 +47,11 @@ export function AccountForm(props: { email: string; nickname: string; mailNotice
         <input type="checkbox" name="mailNotices" defaultChecked={values.mailNotices} />
         {s.mail}
       </label>
+      {props.unverified && (
+        <p className="hint" data-testid="unverified">
+          {s.unverified} {props.unverified.canVerify ? s.verify : ''}
+        </p>
+      )}
       <ErrorText id="account-error" text={error} />
       <button type="submit" disabled={pending}>
         {pending ? s.saving : s.save}

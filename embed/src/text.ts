@@ -1,4 +1,4 @@
-// The player's own UI text. v1 has English only; other languages fall back to English
+// The widget's own UI text. v1 has English only; other languages fall back to English
 // (CONTRACT 2.1, rule 6). Message texts are not part of the contract; error codes are.
 
 export type ErrorCode =
@@ -13,8 +13,12 @@ const en = {
   play: "Play",
   pause: "Pause",
   seek: "Seek",
-  player: "Audio player",
+  frame: "Recording and its stories",
   stories: "Stories",
+  /** Above the stories (part `intro`, CONTRACT 3.3). */
+  intro: "Each story is about one part of the recording. Select a story to hear that part.",
+  /** The range of the `range` attribute (CONTRACT 2.1, 3.3). */
+  range: (from: string, to: string) => `Your story: ${from} to ${to}`,
   annotate: "Tell a story",
   member: "A member",
   media: {
@@ -36,25 +40,23 @@ const en = {
   /** The note of an empty container: with the Annotate link, and without it. */
   empty: "No stories yet. Tell the first one.",
   emptyNoLink: "No stories yet.",
-  /** Before the rights line of the project (CONTRACT 3.2, rule 7). */
-  rights: "Stories here:",
   truncated: (n: number) => `Only the first ${n} stories show here.`,
   error: {
-    "missing-attribute": (name: string) => `This audio player is not set up correctly. The "${name}" value is missing.`,
+    "missing-attribute": (name: string) => `This widget is not set up correctly. The "${name}" value is missing.`,
     "invalid-attribute": (name: string) =>
       name === "src"
-        ? `This audio player is not set up correctly. The "src" value is not a web address.`
-        : `This audio player is not set up correctly. The "${name}" value is not an origin.`,
+        ? `This widget is not set up correctly. The "src" value is not a web address.`
+        : `This widget is not set up correctly. The "${name}" value is not an origin.`,
     "not-found": () => "Stories for this recording are not available.",
     "stories-unavailable": () => "Stories could not load. Reload the page to try again.",
     "audio-unavailable": () => "The audio could not load.",
-    "bundle-unavailable": () => "The audio player could not load. Reload the page to try again.",
+    "bundle-unavailable": () => "The widget could not load. Reload the page to try again.",
   } satisfies Record<ErrorCode, (name: string) => string>,
 };
 
 export type UiText = typeof en;
 
-/** Returns the UI language that the player can show, and its text. */
+/** Returns the UI language that the widget can show, and its text. */
 export function uiText(_requested: string): { lang: string; text: UiText } {
   return { lang: "en", text: en };
 }

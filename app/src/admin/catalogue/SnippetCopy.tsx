@@ -1,9 +1,13 @@
 'use client'
 
-import { Button } from '@payloadcms/ui'
+// The copy field of a snippet (design/design-system.md §5, Copy field): the two lines in a
+// read-only box, Copy the snippet, and one status line. With more than one project, a
+// dropdown chooses the project of the snippet.
+
 import { useId, useRef, useState } from 'react'
 
 import { strings } from '../strings'
+import { Icon } from '../ui/Icon'
 
 const s = strings.recording
 
@@ -13,8 +17,8 @@ export function SnippetCopy(props: {
 }) {
   const [project, setProject] = useState(props.snippets[0].project)
   const [copied, setCopied] = useState<'no' | 'yes' | 'refused'>('no')
-  const selectId = useId()
-  const code = useRef<HTMLElement>(null)
+  const ids = { select: useId(), code: useId() }
+  const box = useRef<HTMLTextAreaElement>(null)
   const current = props.snippets.find((item) => item.project === project) ?? props.snippets[0]
 
   // A browser can refuse the clipboard (no permission, no secure context). Then select the
@@ -24,47 +28,64 @@ export function SnippetCopy(props: {
       await navigator.clipboard.writeText(current.text)
       setCopied('yes')
     } catch {
-      const range = document.createRange()
-      if (code.current) range.selectNodeContents(code.current)
-      window.getSelection()?.removeAllRanges()
-      window.getSelection()?.addRange(range)
+      box.current?.focus()
+      box.current?.select()
       setCopied('refused')
     }
   }
 
   return (
-    <div className="annoudio-snippet">
+    <div className="ao-copy annoudio-snippet">
       {props.snippets.length > 1 && (
-        <p>
-          <label htmlFor={selectId}>{s.project} </label>
-          <select
-            id={selectId}
-            value={project}
-            onChange={(event) => {
-              setProject(event.target.value)
-              setCopied('no')
-            }}
-          >
-            {props.snippets.map((item) => (
-              <option key={item.project} value={item.project}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </p>
+        <div className="ao-field">
+          <label htmlFor={ids.select}>{s.project}</label>
+          <span className="ao-select">
+            <select
+              id={ids.select}
+              value={project}
+              onChange={(event) => {
+                setProject(event.target.value)
+                setCopied('no')
+              }}
+            >
+              {props.snippets.map((item) => (
+                <option key={item.project} value={item.project}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+            <Icon name="chevron" />
+          </span>
+        </div>
       )}
-      <pre className="annoudio-snippet__code">
-        <code ref={code}>{current.text}</code>
-      </pre>
-      <p className="annoudio-snippet__actions">
-        <Button buttonStyle="primary" size="medium" onClick={copy}>
+      <label htmlFor={ids.code} className="ao-label">
+        {s.snippetFor(current.label)}
+      </label>
+      <textarea
+        id={ids.code}
+        ref={box}
+        readOnly
+        rows={4}
+        spellCheck={false}
+        value={current.text}
+        className="annoudio-snippet__code"
+      />
+      <div className="ao-actions">
+        <button type="button" className="ao-btn ao-btn--primary" onClick={copy}>
+          <Icon name="copy" />
           {s.copy}
-        </Button>
-        <span role="status">
-          {copied === 'yes' ? s.copied : copied === 'refused' ? s.copyRefused : ''}
+        </button>
+        <span role="status" className="ao-copy__status">
+          {copied === 'yes' && (
+            <>
+              <Icon name="published" />
+              {s.copied}
+            </>
+          )}
+          {copied === 'refused' && s.copyRefused}
         </span>
-      </p>
-      <p className="annoudio-snippet__id">{s.id(props.recordingId)}</p>
+      </div>
+      <p className="ao-field__help annoudio-snippet__id">{s.id(props.recordingId)}</p>
     </div>
   )
 }

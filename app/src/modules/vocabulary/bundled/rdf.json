@@ -1,0 +1,112 @@
+{
+  "prefix": "rdf",
+  "label": "RDF",
+  "namespace": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+  "url": "https://www.w3.org/1999/02/22-rdf-syntax-ns.ttl",
+  "licence": "W3C Software and Document Licence",
+  "terms": [
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Alt",
+      "kind": "class",
+      "label": "Alt",
+      "comment": "The class of containers of alternatives."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag",
+      "kind": "class",
+      "label": "Bag",
+      "comment": "The class of unordered containers."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#CompoundLiteral",
+      "kind": "class",
+      "label": "CompoundLiteral",
+      "comment": "A class representing a compound literal."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#List",
+      "kind": "class",
+      "label": "List",
+      "comment": "The class of RDF Lists."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "kind": "class",
+      "label": "Property",
+      "comment": "The class of RDF properties."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Seq",
+      "kind": "class",
+      "label": "Seq",
+      "comment": "The class of ordered containers."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement",
+      "kind": "class",
+      "label": "Statement",
+      "comment": "The class of RDF statements."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction",
+      "kind": "property",
+      "label": "direction",
+      "comment": "The base direction component of a CompoundLiteral."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+      "kind": "property",
+      "label": "first",
+      "comment": "The first item in the subject RDF list.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Resource"
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#language",
+      "kind": "property",
+      "label": "language",
+      "comment": "The language component of a CompoundLiteral."
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#object",
+      "kind": "property",
+      "label": "object",
+      "comment": "The object of the subject RDF statement.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Resource"
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate",
+      "kind": "property",
+      "label": "predicate",
+      "comment": "The predicate of the subject RDF statement.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Resource"
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
+      "kind": "property",
+      "label": "rest",
+      "comment": "The rest of the subject RDF list after the first item.",
+      "rangeHint": "http://www.w3.org/1999/02/22-rdf-syntax-ns#List"
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#subject",
+      "kind": "property",
+      "label": "subject",
+      "comment": "The subject of the subject RDF statement.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Resource"
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "kind": "property",
+      "label": "type",
+      "comment": "The subject is an instance of a class.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Class"
+    },
+    {
+      "iri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#value",
+      "kind": "property",
+      "label": "value",
+      "comment": "Idiomatic property used for structured values.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Resource"
+    }
+  ]
+}

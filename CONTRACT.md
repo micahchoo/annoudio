@@ -16,7 +16,7 @@ The operator copies these two lines from the catalogue. `ORG` is the stable host
 
 ```html
 <script async src="https://ORG/embed/v1.js"></script>
-<annoudio-player project="…" recording="…" src="…"></annoudio-player>
+<annoudio-player project="…" recording="…" src="…"><audio controls preload="none" src="…"></audio></annoudio-player>
 ```
 
 Rules:
@@ -25,7 +25,7 @@ Rules:
 2. The `<script>` line can be before or after the elements, in `<head>` or in `<body>`. The player starts when the loader runs. Elements that the page adds later also start.
 3. The `<script>` must be a classic script. Do not add `type="module"`. Do not add `integrity`: the loader changes when the organisation upgrades.
 4. One page can hold many players. Each player is one **instance** (project, recording).
-5. Child content of `<annoudio-player>` is fallback content. The browser shows it until the loader runs. The player hides it when it starts. Example: `<annoudio-player …><a href="ferry.m4a">Listen to the recording</a></annoudio-player>`. The snippet that the catalogue makes has no child content.
+5. Child content of `<annoudio-player>` is fallback content. The browser shows it until the loader runs. The player hides it when it starts. Example: `<annoudio-player …><a href="ferry.m4a">Listen to the recording</a></annoudio-player>`. The snippet that the catalogue makes has one fallback child: `<audio controls preload="none">` with the same `src`, so a page whose loader cannot load still plays the recording (added 2026-10-09, additive; `preload="none"` makes no request before the visitor plays it). A snippet with no child content stays valid.
 
 Example with real values:
 
@@ -49,6 +49,7 @@ Example with real values:
 | `origin` | no | An origin: scheme, host and optional port. No path, query or fragment. | Where the player reads stories and theme, and where the Annotate link goes. Default: the origin of the loader that defined the element (2.3). |
 | `annotate` | no | `link` or `none`. Default `link`. | `link` shows the Annotate link. `none` hides it, for read-only pages. |
 | `lang` | no | A BCP 47 language tag. This is the global HTML attribute. | The language of the player's own text (labels, messages). Default: the language of the nearest ancestor with `lang`, as for any HTML element. |
+| `range` | no | Two seconds values, `start,end`, for example `62,95`; `end` after `start`. Added 2026-10-09, additive. | The time range of a story that someone writes now: the player draws it on the timeline as the part `range`. A drag on the waveform (also inside the range) chooses a new range, and a drag of one of its two edges changes it; each change by the visitor dispatches `annoudio:range` (4.1). The Annotate page uses it. A host page leaves it out. |
 
 Rules for all attributes:
 
@@ -58,6 +59,7 @@ Rules for all attributes:
 4. The player does not compare `src` with the URLs in the catalogue. Stories point at the recording, not at a file. If `src` is a different edit of the audio (for example, cut at the start), the stories are at the wrong times. The host is responsible for this.
 5. For `annotate`, an unknown value counts as the default (`link`). The player writes one `console.warn`. This follows HTML's rule for enumerated attributes, and lets a later v1 add values.
 6. If the UI language in `lang` is not available, the player uses English. This is not an error.
+7. A change to `range` updates the display only (added 2026-10-09). A value that is not `start,end` with `end` after `start` draws no range, with one `console.warn`. The player keeps the range inside the duration. A change of the attribute dispatches no event: only the visitor's drag does. While `range` is set, a drag over a story's range chooses a range; a click on it still opens the story. A drag needs a pointer: a page that sets `range` must also offer fields for the times (the Annotate page has Start and End).
 
 ### 2.2 Why `src` is required
 
@@ -111,12 +113,12 @@ annoudio-player { --annoudio-color-accent: #8a1c2b; --annoudio-radius: 0; }
 | `--annoudio-color-surface` | Background of the player. | `#ffffff` |
 | `--annoudio-color-text` | Main text and icons. | `#1f1f1f` |
 | `--annoudio-color-muted` | Secondary text: times, nicknames, dates. | `#595959` |
-| `--annoudio-color-accent` | Play button, played part of the timeline, edge of the open story's range, links. | `#0b5cad` |
+| `--annoudio-color-accent` | Play button, played part of the timeline, edge of the open story's range, links. | `#0b6e99` |
 | `--annoudio-color-on-accent` | Text and icons on the accent colour. | `#ffffff` |
 | `--annoudio-color-border` | Borders and the timeline track. | `#767676` |
-| `--annoudio-color-wave` | Waveform bars not yet played. | `#8c8c8c` |
-| `--annoudio-color-region` | Fill of a story's time range on the timeline. | `#d5e3f3` |
-| `--annoudio-color-focus` | Focus ring. | `#0b5cad` |
+| `--annoudio-color-wave` | Waveform bars not yet played. | `#848484` |
+| `--annoudio-color-region` | Fill of a story's time range on the timeline. | `#d6eaf5` |
+| `--annoudio-color-focus` | Focus ring. | `#0b6e99` |
 | `--annoudio-font-family` | All text. | The font that the host page gives the element (inherited). |
 | `--annoudio-font-size` | Base text size. All other sizes scale from it. | The size that the host page gives the element (inherited). |
 | `--annoudio-radius` | Corner radius of the frame and buttons. | `6px` |
@@ -130,7 +132,7 @@ Rules:
 3. Order of strength, strongest first: host CSS on the element itself (`annoudio-player { --annoudio-color-accent: … }`), then the project theme from the admin (`:host` in the shadow root), then host CSS on an ancestor (`:root`, `body`, a wrapper), then the defaults in this table. Reason: a document rule on the host element beats a `:host` rule from the shadow tree; a `:host` rule beats an inherited value (CSS Scoping §3.3). A host that wants to override a project theme sets the token on the element, not on `:root`.
 4. The defaults are light colours. The player does not follow `prefers-color-scheme` by itself. A host or a project that wants a dark player sets the tokens. Reason: the player must match the host page, not the operating system.
 5. In forced-colours mode, the player uses system colours and ignores colour tokens.
-6. Default contrast on `--annoudio-color-surface` (WCAG 2.2): text 16.5:1, muted 7.0:1, accent 6.7:1, on-accent on accent 6.7:1, border 4.5:1, wave 3.4:1. The player does not check the contrast of values that a host or a project sets.
+6. Default contrast on `--annoudio-color-surface` (WCAG 2.2): text 16.5:1, muted 7.0:1, accent 5.7:1, on-accent on accent 5.7:1, border 4.5:1, wave 3.7:1, wave on region 3.0:1, focus 5.7:1. The player does not check the contrast of values that a host or a project sets. Changed 2026-10-09 (design/design-system.md §7): the accent and the focus ring were `#0b5cad` (6.7:1), the wave `#8c8c8c` and the region `#d5e3f3`; the old wave on the old region was 2.58:1, under the 3:1 for non-text. Defaults are not part of the interface (12.2); a host that wants the old blue sets `--annoudio-color-accent: #0b5cad`. The admin Theme tab shows the ratio of each colour that an operator sets.
 
 ### 3.2 How the project theme reaches the player
 
@@ -145,7 +147,11 @@ GET {origin}/embed/v1/themes/{project}.json
   "tokens": { "color-accent": "#8a1c2b", "radius": "0px" },
   "name": "River Voices",
   "rightsLine": "CC BY 4.0",
-  "rightsIri": "https://creativecommons.org/licenses/by/4.0/"
+  "rightsIri": "https://creativecommons.org/licenses/by/4.0/",
+  "fields": [
+    { "property": "http://purl.org/dc/terms/spatial", "label": "Place", "showAs": "line", "valueType": "list" },
+    { "property": "http://purl.org/dc/terms/subject", "label": "Topics", "showAs": "tags", "valueType": "list" }
+  ]
 }
 ```
 
@@ -158,10 +164,11 @@ Rules:
 5. The player starts this request at the same time as the stories request. It shows its controls when the theme request settles or after 500 ms, whichever comes first. A theme that arrives later replaces the defaults in place.
 6. This JSON shape is part of v1, because a v1 bundle from one stack can read the theme of another v1 stack (`origin`). The stack can add keys. It cannot remove or rename keys within v1.
 7. The project frame (added 2026-10-09, additive). `name` is the project name; it is always there. `rightsLine` is the rights statement of the project as text, for example "CC BY 4.0"; `rightsIri` is the web address of the licence. Each of the two is there only when the operator set it. The player shows `rightsLine` once, in the `rights` part, below the stories; with an `http:` or `https:` `rightsIri`, the line is a link to it. The player does not show `name`: the host page names its site. A player that gets no `rightsLine` (no theme, a 404, an older stack) shows no `rights` part.
+8. The field labels (added 2026-10-09, additive). `fields` is the list of the fields of the project, in field order, hidden fields too, so old stories keep their labels. Each entry has `property` (the full IRI that a value body names in `rdf:predicate`, 6 rule 13), `label` (the question that members answer, for example "Place"), `showAs` (`line`: "Label: value"; `tags`: `tag` parts with no label; `none`: not shown, the value stays in the public WADM) and `valueType` (`text`, `date`, `number`, `link`, `list` or `entity`). The key is there only when the project has at least one field. A relabel changes this JSON only: it reaches hosts at their next page load (5.1, changed 2026-10-09) and rebuilds no stories. A player that gets no `fields` shows list values as `tag` parts and other values as lines with no label.
 
 Why this way (the requirement is "the operator configures the theme in the admin"):
 
-- A change in the admin reaches every host page within the cache time (300 s), with no edit on any host.
+- A change in the admin reaches every host page at its next page load, with no edit on any host. (Changed 2026-10-09: it was "within the cache time (300 s)". The theme JSON is `no-cache` now, 5.1.)
 - The host keeps the final word in its own CSS, with normal CSS rules.
 - The player never touches host CSS. A `<link>` or `<style>` in the host `<head>` would leak rules into the host page.
 - JSON is data. A stylesheet from the admin could hold any selector and break the player's layout. Also, the private CSS names inside the bundle stay private.
@@ -184,12 +191,18 @@ annoudio-player::part(story active) { outline: 2px solid currentColor; }
 | `timeline` | The seek track. Holds `waveform` and the `region` parts. |
 | `waveform` | The waveform drawing. Present only when the player has waveform data (section 6, request 5). |
 | `region` | One story's time range on the timeline. One per story. |
+| `range` | The time range of the `range` attribute (2.1) on the timeline. Absent without the attribute. Added 2026-10-09, additive. |
 | `stories` | The list of stories. |
+| `intro` | One line above `stories` that says what a story is: "Each story is about one part of the recording. Select a story to hear that part." Present when the container has stories. Added 2026-10-09, additive. |
 | `story` | One story in the list. |
 | `story-text` | The text body of a story. |
 | `story-media` | A sound, image or video body of a story: a media element with controls for a sound or a video, an image for an image. One per media body. Added 2026-10-09, additive. |
 | `story-meta` | The nickname, date and time range of a story. |
-| `tag` | One tag label of a story. |
+| `tag` | One tag label of a story. A list value of a field shown as "Label: value" has the part `tag` too, on its `field-value`. |
+| `fields` | The answers of a story as "Label: value" lines (3.2, rule 8; 6, rule 13). Absent for a story with no such answers. Added 2026-10-09, additive. |
+| `field` | One field in `fields`: its label and its values. Added 2026-10-09, additive. |
+| `field-label` | The label of a field, for example "Place". Added 2026-10-09, additive. |
+| `field-value` | One value of a field, for example "Fort Kochi". One per value. A value whose field the theme does not name shows after `fields`, with no label, with this part only. Added 2026-10-09, additive. |
 | `annotate-link` | The Annotate link. Absent when `annotate="none"`. |
 | `replies` | The list of replies under a story (6, rule 12). Present only for a story with replies. It shows when its story is open. Added 2026-10-09, additive. |
 | `reply` | One reply in `replies`. Added 2026-10-09, additive. |
@@ -210,6 +223,8 @@ Rules:
 6. Media bodies add the part `story-media` (added 2026-10-09, additive). New parts are not a breaking change.
 7. Reply threads add the parts `replies`, `reply`, `reply-text`, `reply-meta` and `reply-link` (added 2026-10-09, additive).
 8. The project frame adds the part `rights` (added 2026-10-09, additive).
+9. The answers of a story add the parts `fields`, `field`, `field-label` and `field-value` (added 2026-10-09, additive). The part `tag` stays for list values, so host CSS for `::part(tag)` still works.
+10. The `range` attribute adds the part `range`; the intro line adds the part `intro` (added 2026-10-09, additive).
 
 ---
 
@@ -230,6 +245,7 @@ Each `detail` is a plain object. Every `detail` has `project` and `recording` (s
 | `annoudio:story-open` | The visitor opens a story (on the timeline or in the list), or the return fragment opens it (7.2, `annoudio-reply`). Not when playback only passes through a story's range. | `{ project, recording, story, start, end }`. `story`: the story IRI (`id` in WADM). |
 | `annoudio:annotate` | The visitor follows the Annotate link or a Reply link (7.3), before the browser leaves the page. | `{ project, recording, time, href, story }`. `href`: the full Annotate URL. `story`: the IRI of the story that the Reply link answers, or `null` for the Annotate link. `story` and the Reply link added 2026-10-09, additive. |
 | `annoudio:timeupdate` | The value of `currentTime` (4.3) changes: during playback, and after a seek. At most 4 times per second. Not before `annoudio:ready`. Added 2026-10-09, additive. | `{ project, recording, currentTime }`. `currentTime`: the new value of the property. |
+| `annoudio:range` | The visitor chooses a new range with a drag on the waveform, or ends a drag of one of the edges of the range (2.1, `range`). Not for a change of the attribute. Added 2026-10-09, additive. | `{ project, recording, start, end }`. Seconds, at most 3 decimal places, inside the duration. The page sets `range` to the values it keeps. |
 
 Rules:
 
@@ -303,10 +319,12 @@ Rules:
 |---|---|---|
 | `/embed/v1.js` | `public, max-age=300, stale-while-revalidate=3600` | `ETag` |
 | `/embed/v1/<hash>/player.js` | `public, max-age=31536000, immutable` | |
-| `/embed/v1/themes/{project}.json` | `public, max-age=300, stale-while-revalidate=86400`; on 404: `public, max-age=60` | `ETag` |
-| `/embed/v1/recordings/{project}/{id}.json` | as the theme route | `ETag`. Added 2026-10-09, additive. |
+| `/embed/v1/themes/{project}.json` | `public, no-cache` (changed 2026-10-09, was `public, max-age=300, stale-while-revalidate=86400`); on 404: `public, max-age=60` | `ETag` |
+| `/embed/v1/recordings/{project}/{id}.json` | `public, max-age=300, stale-while-revalidate=86400`; on 404: `public, max-age=60` | `ETag`. Added 2026-10-09, additive. |
 
 All four paths send `Access-Control-Allow-Origin: *`, `Cross-Origin-Resource-Policy: cross-origin` and `X-Content-Type-Options: nosniff`. The bundle needs CORS: the browser fetches modules with the CORS protocol (MDN, `<script>`, `type="module"`). `Cross-Origin-Resource-Policy` lets hosts with `Cross-Origin-Embedder-Policy: require-corp` load the files. JavaScript files use `Content-Type: text/javascript; charset=utf-8`.
+
+The theme JSON is `no-cache` (changed 2026-10-09, a shorter cache time, so additive): the browser keeps the file but asks the stack again before each use, with `If-None-Match`, and a 304 answers while the theme is the same. So a theme that an operator saves shows on the next page load of every host page, also on a plain reload, and in the admin's own preview page and Try it links. Reason: with `max-age=300`, a reload kept the old theme for up to 5 minutes (Chromium revalidates only the page itself on a reload, not a `fetch()` of the player), and a maintainer who checked a change saw none. The request stays a CORS-simple GET: the browser cache adds `If-None-Match`, the player does not. Older v1 bundles get the same header; the player code did not change.
 
 A release keeps the bundles of the two releases before it. Reason: a browser can use a cached loader for up to 3900 s, and that loader names an older hash.
 
@@ -359,6 +377,7 @@ Rules:
 10. The player puts story text into the page with `textContent` only (stories invariant 7). It sets `lang` on each text body from the body's `language`.
 11. The player shows each `Sound`, `Image` and `Video` body with an `http:` or `https:` `id` as one `story-media` part, after the text of its story. An image has the first text body of its story as `alt` (every media body comes with a short text). Playing a sound or a video body pauses the recording. Added 2026-10-09, additive.
 12. Replies (added 2026-10-09, additive). A reply is a WADM annotation with `motivation: "replying"` and the story IRI as its `target` (a plain IRI). The stack serves the published replies of a story inside its page item, under the key `annoudio:replies`: an array of complete annotations without `@context`, oldest first. A page or container that holds such an item adds one extension context object: `"@context": ["http://www.w3.org/ns/anno.jsonld", …, { "annoudio:replies": { "@reverse": "oa:hasTarget" } }]`. So for a JSON-LD processor each value is an annotation whose target is the item, which the reply says itself; the key adds no other statement (`design/phase5b-notes.md`). The player reads a value only when its `motivation` is `replying` and its `target` is the item's `id`. It shows the replies of the open story in the `replies` part, in array order, with the rules 9 to 11 of a story. Tags of a reply are ignored. The `?iris=1` variants list the story IRIs only; `total` counts the stories, not the replies. Each published reply is also at its own IRI, as a complete annotation.
+13. Value bodies (added 2026-10-09, additive; design/vocab.md §3). Each answer of a story is one body with `"type": ["TextualBody", "rdf:Statement"]`, `value` (the text to show), an optional `language`, `purpose` (`tagging` for an item of a list, else `describing`), `rdf:subject` (`{ "id": "{recording IRI}#t={start},{end}" }`), `rdf:predicate` (`{ "id": property IRI }`) and `rdf:object` (an `{ "id" }`, a literal with `@value` and `@language` or `type`, or a blank node with `type` and `rdfs:label`). They come after the text and media bodies, in field order. The player groups them by `rdf:predicate.id` and labels them with the theme `fields` (3.2, rule 8). It shows a date (`xsd:gYear`, `xsd:gYearMonth`, `xsd:date`) at its stored precision with `Intl.DateTimeFormat`, and the `rdf:object` address of a `link` field as a link with `rel="nofollow ugc"`, only for `http:` and `https:`. All text goes in with `textContent`. A player of an earlier release reads a value body as a text line (a `tagging` one as a tag): extra text, no lost data. This stack no longer writes the tag pair of the earlier releases (`SpecificResource` + `TextualBody`, both `tagging`); the player still shows such a pair from another stack as a `tag`.
 
 ---
 
@@ -477,7 +496,7 @@ The player meets WCAG 2.2 level AA with its default tokens. In detail:
 
 1. Keyboard: every control is a native `<button>`, `<a>` or `<input type="range">`. Tab reaches each one in visual order. The timeline is the range input: Left and Right arrows move 5 s, Page Up and Page Down move 30 s, Home and End go to the start and the end.
 2. Each story is reachable from the keyboard in the `stories` list. The timeline regions are a second way to reach them, not the only way.
-3. Labels: every control has an accessible name in the UI language ("Play", "Pause", "Seek"). The timeline has `aria-valuetext`, for example "0:42 of 3:10". Each story has a name, for example "Story by Leela, 0:42 to 0:51". The frame is a group named with the container `label` (the recording title), or "Audio player" if there is none.
+3. Labels: every control has an accessible name in the UI language ("Play", "Pause", "Seek"). The timeline has `aria-valuetext`, for example "0:42 of 3:10". Each story has a name, for example "Story by Leela, 0:42 to 0:51". The frame is a group named with the container `label` (the recording title), or "Recording and its stories" if there is none (was "Audio player" until 2026-10-09: the word people read is "widget", CONTEXT.md).
 4. Focus: a visible focus ring of at least 2 px in `--annoudio-color-focus`, at least 3:1 against the surface with default tokens.
 5. Target size: every control is at least 24 × 24 CSS px.
 6. Reduced motion: with `prefers-reduced-motion: reduce`, the player has no transitions, no animated scroll and no animated waveform. The playback position still moves, because it is information.
@@ -582,3 +601,5 @@ These run in Phase 2 against a fixture server, in Chromium, Firefox and WebKit. 
 8. Keyboard only: play, seek, open a story, follow the Annotate link. Axe finds no violations with default tokens.
 9. Reply threads (added 2026-10-09): the thread shows only under the open story, in order, as text; reply media bodies are `story-media` parts; the Reply link carries `replyTo` and the story start, and fires `annoudio:annotate` with `story`; `annotate="none"` hides every Reply link; the fragment with `annoudio-reply` opens the story and shows the reply note; axe finds no violations with an open thread.
 10. The project frame and the new fragment keys (added 2026-10-09): a theme with `rightsLine` and `rightsIri` gives one `rights` part below the stories, a link to the licence; a theme without them gives none; an empty container shows its note in `message` and keeps the Annotate link; `annoudio-saved=published` shows the published note; `annoudio-story` opens the story with no note; axe finds no violations in these states.
+11. Answers (added 2026-10-09): with theme `fields`, value bodies show as `fields` > `field` > `field-label` + `field-value` in field order; a list value keeps the part `tag`; a field shown as tags gives `tag` parts with no label; `showAs: none` shows nothing; a value with no field label shows after the others with no label; a date shows at its precision; a link field gives a `nofollow ugc` link for `https:` only, text for `javascript:`; a relabel in the theme changes the label with the same stories; with no theme, list values are tags; axe finds no violations.
+12. The range and the intro (added 2026-10-09): `range="2,5"` gives one `range` part that `::part(range)` styles; a drag on the waveform dispatches one `annoudio:range` with `start` before `end`; a change of the attribute moves the range and dispatches nothing; without the attribute there is no `range` part; the `intro` part shows above the stories; axe finds no violations with a range.

@@ -33,14 +33,16 @@ export async function History({ initPageResult, user }: DocumentViewServerProps)
   const id = initPageResult.docID
   const lines = operator && id !== undefined ? await stories.history(operator, String(id)) : []
   return (
-    <div className="annoudio-history gutter--left gutter--right">
-      <h2>{s.heading}</h2>
-      <p className="annoudio-history__intro">{s.intro}</p>
-      <ol className="annoudio-history__lines" reversed>
+    <div className="ao annoudio-history gutter--left gutter--right">
+      <h2 className="annoudio-history__heading">{s.heading}</h2>
+      <p className="ao-header__help annoudio-history__intro">{s.intro}</p>
+      <ol className="ao-list annoudio-history__lines" reversed>
         {lines.map((line, i) => (
-          <li key={`${line.at}-${i}`} data-action={line.action}>
+          <li key={`${line.at}-${i}`} data-action={line.action} className="ao-row">
             <span>{lineText(line, i === lines.length - 1)}</span>
-            <LocalDate iso={line.at} />
+            <span className="ao-row__end">
+              <LocalDate iso={line.at} />
+            </span>
           </li>
         ))}
       </ol>

@@ -153,12 +153,15 @@ test('a photo story: upload, save while processing, ready, publish, and the play
     buffer: PHOTO,
   })
   await expect(attachment(page)).toContainText('Processing. You can send the story now.')
-  await expect(page.getByText('shows in the player after review and processing')).toBeVisible()
+  await expect(page.getByText('Visitors see it with your text after the story is published.')).toBeVisible()
   await page.getByRole('textbox', { name: 'Start', exact: true }).fill('2')
   await page.getByRole('textbox', { name: 'End', exact: true }).fill('4')
   await page.getByRole('textbox', { name: 'Story', exact: true }).fill('The ferry at dawn.')
   await page.getByRole('button', { name: 'Send for review' }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Sent.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Your story is sent/ })).toBeVisible()
+  // The done screen says the state at the time it renders: the photo is still processing.
+  await expect(page.locator('.done')).toHaveAttribute('data-state', 'processing')
+  await expect(page.locator('.done .badge')).toHaveText('Processing')
 
   const [row] = await world.mediaRows()
   expect(row).toMatchObject({ kind: 'image', state: 'uploaded', format: 'image/jpeg' })
@@ -187,7 +190,10 @@ test('a photo story: upload, save while processing, ready, publish, and the play
   await page.waitForLoadState('networkidle')
   await page.getByRole('textbox', { name: 'Story', exact: true }).fill('The ferry at dawn, 1962.')
   await page.getByRole('button', { name: 'Send for review' }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Sent.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Your story is sent/ })).toBeVisible()
+  // The photo is ready now: the story waits for review.
+  await expect(page.locator('.done')).toHaveAttribute('data-state', 'waiting')
+  await expect(page.locator('.done .badge')).toHaveText('Waiting for review')
   const [changed] = await world.stories.ownDrafts(session, { project: PROJECT, recording })
   expect(changed.bodies).toContainEqual({ kind: 'image', media: row.id })
 
@@ -208,10 +214,10 @@ test('a voice note: record 1 s from the microphone, attach, upload, then the sta
   await signIn(page, 'voice@example.org', 'Ravi')
   const before = (await world.mediaRows()).length
   await page.getByRole('button', { name: 'Record a voice note' }).click()
-  await expect(page.getByText(/^Recording: \d+ s$/)).toBeVisible()
+  await expect(page.getByText(/^Voice note: \d+ s$/)).toBeVisible()
   await page.waitForTimeout(1_000)
-  await page.getByRole('button', { name: 'Stop the recording' }).click()
-  await expect(page.getByText('Your recording')).toBeVisible()
+  await page.getByRole('button', { name: 'Stop the voice note' }).click()
+  await expect(page.getByText('Your voice note')).toBeVisible()
   await page.getByRole('button', { name: 'Attach this voice note' }).click()
   await expect(attachment(page)).toContainText('Processing. You can send the story now.')
 

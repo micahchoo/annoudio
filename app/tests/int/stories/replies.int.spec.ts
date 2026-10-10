@@ -25,6 +25,7 @@ import {
   seed,
   startPayload,
   storyId,
+  topic,
   tallies,
 } from './world'
 
@@ -113,7 +114,7 @@ describe('saveDraft with replyTo', () => {
     expect(stored).toMatchObject({ project: PROJECT, recording: '1', start: null, end: null })
   })
 
-  it('refuses a reply with a time range or with tags', async () => {
+  it('refuses a reply with a time range or with values', async () => {
     await publishDraft(stories, draft())
     expect(await stories.saveDraft(ravi, reply(2, { start: 1, end: 2 }))).toEqual({
       ok: false,
@@ -123,9 +124,9 @@ describe('saveDraft with replyTo', () => {
       ok: false,
       error: { code: 'reply-and-range' },
     })
-    expect(await stories.saveDraft(ravi, reply(2, { tags: [FERRY] }))).toEqual({
+    expect(await stories.saveDraft(ravi, reply(2, { values: [topic(FERRY)] }))).toEqual({
       ok: false,
-      error: { code: 'reply-and-tags' },
+      error: { code: 'reply-and-values' },
     })
   })
 
@@ -313,9 +314,10 @@ describe('the member and operator reads of a reply', () => {
       etag: expect.any(String),
       reviewState: 'draft',
       pendingRevision: false,
+      modified: expect.any(String),
       replyTo: PARENT,
       bodies: [{ kind: 'text', value: 'Reply number 2.', language: 'ml' }],
-      tags: [],
+      values: [],
     })
     // The ETag fits the next save.
     const next = await stories.saveDraft(ravi, {
@@ -335,7 +337,7 @@ describe('the member and operator reads of a reply', () => {
       reviewState: 'draft',
       replyTo: { id: PARENT, excerpt: 'My grandmother sang this on the ferry.', nickname: 'Leela' },
       texts: [{ value: 'Reply number 2.', language: 'ml' }],
-      tags: [],
+      values: [],
     })
     expect(review).not.toHaveProperty('start')
   })

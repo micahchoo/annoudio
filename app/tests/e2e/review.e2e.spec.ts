@@ -101,13 +101,17 @@ test('the review queue shows the drafts in plain words, oldest first', async () 
   await expect(rows.nth(0)).toContainText('0:02–0:04')
   await expect(rows.nth(0)).toContainText('Waiting for review')
   await expect(rows.nth(1)).toContainText('Ravi')
+  // Every row shows its state badge, not only the first (recordings audit, 1).
+  for (const row of await rows.all()) {
+    await expect(row.locator('.cell-lifecycle .ao-badge')).toHaveText('Waiting for review')
+  }
   // Operators never write stories.
   await expect(page.getByRole('link', { name: /Create New/i })).toHaveCount(0)
 })
 
 test('Publish shows what visitors see, then the next waiting story opens', async () => {
   await page.getByRole('link', { name: 'My grandmother sang this on the ferry.' }).click()
-  const panel = page.locator('.annoudio-panel')
+  const panel = page.locator('.annoudio-story')
   await expect(panel).toContainText('Waiting for review. Visitors do not see it.')
   await expect(page.locator('.annoudio-status')).toContainText('Waiting for review')
   await expect(panel).toContainText('My grandmother sang this on the ferry.')
@@ -126,7 +130,7 @@ test('Publish shows what visitors see, then the next waiting story opens', async
 
   await page.getByRole('button', { name: 'Publish', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Publish this story?' })
-  await expect(dialog).toContainText('Visitors see it like this, within one minute:')
+  await expect(dialog).toContainText('Visitors see it like this in the widget, within one minute:')
   await expect(dialog).toContainText('Leela · 0:02–0:04')
   await expect(dialog).toContainText('My grandmother sang this on the ferry.')
   await expect(dialog).toContainText('We send no mail to Leela.')
@@ -171,6 +175,8 @@ test('an operator returns a story to the member with a reason', async () => {
   await dialog.getByRole('button', { name: 'Return the story' }).click()
   await expect(dialog.getByRole('alert')).toHaveText('Write the reason. The member sees it.')
   await dialog.getByLabel('Reason').fill('Please say where the boat was.')
+  // The error goes once a reason is there.
+  await expect(dialog.getByRole('alert')).toHaveCount(0)
   await dialog.getByRole('button', { name: 'Return the story' }).click()
   await expect(page.getByText('Returned to the member.')).toBeVisible()
   // No story waits now: the empty Waiting for review tab, with our text only.
@@ -197,7 +203,7 @@ test('the member sees the reason on the Annotate page', async ({ browser }) => {
   await member.getByRole('textbox', { name: 'End', exact: true }).fill('8')
   await member.getByRole('textbox', { name: 'Story', exact: true }).fill('Fish came in at six.')
   await member.getByRole('button', { name: 'Send for review' }).click()
-  await expect(member.getByRole('status').filter({ hasText: 'Sent.' })).toBeVisible()
+  await expect(member.getByRole('heading', { name: /Your story is sent/ })).toBeVisible()
 
   await page.goto('/admin/collections/stories')
   await page.getByRole('link', { name: 'Fish came in at six.' }).click()
@@ -207,7 +213,8 @@ test('the member sees the reason on the Annotate page', async ({ browser }) => {
   await dialog.getByRole('button', { name: 'Return the story' }).click()
   await expect(page).toHaveURL(QUEUE)
 
-  await member.reload()
+  // From the done screen, "Tell another story" opens the form with the own stories.
+  await member.getByRole('link', { name: 'Tell another story' }).click()
   const own = member.locator('.own li', { hasText: 'Fish came in at six.' })
   await expect(own).toContainText('Returned to you')
   await expect(own).toContainText('Reason: Which market was it?')
@@ -268,7 +275,7 @@ test('Remove removes the story for ever, after a confirmation', async () => {
   await page.goto(`/admin/collections/stories/${SECOND}`)
   await page.getByRole('button', { name: 'Remove' }).click()
   const dialog = page.getByRole('dialog', { name: 'Remove this story?' })
-  await expect(dialog).toContainText('The story goes for ever.')
+  await expect(dialog).toContainText('The story goes for ever, and we mail the member.')
   await dialog
     .getByLabel('Reason (optional). The member reads it in the mail.')
     .fill('A complaint.')
@@ -285,7 +292,8 @@ test('an operator adds a concept under a parent; the app makes its IRI', async (
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page.locator('#field-iri')).toHaveValue(`${E2E_ORIGIN}/vocab/${PROJECT}/c/ferry`)
 
-  await openProject(page, 'Vocabulary')
+  // The tree is on the page of the list Topics (Lists → Open Topics).
+  await page.goto(`/admin/concepts/${PROJECT}?list=topics`)
   await expect(
     page.locator('.annoudio-tree li[data-concept="Transport"] li[data-concept="Ferry"]'),
   ).toBeVisible()
@@ -301,11 +309,11 @@ test('an operator downloads the vocabulary as SKOS', async () => {
   expect(turtle).toContain(`skos:broader <${E2E_ORIGIN}/vocab/${PROJECT}/c/transport>`)
 })
 
-test('the recording page probes the length and copies the snippet; the list has Add a player', async () => {
+test('the recording page probes the length and copies the snippet; the list has Add a widget', async () => {
   await page.goto('/admin/collections/recordings')
-  await expect(page.getByRole('link', { name: 'Add a player' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Add a widget' })).toHaveAttribute(
     'href',
-    '/admin/add-player',
+    '/admin/add-widget',
   )
   await expect(page.getByRole('link', { name: /Create New/i })).toHaveCount(0)
   const row = page.locator('tbody tr', { hasText: 'Ferry crossing, 1962' })
@@ -317,8 +325,8 @@ test('the recording page probes the length and copies the snippet; the list has 
   await expect(page.getByText('The audio plays in this browser. Length: 0:10.')).toBeVisible()
   const expected =
     `<script async src="${E2E_ORIGIN}/embed/v1.js"></script>\n` +
-    `<annoudio-player project="${PROJECT}" recording="${recording}" src="${HOST}/ferry.m4a"></annoudio-player>`
-  await expect(page.locator('.annoudio-snippet__code')).toHaveText(expected)
+    `<annoudio-player project="${PROJECT}" recording="${recording}" src="${HOST}/ferry.m4a"><audio controls preload="none" src="${HOST}/ferry.m4a"></audio></annoudio-player>`
+  await expect(page.locator('.annoudio-snippet__code')).toHaveValue(expected)
   await page.getByRole('button', { name: 'Copy the snippet' }).click()
   await expect(page.getByText('Copied.')).toBeVisible()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(expected)
@@ -330,8 +338,3 @@ async function choose(page: Page, field: string, option: string) {
   await page.locator('.rs__option', { hasText: option }).first().click()
 }
 
-async function openProject(page: Page, tab: string) {
-  await page.goto('/admin/collections/projects')
-  await page.getByRole('link', { name: 'River Voices' }).click()
-  await page.getByRole('button', { name: tab }).click()
-}

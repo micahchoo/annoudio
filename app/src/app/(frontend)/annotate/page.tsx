@@ -1,16 +1,16 @@
 // The Annotate page: the first-party page where a member writes a story or a reply.
-// URL: /annotate?project&recording&t&return (CONTRACT.md §7); the player's Reply link adds
+// URL: /annotate?project&recording&t&return (CONTRACT.md §7); the widget's Reply link adds
 // `replyTo` (§7.3). Extra keys that only this stack sets: `story` (show and change an own
 // story or reply: Your story, P6) and `saved=1` (just after a save with no return).
 
-import config, { media, membership, stories } from '@payload-config'
+import config, { media, membership, stories, vocabulary } from '@payload-config'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 
 import { clock, clockRange } from '@/clock'
-import { withPlayerFragment } from '@/fragment'
+import { withWidgetFragment } from '@/fragment'
 import { recording as findRecording } from '@/modules/catalogue'
 import { PICKER_TYPES, UPLOAD_LIMITS } from '@/modules/media'
 import { bySlug, returnTarget, theme, type Project } from '@/modules/projects'
@@ -20,16 +20,20 @@ import {
   type OwnDraft,
   type PublishedStory,
 } from '@/modules/stories'
-import { conceptsOf, type ConceptNode } from '@/modules/vocabulary'
+import type { Profile } from '@/modules/vocabulary'
 
 import { Frame } from './Frame'
 import { annotatePath, readLink, uuidv7, type AnnotateLink } from './link'
 import type { Attachment } from './MediaField'
 import { ReplyForm } from './ReplyForm'
 import { SignInForm } from './SignInForm'
-import { StoryForm, type StoryDraft, type TopicNode } from './StoryForm'
-import { stateLabel, stateSentence, strings } from './strings'
+import { answersOf } from './answers'
+import type { FormQuestion, KeptAnswer } from './FieldControls'
+import { StateBadges } from './StateBadges'
+import { StoryForm, type StoryDraft } from './StoryForm'
+import { stateKey, stateLabel, stateSentence, strings } from './strings'
 import './annotate.css'
+import './questions.css'
 
 export const metadata: Metadata = { title: strings.title, robots: { index: false } }
 
@@ -49,25 +53,54 @@ export default async function AnnotatePage({ searchParams }: { searchParams: Pro
   if (!project || !recording) notFound()
 
   // Open-redirect rule: keep `return` only if its origin is a site of the project.
-  const link: AnnotateLink = { ...given, return: returnTarget(project, given.return) }
+  // The link keeps `return` as given: the forms send it on, and `stories` keeps a page whose
+  // website is not on the list for the operator ("Add this website"). The way back uses only
+  // the checked target (open-redirect rule); the admin preview page of a widget is the one
+  // page of this stack that it accepts.
+  const link: AnnotateLink = given
+  const target = returnTarget(project, given.return, { self: site.origin })
+  const justSaved = query.saved === '1' && given.story !== null
+  const notListed = given.return !== null && target === null
   const [session, parent] = await Promise.all([
     membership.sessionFromRequest({ headers: await headers() }),
     link.replyTo ? stories.publishedStory(link, link.replyTo) : null,
   ])
-  const back = link.return
+  const own = session
+    ? await stories.ownDrafts(session, { project: link.project, recording: link.recording })
+    : []
+  // `story` opens an own story in the story form, and an own reply to `replyTo` in the reply form.
+  const editing = own.find(
+    (story) => story.id === link.story && (story.replyTo ?? null) === link.replyTo,
+  )
+  const back = target
     ? {
-        href: withPlayerFragment(link.return, {
+        href: withWidgetFragment(target, {
           project: link.project,
           recording: link.recording,
           t: link.t,
         }),
         label: strings.back,
       }
-    : { href: '/annotate/mine', label: strings.menu.stories }
+    : {
+        href: '/annotate/mine',
+        label: strings.menu.stories,
+        // After a save, the done screen says it (workflow-audit 12, 19).
+        note: notListed && !justSaved ? strings.notListed : undefined,
+      }
 
   return (
     <Frame
-      title={link.replyTo ? strings.replyTitle : strings.title}
+      title={
+        justSaved
+          ? link.replyTo
+            ? strings.story.replyHeading
+            : strings.story.heading
+          : link.replyTo
+            ? strings.replyTitle
+            : editing
+              ? strings.changeTitle
+              : strings.title
+      }
       subtitle={recording.title}
       project={{
         name: project.label,
@@ -88,19 +121,25 @@ export default async function AnnotatePage({ searchParams }: { searchParams: Pro
             <Workspace
               link={link}
               session={session}
-              justSaved={query.saved === '1'}
+              own={own}
+              editing={editing}
+              justSaved={justSaved}
+              back={target ? back.href : null}
+              notListed={notListed}
               origin={site.origin}
               audio={recording.urls[0]}
+              duration={recording.duration}
               project={project}
-              concepts={await conceptsOf(site, project.slug)}
+              profile={await vocabulary.profile(project.slug)}
             />
           ) : (
             <SignInForm
               link={link}
+              mode={project.signIn}
               moment={
                 parent
                   ? strings.signIn.replyMoment(parent.nickname)
-                  : strings.signIn.moment(clock(link.t))
+                  : strings.signIn.moment(clock(link.t), recording.title)
               }
             />
           )}
@@ -145,21 +184,23 @@ function ParentGone({ link }: { link: AnnotateLink }) {
 async function Workspace(props: {
   link: AnnotateLink
   session: MemberSession
+  /** The own stories and replies on this recording. */
+  own: OwnDraft[]
+  /** The own story or reply that `story` names, if any. */
+  editing: OwnDraft | undefined
   justSaved: boolean
+  /** The checked way back to the site, or null. */
+  back: string | null
+  /** A `return` was given, but its website is not on the list of the project. */
+  notListed: boolean
   origin: string
   audio: string
+  /** The length of the recording in seconds, when the catalogue knows it. */
+  duration?: number
   project: Project
-  concepts: ConceptNode[]
+  profile: Profile | null
 }) {
-  const { link, project } = props
-  const own = await stories.ownDrafts(props.session, {
-    project: link.project,
-    recording: link.recording,
-  })
-  // `story` opens an own story in the story form, and an own reply to `replyTo` in the reply form.
-  const editing = own.find(
-    (story) => story.id === link.story && (story.replyTo ?? null) === link.replyTo,
-  )
+  const { link, project, own, editing } = props
   const text = editing?.bodies
     .flatMap((body) => (body.kind === 'text' ? body.value : []))
     .join('\n\n')
@@ -173,6 +214,9 @@ async function Workspace(props: {
     const reply = editing
       ? { id: editing.id, etag: editing.etag, text: text ?? '', media }
       : { id: uuidv7(), text: '', media: [] }
+    if (editing && props.justSaved) {
+      return <Done story={editing} link={link} back={props.back} notListed={props.notListed} />
+    }
     return (
       <>
         {editing && <StoryStatus story={editing} link={link} justSaved={props.justSaved} />}
@@ -200,10 +244,16 @@ async function Workspace(props: {
         start: editing.start!,
         end: editing.end!,
         text: text ?? '',
-        tags: editing.tags,
+        answers: answersOf(await vocabulary.inputsOf(link.project, editing.values)),
         media,
       }
-    : { id: uuidv7(), start: link.t, end: link.t + 10, text: '', tags: [], media: [] }
+    : newStory(link.t, props.duration)
+  const { questions, kept } = await questionsOf(props.profile, editing?.values ?? [])
+  if (editing && props.justSaved) {
+    return <Done story={editing} link={link} back={props.back} notListed={props.notListed} />
+  }
+  // A returned story goes back with "Send again" (recordings audit, 12).
+  const returned = editing !== undefined && stateKey(lifecycle(editing)) === 'returned'
 
   return (
     <>
@@ -214,11 +264,16 @@ async function Workspace(props: {
         origin={props.origin}
         audio={props.audio}
         story={story}
-        topics={tree(
-          // A hidden concept is not for new stories. An own story that has it keeps it.
-          props.concepts.filter((concept) => !concept.hidden || story.tags.includes(concept.iri)),
-        )}
-        submit={atOnce ? strings.form.publish : strings.form.send}
+        questions={questions}
+        kept={kept}
+        submit={atOnce ? strings.form.publish : returned ? strings.form.sendAgain : strings.form.send}
+        next={
+          atOnce
+            ? strings.form.sendsTo.publish
+            : returned
+              ? strings.form.sendsTo.again
+              : strings.form.sendsTo.review
+        }
         limits={UPLOAD_LIMITS}
         pickerTypes={PICKER_TYPES}
       />
@@ -233,6 +288,66 @@ async function Workspace(props: {
 }
 
 /**
+ * A new story at `t`: ten seconds long, inside the recording (workflow-audit 15). Near the
+ * end, the range ends at the end and starts up to ten seconds before.
+ */
+function newStory(t: number, duration?: number): StoryDraft {
+  const length = duration !== undefined && duration > 0 ? duration : Infinity
+  const end = Math.min(t + 10, length)
+  const start = Math.max(0, Math.min(t, end - 1))
+  return { id: uuidv7(), start, end, text: '', answers: [], media: [] }
+}
+
+/**
+ * The done screen (P5, workflow-audit 19): after a save that had no way back to the site.
+ * The state of the story, and the next moves: back to the site, another story, Your
+ * stories. When the site is not on the website list, it says so (workflow-audit 12).
+ */
+function Done(props: {
+  story: OwnDraft
+  link: AnnotateLink
+  back: string | null
+  notListed: boolean
+}) {
+  const { story, link } = props
+  const s = strings.done
+  const state = lifecycle(story)
+  const published = state.state === 'published' && state.change === null
+  const heading = story.replyTo
+    ? published
+      ? s.replyPublished
+      : s.replySent
+    : published
+      ? s.published
+      : s.sent
+  return (
+    <section aria-labelledby="done-heading" className="done" data-state={stateKey(state)} role="status">
+      <h2 id="done-heading">
+        {heading} <span className="badge">{stateLabel(state)}</span>
+      </h2>
+      <p>{stateSentence(state)}</p>
+      {props.notListed && (
+        <p className="done__note">{published ? s.notListedPublished : s.notListed}</p>
+      )}
+      <p className="done__links">
+        {props.back && (
+          <a className="button-link button-link--primary" href={props.back}>
+            {s.back}
+          </a>
+        )}
+        <a className={`button-link${props.back ? '' : ' button-link--primary'}`} href={annotatePath({ ...link, story: null, replyTo: null })}>
+          {s.another}
+        </a>
+        <a className="button-link" href={annotatePath({ ...link, story: story.id })}>
+          {story.replyTo ? strings.story.changeReply : strings.story.change}
+        </a>
+        <a href="/annotate/mine">{s.yours}</a>
+      </p>
+    </section>
+  )
+}
+
+/**
  * Your story (P5, P6): where an own story is in its lifecycle, from `stories.lifecycle`.
  * A returned story shows the reason. Just after a save, it says "Sent." or "Published.".
  */
@@ -243,7 +358,7 @@ function StoryStatus(props: { story: OwnDraft; link: AnnotateLink; justSaved: bo
   const returned = (state.change ?? state.state) === 'returned'
   const listen =
     state.state === 'published' && story.toldOn
-      ? withPlayerFragment(story.toldOn, {
+      ? withWidgetFragment(story.toldOn, {
           project: props.link.project,
           recording: props.link.recording,
           t: story.start ?? 0,
@@ -254,6 +369,7 @@ function StoryStatus(props: { story: OwnDraft; link: AnnotateLink; justSaved: bo
     <section
       aria-labelledby="status-heading"
       className={`status status--${returned ? 'returned' : state.state}`}
+      data-state={stateKey(state)}
       role={props.justSaved ? 'status' : undefined}
     >
       <h2 id="status-heading">
@@ -331,8 +447,7 @@ function OwnStories(props: {
               : annotatePath({ ...link, t: story.start!, replyTo: null, story: story.id })
             return (
               <li key={story.id} data-story={story.id}>
-                <span className="when">{where}</span>{' '}
-                <span className="state">{stateLabel(lifecycle(story))}</span>
+                <span className="when">{where}</span> <StateBadges story={story} />
                 {story.rejection && (
                   <p className="returned">
                     <strong>{strings.story.reason}</strong> {story.rejection.reason}
@@ -352,19 +467,47 @@ function OwnStories(props: {
   )
 }
 
-/** The concepts as a tree. A concept whose parent is not in the list is a root. */
-function tree(concepts: ConceptNode[]): TopicNode[] {
-  const nodes = new Map(
-    concepts.map((concept) => [
-      concept.iri,
-      { iri: concept.iri, label: concept.label, children: [] as TopicNode[] },
-    ]),
+/**
+ * The questions for the form: the fields that are not hidden, each list with its items
+ * (a hidden item is not offered, unless this story has it). A hidden field with an answer
+ * in this story shows that answer, read only.
+ */
+async function questionsOf(
+  profile: Profile | null,
+  values: OwnDraft['values'],
+): Promise<{ questions: FormQuestion[]; kept: KeptAnswer[] }> {
+  if (!profile) return { questions: [], kept: [] }
+  const questions = await Promise.all(
+    profile.fields
+      .filter((field) => !field.hidden)
+      .map(async (field): Promise<FormQuestion> => {
+        const choices = field.list
+          ? (await vocabulary.choices(profile.project, field.list.key)).map(
+              ({ iri, label, depth }) => ({ iri, label, depth }),
+            )
+          : undefined
+        for (const value of values) {
+          const object = value.object
+          if (value.property !== field.property || !('iri' in object) || !choices) continue
+          if (!choices.some((c) => c.iri === object.iri)) {
+            choices.push({ iri: object.iri, label: value.text, depth: 0 })
+          }
+        }
+        return {
+          property: field.property,
+          label: field.label,
+          ...(field.help ? { help: field.help } : {}),
+          valueType: field.valueType,
+          required: field.required,
+          max: field.max,
+          allowOwn: field.allowOwn,
+          ...(choices ? { choices } : {}),
+        }
+      }),
   )
-  const roots: TopicNode[] = []
-  for (const concept of concepts) {
-    const node = nodes.get(concept.iri)!
-    const parent = concept.parent ? nodes.get(concept.parent) : undefined
-    ;(parent ? parent.children : roots).push(node)
-  }
-  return roots
+  const hidden = new Map(profile.fields.filter((f) => f.hidden).map((f) => [f.property, f.label]))
+  const kept = values.flatMap((value) =>
+    hidden.has(value.property) ? [{ label: hidden.get(value.property)!, text: value.text }] : [],
+  )
+  return { questions, kept }
 }

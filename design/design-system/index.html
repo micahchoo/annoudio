@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annoudio design system</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="guide">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-story" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 6 6"/></symbol>
+  <symbol id="i-recording" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/></symbol>
+  <symbol id="i-project" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-site" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-concept" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/></symbol>
+  <symbol id="i-member" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-processing" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-waiting" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/></symbol>
+  <symbol id="i-returned" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-published" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-go" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></symbol>
+  <symbol id="i-add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-remove" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></symbol>
+  <symbol id="i-theme" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.5-1-1.5-1-3 0-1 .7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></symbol>
+</svg>
+
+<header class="guide__bar ao">
+  <h1>Annoudio design system</h1>
+  <nav class="guide__nav" aria-label="Sections">
+    <a href="#tokens">Tokens</a><a href="#icons">Icons</a><a href="#header">Header</a><a href="#states">States</a>
+    <a href="#chips">Chips</a><a href="#steps">Add a widget</a><a href="#fields">Fields</a><a href="#colour">Colour</a>
+    <a href="#buttons">Buttons</a><a href="#overlays">Dialog, toast</a><a href="#lists">Lists</a><a href="#phone">Phone</a><a href="#widget">Widget</a>
+  </nav>
+  <div class="ao-actions" role="group" aria-label="Theme">
+    <button class="ao-btn" type="button" data-show="light" aria-pressed="true">Light</button>
+    <button class="ao-btn" type="button" data-show="dark" aria-pressed="false">Dark</button>
+    <button class="ao-btn" type="button" data-show="both" aria-pressed="false">Both</button>
+  </div>
+</header>
+
+<main class="guide__main" id="main">
+<div class="guide__col ao" data-theme="light" id="col">
+
+<section class="guide__sec" id="tokens">
+  <h2>Tokens</h2>
+  <p>Components read only <code>--ao-*</code> tokens. In the admin each token points at a Payload variable, so our pages and Payload's own screens change together.</p>
+  <span class="guide__label">Colour roles</span>
+  <div class="guide__swatches">
+    <div class="guide__swatch" style="background:var(--ao-bg)"><b>bg</b>Page</div>
+    <div class="guide__swatch" style="background:var(--ao-surface)"><b>surface</b>Card, field</div>
+    <div class="guide__swatch" style="background:var(--ao-surface-sunken)"><b>surface-sunken</b>Snippet, empty state</div>
+    <div class="guide__swatch" style="background:var(--ao-surface);color:var(--ao-text-muted)"><b>text-muted</b>Help, meta</div>
+    <div class="guide__swatch" style="background:var(--ao-surface);box-shadow:inset 0 0 0 2px var(--ao-border-control)"><b>border-control</b>Field edge, 3:1+</div>
+    <div class="guide__swatch" style="background:var(--ao-accent);color:var(--ao-on-accent)"><b>accent</b>Act, link, focus</div>
+    <div class="guide__swatch" style="background:var(--ao-accent-subtle);color:var(--ao-accent-text)"><b>accent-subtle</b>Selected, current</div>
+    <div class="guide__swatch" style="background:var(--ao-danger);color:var(--ao-on-danger)"><b>danger</b>Remove, error</div>
+    <div class="guide__swatch" style="background:var(--ao-processing-bg);color:var(--ao-processing-text)"><b>processing</b>System's move</div>
+    <div class="guide__swatch" style="background:var(--ao-waiting-bg);color:var(--ao-waiting-text)"><b>waiting</b>Operator's move</div>
+    <div class="guide__swatch" style="background:var(--ao-returned-bg);color:var(--ao-returned-text)"><b>returned</b>Member's move</div>
+    <div class="guide__swatch" style="background:var(--ao-published-bg);color:var(--ao-published-text)"><b>published</b>Done</div>
+  </div>
+  <span class="guide__label">Type scale (admin px; member pages one step larger)</span>
+  <div class="guide__type">
+    <div style="font-size:var(--ao-text-2xl);font-weight:600;line-height:1.2">2xl 26 · Review stories</div>
+    <div style="font-size:var(--ao-text-xl);font-weight:600">xl 20 · Publish this story?</div>
+    <div style="font-size:var(--ao-text-lg);font-weight:600">lg 16 · The story</div>
+    <div style="font-size:var(--ao-text-md)">md 14 · My father worked the ferry. The horn meant the last boat.</div>
+    <div style="font-size:var(--ao-text-sm);color:var(--ao-text-muted)">sm 13 · Asha · 1:02–1:35 · 2 days</div>
+    <div style="font-size:var(--ao-text-xs);font-weight:600">xs 12 · Waiting for review</div>
+  </div>
+  <span class="guide__label">Space 4 · 8 · 12 · 16 · 24 · 32 · 48 — radius 4 · 6 · 10 · pill — elevation card · overlay</span>
+  <div class="ao-actions">
+    <span style="display:inline-block;width:4px;height:24px;background:var(--ao-accent)"></span><span style="display:inline-block;width:8px;height:24px;background:var(--ao-accent)"></span><span style="display:inline-block;width:12px;height:24px;background:var(--ao-accent)"></span><span style="display:inline-block;width:16px;height:24px;background:var(--ao-accent)"></span><span style="display:inline-block;width:24px;height:24px;background:var(--ao-accent)"></span><span style="display:inline-block;width:32px;height:24px;background:var(--ao-accent)"></span><span style="display:inline-block;width:48px;height:24px;background:var(--ao-accent)"></span>
+    <span class="ao-card" style="padding:12px;border-radius:var(--ao-radius-m)">radius m, card</span>
+    <span class="ao-card" style="padding:12px;box-shadow:var(--ao-shadow-overlay)">radius l, overlay</span>
+  </div>
+</section>
+
+<section class="guide__sec" id="icons">
+  <h2>Icons</h2>
+  <p>One set, 24 grid, 1.5 stroke, <code>currentColor</code>. An icon never stands alone: a word or an <code>aria-label</code> goes with it.</p>
+  <div class="guide__icons">
+    <div><svg class="ao-icon"><use href="#i-story"/></svg>story</div><div><svg class="ao-icon"><use href="#i-reply"/></svg>reply</div>
+    <div><svg class="ao-icon"><use href="#i-recording"/></svg>recording</div><div><svg class="ao-icon"><use href="#i-project"/></svg>project</div>
+    <div><svg class="ao-icon"><use href="#i-site"/></svg>site</div><div><svg class="ao-icon"><use href="#i-concept"/></svg>concept</div>
+    <div><svg class="ao-icon"><use href="#i-member"/></svg>member</div><div><svg class="ao-icon"><use href="#i-code"/></svg>invite-code</div>
+    <div><svg class="ao-icon"><use href="#i-processing"/></svg>processing</div><div><svg class="ao-icon"><use href="#i-waiting"/></svg>waiting</div>
+    <div><svg class="ao-icon"><use href="#i-returned"/></svg>returned</div><div><svg class="ao-icon"><use href="#i-published"/></svg>published</div>
+    <div><svg class="ao-icon"><use href="#i-copy"/></svg>copy</div><div><svg class="ao-icon"><use href="#i-open"/></svg>open</div>
+    <div><svg class="ao-icon"><use href="#i-play"/></svg>play</div><div><svg class="ao-icon"><use href="#i-chevron"/></svg>chevron</div>
+    <div><svg class="ao-icon"><use href="#i-go"/></svg>go</div><div><svg class="ao-icon"><use href="#i-add"/></svg>add</div>
+    <div><svg class="ao-icon"><use href="#i-remove"/></svg>remove</div><div><svg class="ao-icon"><use href="#i-close"/></svg>close</div>
+    <div><svg class="ao-icon"><use href="#i-alert"/></svg>alert</div><div><svg class="ao-icon"><use href="#i-theme"/></svg>theme</div>
+  </div>
+</section>
+
+<section class="guide__sec" id="header">
+  <h2>Page header, tabs, section card</h2>
+  <p>The header says what the page is for, in one help line, and holds the page's actions. Tabs are links: each one is a page with its own address.</p>
+  <div class="ao-header">
+    <div>
+      <div class="ao-header__crumb"><a href="#">Review stories</a> / Story by Asha</div>
+      <h3 class="ao-header__title">Story by Asha · Ferry crossing, 1962</h3>
+      <p class="ao-header__help">Read the story, then publish it or return it to the member. Visitors see a published story within one minute.</p>
+    </div>
+    <div class="ao-header__actions">
+      <button class="ao-btn" type="button">Next story</button>
+      <button class="ao-btn" type="button"><svg class="ao-icon"><use href="#i-returned"/></svg>Return to the member</button>
+      <button class="ao-btn ao-btn--primary" type="button">Publish</button>
+    </div>
+  </div>
+  <nav class="ao-tabs" aria-label="Story views">
+    <a href="#" aria-current="page">Story</a><a href="#">History <span class="ao-chip__count">4</span></a>
+  </nav>
+  <section class="ao-card" aria-labelledby="h-story">
+    <div class="ao-card__head">
+      <h4 id="h-story">The story</h4>
+      <span class="ao-badges"><span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>Waiting for review</span></span>
+      <p>Waiting for review for 2 days. Visitors do not see it.</p>
+    </div>
+    <dl class="ao-facts">
+      <dt>Member</dt><dd><a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-member"/></svg><span class="ao-chip__label">Asha</span><span class="ao-chip__count">5 stories</span></a></dd>
+      <dt>Recording</dt><dd><a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-recording"/></svg><span class="ao-chip__label">Ferry crossing, 1962</span><span class="ao-chip__count">12 stories</span></a></dd>
+      <dt>Project</dt><dd><a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-project"/></svg><span class="ao-chip__label">River Voices</span><svg class="ao-icon ao-chip__go"><use href="#i-go"/></svg></a></dd>
+      <dt>Time range</dt><dd class="ao-num">1:02–1:35 <button class="ao-btn ao-btn--quiet" type="button"><svg class="ao-icon"><use href="#i-play"/></svg>Play the time range</button></dd>
+      <dt>Told on</dt><dd>rivervoices.example.org/ferry <a href="#">Open on the site</a></dd>
+      <dt>Topics</dt><dd><span class="ao-chip"><svg class="ao-icon"><use href="#i-concept"/></svg>Ferry</span><span class="ao-chip"><svg class="ao-icon"><use href="#i-concept"/></svg>Horn</span><a href="#">Add a concept to River Voices</a></dd>
+    </dl>
+    <p>“My father worked the ferry. The horn meant the last boat.”</p>
+  </section>
+</section>
+
+<section class="guide__sec" id="states">
+  <h2>Lifecycle states, stats, empty state</h2>
+  <p>Each state has one colour, one icon and one word, on every surface. The colour says whose move it is.</p>
+  <div class="ao-chips">
+    <span class="ao-badge ao-badge--processing"><svg class="ao-icon"><use href="#i-processing"/></svg>Processing</span>
+    <span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>Waiting for review</span>
+    <span class="ao-badge ao-badge--returned"><svg class="ao-icon"><use href="#i-returned"/></svg>Returned</span>
+    <span class="ao-badge ao-badge--returned"><svg class="ao-icon"><use href="#i-returned"/></svg>Returned (automatic)</span>
+    <span class="ao-badge ao-badge--published"><svg class="ao-icon"><use href="#i-published"/></svg>Published</span>
+    <span class="ao-badges"><span class="ao-badge ao-badge--published"><svg class="ao-icon"><use href="#i-published"/></svg>Published</span><span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>change waiting</span></span>
+  </div>
+  <div class="ao-header" style="padding:0">
+    <div><h3 class="ao-header__title">Today</h3><p class="ao-header__help">What needs you now. Counts can be 30 seconds late.</p></div>
+  </div>
+  <div class="ao-stats">
+    <a class="ao-stat ao-stat--waiting" href="#" style="color:inherit;text-decoration:none"><span class="ao-stat__n">3</span><span class="ao-stat__label">Waiting for review</span><span class="ao-stat__note">2 stories and 1 reply. The oldest came in 2 days ago.</span></a>
+    <a class="ao-stat ao-stat--returned" href="#" style="color:inherit;text-decoration:none"><span class="ao-stat__n">2</span><span class="ao-stat__label">Returned</span><span class="ao-stat__note">Members must change them. 1 is automatic (file).</span></a>
+    <a class="ao-stat" href="#" style="color:inherit;text-decoration:none"><span class="ao-stat__n">1</span><span class="ao-stat__label">Processing</span><span class="ao-stat__note">You can publish when the file is ready.</span></a>
+    <div class="ao-stat ao-stat--published"><span class="ao-stat__n">9</span><span class="ao-stat__label">Published, last 7 days</span><span class="ao-stat__note">12 came in, 2 returned, 1 removed.</span></div>
+  </div>
+  <div class="ao-actions"><a class="ao-btn ao-btn--primary" href="#">Start reviewing</a><a class="ao-btn" href="#">Add a widget</a><a class="ao-btn" href="#">Concepts</a><a class="ao-btn" href="#">Members</a></div>
+  <div class="ao-empty">
+    <svg class="ao-icon" aria-hidden="true"><use href="#i-published"/></svg>
+    <h3>No stories wait for review</h3>
+    <p>The last story came in 3 days ago. To get more stories, put a recording on another page of your site.</p>
+    <a class="ao-btn ao-btn--primary" href="#"><svg class="ao-icon"><use href="#i-add"/></svg>Add a widget to a site</a>
+  </div>
+</section>
+
+<section class="guide__sec" id="chips">
+  <h2>Relationship chips</h2>
+  <p>A chip names a related thing, links to it and counts what hangs on it. It answers “what is this connected to?” without a search.</p>
+  <div class="ao-chips">
+    <a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-project"/></svg><span class="ao-chip__label">River Voices</span><span class="ao-chip__count">3 recordings</span></a>
+    <a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-recording"/></svg><span class="ao-chip__label">Ferry crossing, 1962</span><span class="ao-chip__count">12 stories</span></a>
+    <a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-site"/></svg><span class="ao-chip__label">rivervoices.example.org</span><svg class="ao-icon ao-chip__go"><use href="#i-open"/></svg></a>
+    <a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-concept"/></svg><span class="ao-chip__label">Ferry</span><span class="ao-chip__count">7 stories</span></a>
+    <a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-member"/></svg><span class="ao-chip__label">Leela</span><span class="ao-chip__count">2 stories</span></a>
+    <a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-code"/></svg><span class="ao-chip__label">Workshop 12 Oct</span><span class="ao-chip__count">18 of 30</span></a>
+  </div>
+</section>
+
+<section class="guide__sec" id="steps">
+  <h2>Add a widget to a site: steps, select, copy field</h2>
+  <div class="ao-header" style="padding:0"><div><h3 class="ao-header__title">Add a widget to a site</h3><p class="ao-header__help">Choose a recording and a site. Then paste the snippet into the page.</p></div></div>
+  <ol class="ao-steps" aria-label="Steps">
+    <li data-done><span class="ao-sr">Done: </span>Recording</li>
+    <li data-done><span class="ao-sr">Done: </span>Site</li>
+    <li aria-current="step">Snippet</li>
+  </ol>
+  <div class="ao-card">
+    <div class="ao-field">
+      <label for="f-rec">Recording</label>
+      <div class="ao-select"><select id="f-rec" class="ao-input"><option>Ferry crossing, 1962 · 30:34</option><option>Market songs, 1974 · 12:05</option><option>New recording…</option></select><svg class="ao-icon"><use href="#i-chevron"/></svg></div>
+      <p class="ao-field__help">The widget plays this recording and shows its stories.</p>
+    </div>
+    <div class="ao-copy">
+      <label class="ao-label" for="f-snip">Snippet</label>
+      <textarea id="f-snip" class="ao-input" readonly rows="4" spellcheck="false">&lt;script async src="https://stories.org.example/embed/v1.js"&gt;&lt;/script&gt;
+&lt;annoudio-player project="river-voices" recording="1"
+  src="https://archive.example/f.mp3"&gt;&lt;/annoudio-player&gt;</textarea>
+      <div class="ao-actions">
+        <button class="ao-btn ao-btn--primary" type="button" data-copy="f-snip"><svg class="ao-icon"><use href="#i-copy"/></svg>Copy the snippet</button>
+        <a class="ao-btn" href="#"><svg class="ao-icon"><use href="#i-open"/></svg>Open the Annotate page</a>
+        <span class="ao-copy__status" role="status"></span>
+      </div>
+      <p class="ao-field__help">Paste these two lines into the page. A page needs the first line one time only. Members come back only to rivervoices.example.org.</p>
+    </div>
+    <div class="ao-actions"><a class="ao-btn" href="#">Back</a><a class="ao-btn ao-btn--primary ao-actions__end" href="#">Done</a></div>
+  </div>
+</section>
+
+<section class="guide__sec" id="fields">
+  <h2>Form fields and dropdowns</h2>
+  <p>Label above, help below the label, error below the field. A placeholder is never the label.</p>
+  <form class="ao-form" novalidate onsubmit="return false">
+    <div class="ao-row-2">
+      <div class="ao-field">
+        <label for="f-count">How many codes</label>
+        <input id="f-count" class="ao-input ao-num" type="number" inputmode="numeric" value="0" aria-invalid="true" aria-describedby="f-count-e">
+        <p class="ao-field__error" id="f-count-e"><svg class="ao-icon"><use href="#i-alert"/></svg>Type a number from 1 to 100.</p>
+      </div>
+      <div class="ao-field">
+        <label for="f-uses">Members per code</label>
+        <p class="ao-field__help" id="f-uses-h">1: one code for each person. More: one code for a group.</p>
+        <input id="f-uses" class="ao-input ao-num" type="number" inputmode="numeric" value="30" aria-describedby="f-uses-h">
+      </div>
+    </div>
+    <div class="ao-field">
+      <label for="f-label">Label (optional)</label>
+      <p class="ao-field__help" id="f-label-h">Only operators see it. For example: Workshop 12 Oct.</p>
+      <input id="f-label" class="ao-input" type="text" aria-describedby="f-label-h">
+    </div>
+    <div class="ao-field">
+      <label for="f-rule">Review rule</label>
+      <div class="ao-select"><select id="f-rule" class="ao-input"><option>An operator publishes each story</option><option>Publish at once</option></select><svg class="ao-icon"><use href="#i-chevron"/></svg></div>
+    </div>
+    <div class="ao-field">
+      <label for="f-parent">Parent concept</label>
+      <p class="ao-field__help" id="f-parent-h">Members see concepts as topics, grouped under the parent.</p>
+      <div class="ao-select"><select id="f-parent" class="ao-input" aria-describedby="f-parent-h"><option>None (top level)</option><option>River work</option><option>River work › Ferry</option><option>Sounds</option></select><svg class="ao-icon"><use href="#i-chevron"/></svg></div>
+    </div>
+    <div class="ao-actions"><button class="ao-btn ao-btn--primary" type="submit">Make invite codes</button></div>
+  </form>
+</section>
+
+<section class="guide__sec" id="colour">
+  <h2>Colour picker field</h2>
+  <p>Swatch, hex text and a live contrast readout against the colour it sits on. Empty means the default.</p>
+  <div class="ao-card">
+    <div class="ao-field">
+      <label for="c-accent-hex">Accent colour</label>
+      <p class="ao-field__help">Play button, played part, links. Text on it uses “Text on the accent colour”.</p>
+      <div class="ao-color" data-against="#ffffff" data-need="4.5">
+        <input type="color" value="#0b6e99" aria-label="Accent colour: pick">
+        <input id="c-accent-hex" class="ao-input" type="text" value="#0b6e99" spellcheck="false" autocomplete="off">
+        <span class="ao-contrast" role="status"></span>
+        <span class="ao-color__default">Default #0b6e99. A host site can change it in its own CSS.</span>
+      </div>
+    </div>
+    <div class="ao-field">
+      <label for="c-muted-hex">Secondary text colour</label>
+      <div class="ao-color" data-against="#ffffff" data-need="4.5">
+        <input type="color" value="#9a9a9a" aria-label="Secondary text colour: pick">
+        <input id="c-muted-hex" class="ao-input" type="text" value="#9a9a9a" spellcheck="false" autocomplete="off">
+        <span class="ao-contrast" role="status"></span>
+        <span class="ao-color__default">Default #595959.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="guide__sec" id="buttons">
+  <h2>Buttons</h2>
+  <p>One filled button per view: the next step. Danger is an outline until the dialog that confirms it.</p>
+  <div class="ao-actions">
+    <button class="ao-btn ao-btn--primary" type="button">Publish</button>
+    <button class="ao-btn" type="button">Next story</button>
+    <button class="ao-btn ao-btn--danger" type="button"><svg class="ao-icon"><use href="#i-remove"/></svg>Remove</button>
+    <button class="ao-btn ao-btn--danger-solid" type="button">Remove the story</button>
+    <button class="ao-btn ao-btn--quiet" type="button">Change</button>
+    <button class="ao-btn ao-btn--primary" type="button" aria-disabled="true" aria-describedby="b-why">Publish</button>
+    <span class="ao-field__help" id="b-why">The voice note is still processing.</span>
+  </div>
+</section>
+
+<section class="guide__sec" id="overlays">
+  <h2>Dialog and toast</h2>
+  <div class="ao-actions"><button class="ao-btn" type="button" data-open="dlg-publish">Open the Publish dialog</button></div>
+  <div class="ao-dialog ao-dialog--inline" role="group" aria-labelledby="dlg-h">
+    <div class="ao-dialog__body">
+      <h2 id="dlg-h">Publish this story?</h2>
+      <p>Visitors see it like this, within one minute:</p>
+      <div class="ao-preview"><div class="ao-preview__meta">Asha · 1:02–1:35</div>My father worked the ferry. The horn meant the last boat. <span class="ao-chip">Ferry</span> <span class="ao-chip">Horn</span></div>
+      <p>We mail Asha that it is published.</p>
+      <div class="ao-actions"><button class="ao-btn ao-btn--primary" type="button">Publish the story</button><button class="ao-btn" type="button">Cancel</button></div>
+    </div>
+  </div>
+  <div class="ao-toast" role="status"><svg class="ao-icon"><use href="#i-published"/></svg><p>Published. Visitors see it within one minute.</p></div>
+  <div class="ao-toast ao-toast--error" role="alert"><svg class="ao-icon"><use href="#i-alert"/></svg><p>We could not publish the story. Try again.</p><button class="ao-btn ao-btn--quiet" type="button" aria-label="Close the message"><svg class="ao-icon"><use href="#i-close"/></svg></button></div>
+</section>
+
+<section class="guide__sec" id="lists">
+  <h2>List rows with meta</h2>
+  <p>The whole row opens the thing. Chips inside it stay their own links.</p>
+  <nav class="ao-tabs" aria-label="Review stories">
+    <a href="#" aria-current="page">Waiting for review <span class="ao-chip__count">3</span></a><a href="#">Processing <span class="ao-chip__count">1</span></a><a href="#">Returned <span class="ao-chip__count">2</span></a><a href="#">Published</a>
+  </nav>
+  <ul class="ao-list">
+    <li class="ao-row"><a class="ao-row__title" href="#">My father worked the ferry. The horn meant the last boat.</a>
+      <div class="ao-row__meta"><span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>Waiting for review</span>Asha <span class="ao-num">1:02–1:35</span><a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-recording"/></svg><span class="ao-chip__label">Ferry crossing, 1962</span></a></div>
+      <div class="ao-row__end">2 days</div></li>
+    <li class="ao-row"><a class="ao-row__title" href="#"><svg class="ao-icon" aria-label="Reply" role="img"><use href="#i-reply"/></svg> Reply: I heard the same horn from the bank.</a>
+      <div class="ao-row__meta"><span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>Waiting for review</span>Ravi<a class="ao-chip" href="#"><svg class="ao-icon"><use href="#i-story"/></svg><span class="ao-chip__label">Story by Asha</span></a></div>
+      <div class="ao-row__end">1 day</div></li>
+    <li class="ao-row"><a class="ao-row__title" href="#">The ferry at the north landing.</a>
+      <div class="ao-row__meta"><span class="ao-badges"><span class="ao-badge ao-badge--published"><svg class="ao-icon"><use href="#i-published"/></svg>Published</span><span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>change waiting</span></span>Leela <span class="ao-num">0:05–0:08</span></div>
+      <div class="ao-row__end">5 hours</div></li>
+  </ul>
+  <span class="guide__label">Invite codes</span>
+  <ul class="ao-list">
+    <li class="ao-row"><span class="ao-row__title ao-num" style="font-family:var(--ao-font-mono)">K7QM…</span>
+      <div class="ao-row__meta"><span class="ao-num">Workshop 12 Oct · 18 of 30 used · Last day 30 Oct 2026</span><span class="ao-badge ao-badge--published"><svg class="ao-icon"><use href="#i-published"/></svg>Works</span></div>
+      <div class="ao-row__end"><button class="ao-btn ao-btn--danger" type="button" aria-label="Revoke the code that starts with K7QM">Revoke</button></div></li>
+    <li class="ao-row"><span class="ao-row__title ao-num" style="font-family:var(--ao-font-mono)">P2XD…</span>
+      <div class="ao-row__meta"><span class="ao-num">No label · 1 of 1 used · Last day None</span><span class="ao-badge"><svg class="ao-icon"><use href="#i-processing"/></svg>Used up</span></div>
+      <div class="ao-row__end"></div></li>
+  </ul>
+  <span class="guide__label">History</span>
+  <ul class="ao-list">
+    <li class="ao-row"><span class="ao-row__title">Published by Mira</span><div class="ao-row__meta">9 Oct 2026, 14:02</div><div class="ao-row__end"></div></li>
+    <li class="ao-row"><span class="ao-row__title">Returned to the member by Mira</span><div class="ao-row__meta">“Please name the place.” · 8 Oct 2026, 10:15</div><div class="ao-row__end"></div></li>
+  </ul>
+</section>
+
+<section class="guide__sec" id="phone">
+  <h2>Phone form layout (Annotate page)</h2>
+  <p>One column, 16px text in fields, 44px targets, the main action in a bar that stays on screen.</p>
+  <div class="ao-phone ao-member">
+    <div class="ao-phone__top">
+      <div><div class="ao-phone__project">River Voices</div><h3 class="ao-header__title">Tell a story</h3><div style="color:var(--ao-text-muted)">Ferry crossing, 1962</div></div>
+      <button class="ao-btn" type="button">Asha<svg class="ao-icon"><use href="#i-chevron"/></svg></button>
+    </div>
+    <p style="margin-block-start:12px"><a href="#">← Back to the site</a></p>
+    <form class="ao-form" onsubmit="return false">
+      <div class="ao-moment"><svg class="ao-icon"><use href="#i-play"/></svg>Your story is about <span class="ao-num">0:03–0:08</span></div>
+      <div class="ao-row-2">
+        <div class="ao-field"><label for="p-start">Start</label><input id="p-start" class="ao-input ao-num" inputmode="decimal" value="0:03"><button class="ao-btn" type="button">Use 0:05</button></div>
+        <div class="ao-field"><label for="p-end">End</label><input id="p-end" class="ao-input ao-num" inputmode="decimal" value="0:08"><button class="ao-btn" type="button">Use 0:05</button></div>
+      </div>
+      <div class="ao-field"><label for="p-story">Your story</label><p class="ao-field__help" id="p-story-h">What do you remember? What do you hear?</p><textarea id="p-story" class="ao-input" aria-describedby="p-story-h">My father worked the ferry. The horn meant the last boat.</textarea></div>
+      <fieldset class="ao-field" style="border:0;margin:0;padding:0"><legend>Topics</legend>
+        <div class="ao-topics"><label class="ao-topic"><input type="checkbox" checked><span>Ferry</span></label><label class="ao-topic"><input type="checkbox" checked><span>Horn</span></label><label class="ao-topic"><input type="checkbox"><span>Market</span></label></div>
+      </fieldset>
+      <div class="ao-phone__bar">
+        <button class="ao-btn ao-btn--primary ao-btn--block" type="submit">Send for review</button>
+        <span class="ao-field__help" style="text-align:center">An operator reads it first. We send you a mail when it is published.</span>
+      </div>
+    </form>
+  </div>
+  <span class="guide__label">Your stories</span>
+  <ul class="ao-list ao-member" style="max-width:26rem">
+    <li class="ao-row"><a class="ao-row__title" href="#">My father worked the ferry…</a><div class="ao-row__meta"><span class="ao-badge ao-badge--waiting"><svg class="ao-icon"><use href="#i-waiting"/></svg>Waiting for review</span>Ferry crossing, 1962</div><div class="ao-row__end"></div></li>
+    <li class="ao-row"><a class="ao-row__title" href="#">The ferry at the north landing.</a><div class="ao-row__meta"><span class="ao-badge ao-badge--returned"><svg class="ao-icon"><use href="#i-returned"/></svg>Returned to you</span>Please name the place.</div><div class="ao-row__end"></div></li>
+  </ul>
+</section>
+
+<section class="guide__sec" id="widget">
+  <h2>Widget default tokens</h2>
+  <p>The defaults of <code>&lt;annoudio-player&gt;</code> (CONTRACT §3.1). They stay light, because the widget follows the host page; a project sets the dark set below in its Theme tab.</p>
+  <div class="guide__swatches" style="background:#fff;color:#1f1f1f;padding:12px;border-radius:10px">
+    <div class="guide__swatch" style="background:#fff"><b>surface</b>#ffffff</div>
+    <div class="guide__swatch" style="background:#fff;color:#1f1f1f"><b>text</b>#1f1f1f · 16.5</div>
+    <div class="guide__swatch" style="background:#fff;color:#595959"><b>muted</b>#595959 · 7.0</div>
+    <div class="guide__swatch" style="background:#0b6e99;color:#fff"><b>accent</b>#0b6e99 · 5.7</div>
+    <div class="guide__swatch" style="background:#fff;box-shadow:inset 0 0 0 2px #767676"><b>border</b>#767676 · 4.5</div>
+    <div class="guide__swatch" style="background:#d6eaf5;color:#1f1f1f"><b>region</b>#d6eaf5</div>
+    <div class="guide__swatch" style="background:#fff;box-shadow:inset 6px 0 0 #848484"><b>wave</b>#848484 · 3.7</div>
+  </div>
+  <div class="guide__swatches" style="background:#222;color:#ebebeb;padding:12px;border-radius:10px">
+    <div class="guide__swatch" style="background:#222"><b>surface</b>#222222</div>
+    <div class="guide__swatch" style="background:#222;color:#c3c3c3"><b>muted</b>#c3c3c3 · 9.0</div>
+    <div class="guide__swatch" style="background:#41b2ec;color:#141414"><b>accent</b>#41b2ec · 6.7</div>
+    <div class="guide__swatch" style="background:#222;box-shadow:inset 0 0 0 2px #808080"><b>border</b>#808080 · 4.0</div>
+    <div class="guide__swatch" style="background:#1b3a4b"><b>region</b>#1b3a4b</div>
+    <div class="guide__swatch" style="background:#222;box-shadow:inset 6px 0 0 #9a9a9a"><b>wave</b>#9a9a9a · 5.7</div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<dialog class="ao-dialog ao" data-theme="light" id="dlg-publish" aria-labelledby="dlg-h2">
+  <form method="dialog" class="ao-dialog__body">
+    <h2 id="dlg-h2">Publish this story?</h2>
+    <p>Visitors see it within one minute. We mail Asha that it is published.</p>
+    <div class="ao-actions"><button class="ao-btn ao-btn--primary" value="ok">Publish the story</button><button class="ao-btn" value="cancel" autofocus>Cancel</button></div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  const main = document.getElementById('main');
+  const col = document.getElementById('col');
+  const lum = (hex) => {
+    const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const ratio = (a, b) => { const [h, l] = [lum(a), lum(b)].sort((x, y) => y - x); return (h + 0.05) / (l + 0.05); };
+  const isHex = (v) => /^#[0-9a-f]{6}$/i.test(v);
+
+  function wire(root) {
+    root.querySelectorAll('.ao-color').forEach((box) => {
+      const [pick, text] = box.querySelectorAll('input');
+      const out = box.querySelector('.ao-contrast');
+      const against = box.dataset.against, need = Number(box.dataset.need);
+      const show = (v) => {
+        if (!isHex(v)) { out.dataset.pass = 'false'; out.textContent = 'Type a colour as # and 6 characters, for example #0b6e99.'; return; }
+        const r = ratio(v, against), pass = r >= need;
+        out.dataset.pass = String(pass);
+        out.innerHTML = '<span class="ao-contrast__swatch" style="background:' + against + ';color:' + v + '">Aa</span>' +
+          r.toFixed(1) + ':1 on the background ' + (pass ? '· passes for text' : '· too low for text, needs ' + need + ':1');
+      };
+      pick.addEventListener('input', () => { text.value = pick.value; show(pick.value); });
+      text.addEventListener('input', () => { if (isHex(text.value)) pick.value = text.value.toLowerCase(); show(text.value); });
+      show(text.value);
+    });
+    root.querySelectorAll('[data-copy]').forEach((btn) => btn.addEventListener('click', async () => {
+      const field = btn.closest('.ao-copy').querySelector('textarea');
+      const status = btn.closest('.ao-copy').querySelector('.ao-copy__status');
+      try { await navigator.clipboard.writeText(field.value); status.textContent = 'Copied.'; }
+      catch { field.select(); status.textContent = 'Press Ctrl+C to copy.'; }
+    }));
+    root.querySelectorAll('[data-open]').forEach((btn) => btn.addEventListener('click', () => {
+      const d = document.getElementById(btn.dataset.open);
+      d.dataset.theme = btn.closest('[data-theme]').dataset.theme;
+      d.showModal();
+    }));
+  }
+
+  function show(mode) {
+    document.querySelectorAll('[data-show]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.show === mode)));
+    main.querySelector('[data-clone]')?.remove();
+    delete main.dataset.both;
+    const theme = mode === 'both' ? 'light' : mode;
+    document.documentElement.dataset.theme = theme;
+    col.dataset.theme = theme;
+    if (mode === 'both') {
+      const dark = col.cloneNode(true);
+      dark.dataset.theme = 'dark';
+      dark.dataset.clone = '';
+      dark.removeAttribute('id');
+      dark.querySelectorAll('[id]').forEach((el) => { el.id += '-d'; });
+      dark.querySelectorAll('[for], [aria-describedby], [aria-labelledby]').forEach((el) => {
+        ['for', 'aria-describedby', 'aria-labelledby'].forEach((a) => { if (el.hasAttribute(a)) el.setAttribute(a, el.getAttribute(a) + '-d'); });
+      });
+      main.append(dark);
+      main.dataset.both = '';
+      wire(dark);
+    }
+  }
+
+  document.querySelectorAll('[data-show]').forEach((b) => b.addEventListener('click', () => show(b.dataset.show)));
+  wire(col);
+  show(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+})();
+</script>
+</body>
+</html>

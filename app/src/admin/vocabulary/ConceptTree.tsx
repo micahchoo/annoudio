@@ -10,6 +10,7 @@ import type { Payload } from 'payload'
 import { IMPORT_LIMITS, conceptsOf, type ConceptNode } from '@/modules/vocabulary'
 
 import { SkosTools } from '../projects/SkosTools'
+import { QuickAddItem } from './QuickAddItem'
 import { PATHS } from '../paths'
 import { strings } from '../strings'
 
@@ -22,31 +23,80 @@ interface Node extends ConceptNode {
 export async function ConceptTree(props: {
   payload: Payload
   project: { id: number | string; slug: string }
+  /** One list: its key and admin id. Default: the list Topics. */
+  list?: { key: string; id: number | string; kind: 'items' | 'entities'; label: string }
 }) {
   const { payload, project } = props
-  const [concepts, uses] = await Promise.all([
+  const key = props.list?.key ?? 'topics'
+  const [all, uses] = await Promise.all([
     conceptsOf({ payload }, project.slug),
-    stories.tagCounts(project.slug),
+    stories.valueCounts(project.slug),
   ])
+  const concepts = all.filter((c) => c.list === key)
+  const addUrl = `${PATHS.newConcept}?project=${project.id}${props.list ? `&list=${props.list.id}` : ''}`
   return (
     <>
       {concepts.length === 0 ? (
-        <p className="annoudio-empty">{s.none}</p>
+        <p className="ao-empty">
+          {props.list ? strings.lists.empty(props.list.label) : s.none}
+        </p>
+      ) : props.list?.kind === 'entities' ? (
+        <Entities entities={concepts} uses={uses} />
       ) : (
         <Tree nodes={tree(concepts)} uses={uses} />
       )}
-      <p>
-        <Button
-          el="link"
-          url={`${PATHS.newConcept}?project=${project.id}`}
-          buttonStyle="primary"
-          size="medium"
-        >
-          {s.add}
-        </Button>
-      </p>
-      <SkosTools project={project.slug} maxBytes={IMPORT_LIMITS.bytes} />
+      {props.list ? (
+        <>
+          <QuickAddItem project={project.slug} listKey={props.list.key} />
+          <p>
+            <Link href={addUrl}>{strings.lists.allFields}</Link>
+          </p>
+        </>
+      ) : (
+        <p>
+          <Button el="link" url={addUrl} buttonStyle="primary" size="medium">
+            {s.add}
+          </Button>
+        </p>
+      )}
+      <SkosTools project={project.slug} maxBytes={IMPORT_LIMITS.bytes} list={props.list?.key} />
     </>
+  )
+}
+
+/** An entity list has no tree: Label · Same as · stories (design/vocab.md §8). */
+function Entities({ entities, uses }: { entities: ConceptNode[]; uses: Map<string, number> }) {
+  const c = strings.lists.columns
+  return (
+    <table className="annoudio-entities">
+      <thead>
+        <tr>
+          <th scope="col">{c.label}</th>
+          <th scope="col">{c.sameAs}</th>
+          <th scope="col">{c.stories}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {entities.map((entity) => (
+          <tr key={entity.iri} data-concept={entity.label}>
+            <td>
+              <Link href={`/admin/collections/concepts/${entity.id}`}>{entity.label}</Link>
+              {entity.hidden && <span className="annoudio-tree__hidden"> ({s.hidden})</span>}
+            </td>
+            <td>
+              {entity.sameAs ? (
+                <a href={entity.sameAs} rel="noreferrer" target="_blank">
+                  {entity.sameAs}
+                </a>
+              ) : (
+                strings.lists.noSameAs
+              )}
+            </td>
+            <td>{s.stories(uses.get(entity.iri) ?? 0)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }
 

@@ -36,7 +36,7 @@ const step = (name: string) => page.locator(`[data-step="${name}"]`)
 test('an empty stack shows the 4-step checklist, and each step ticks from data', async () => {
   await page.goto('/admin')
   await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Put your first player on a site' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Put your first widget on a site' })).toBeVisible()
   for (const name of ['project', 'recording', 'snippet', 'story']) {
     await expect(step(name)).toHaveAttribute('data-done', 'false')
   }
@@ -73,7 +73,7 @@ test('an empty stack shows the 4-step checklist, and each step ticks from data',
   await app.stories.publish({ operatorId: 'op-test' }, story(1))
   await page.reload()
   // All four tick: the list goes.
-  await expect(page.getByRole('heading', { name: 'Put your first player on a site' })).toHaveCount(
+  await expect(page.getByRole('heading', { name: 'Put your first widget on a site' })).toHaveCount(
     0,
   )
 })
@@ -125,8 +125,8 @@ test('the sidebar names the jobs, then Settings', async () => {
   const nav = page.locator('nav.nav__wrap, aside.nav').first()
   for (const name of [
     'Today',
-    'Add a player',
-    'Concepts',
+    'Add a widget',
+    'Vocabulary',
     'Members',
     'Projects',
     'Recordings',

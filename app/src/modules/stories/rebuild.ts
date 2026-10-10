@@ -8,11 +8,11 @@ import type { Payload, PayloadRequest } from 'payload'
 
 import { recording as findRecording } from '@/modules/catalogue'
 import { bySlug } from '@/modules/projects'
-import { concept } from '@/modules/vocabulary'
+import type { Vocabulary } from '@/modules/vocabulary'
 
 import { etagOf } from './etag'
 import { representations, type InstanceInfo, type ServedReply, type ServedStory } from './paginate'
-import { parseStory, relabel, tagsOf, type Label } from './shape'
+import { itemIrisOf, parseStory, relabel, type Label } from './shape'
 import type { ConceptIri, ProjectSlug, RecordingId, StoryId, Tally } from './types'
 
 export const STORIES = 'stories'
@@ -21,6 +21,8 @@ export const REPRESENTATIONS = 'story-representations'
 export interface Settings {
   origin: string
   pageSize: number
+  /** The current label of an item, for the served stories. */
+  vocabulary: Pick<Vocabulary, 'item'>
 }
 
 export interface Instance {
@@ -52,16 +54,24 @@ export async function instanceInfo(
   }
 }
 
-/** The current label of each concept, or null for a concept that no longer exists. */
+/** The current label of each item, or null for an IRI that is not an item of the project. */
 export async function labelsOf(
   req: PayloadRequest | undefined,
-  payload: PayloadRequest['payload'],
+  vocabulary: Pick<Vocabulary, 'item'>,
   project: ProjectSlug,
   iris: ConceptIri[],
 ): Promise<Map<ConceptIri, Label | null>> {
   const unique = [...new Set(iris)]
-  const found = await Promise.all(unique.map((iri) => concept({ payload, req }, project, iri)))
-  return new Map(unique.map((iri, i) => [iri, found[i]]))
+  const found = await Promise.all(unique.map((iri) => vocabulary.item(project, iri, { req })))
+  return new Map(
+    unique.map((iri, i) => {
+      const item = found[i]
+      return [
+        iri,
+        item ? { label: item.label, ...(item.language ? { language: item.language } : {}) } : null,
+      ]
+    }),
+  )
 }
 
 export async function rebuild(req: PayloadRequest, settings: Settings, instance: Instance) {
@@ -87,9 +97,9 @@ export async function rebuild(req: PayloadRequest, settings: Settings, instance:
   const parsed = docs.flatMap((doc) => parseStory(doc.wadm, settings.origin) ?? [])
   const labels = await labelsOf(
     req,
-    payload,
+    settings.vocabulary,
     instance.project,
-    parsed.flatMap((story) => tagsOf(story.annotation)),
+    parsed.flatMap((story) => itemIrisOf(story.annotation)),
   )
   // A reply shows only under its published parent. When the parent is not published, the
   // reply keeps its review state but is served nowhere, also not at its own IRI.
@@ -164,7 +174,7 @@ export async function forgetInstances(
 }
 
 /** The Drizzle handle of the transaction of `req`, else of the pool. */
-async function dbOf(payload: Payload, req?: PayloadRequest) {
+export async function dbOf(payload: Payload, req?: PayloadRequest) {
   const adapter = payload.db as unknown as PostgresAdapter
   const transactionID = req ? await req.transactionID : undefined
   return (transactionID !== undefined && adapter.sessions[transactionID]?.db) || adapter.drizzle

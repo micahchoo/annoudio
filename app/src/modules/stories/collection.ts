@@ -1,9 +1,11 @@
+import { sql } from '@payloadcms/db-postgres'
 import {
   APIError,
   ValidationError,
   type CollectionAfterChangeHook,
   type CollectionAfterDeleteHook,
   type CollectionBeforeChangeHook,
+  type CollectionBeforeDeleteHook,
   type CollectionBeforeValidateHook,
   type CollectionConfig,
   type FieldHook,
@@ -18,7 +20,8 @@ import { body as mediaBody, mediaIdOf, type MediaBody, type MediaContext } from 
 import { bySlug } from '@/modules/projects'
 
 import { lifecycle } from './lifecycle'
-import { REPRESENTATIONS, STORIES, rebuild, type Settings } from './rebuild'
+import { REPRESENTATIONS, STORIES, dbOf, rebuild, type Settings } from './rebuild'
+import { writeValues } from './values'
 import type { Rejection } from './types'
 import { excerptOf, mediaUrls, parseStory, withMediaFormats, type ParsedStory } from './shape'
 
@@ -107,10 +110,11 @@ export function rejectionOf(value: unknown): Rejection | undefined {
 /** No rejection: the value that clears the `rejection` group. */
 export const NO_REJECTION = { reason: null, operator: null, at: null, automatic: false }
 
-// A published story is not returned. The admin Publish button sends the rejection that
-// the form holds; this hook clears it for the button and for `publish()` alike.
+// A published story is not returned, and not sent again. The admin Publish button sends
+// the rejection and `sentAgain` that the form holds; this hook clears both for the button
+// and for `publish()` alike.
 const clearRejectionOnPublish: CollectionBeforeChangeHook = ({ data }) =>
-  data._status === 'published' ? { ...data, rejection: NO_REJECTION } : data
+  data._status === 'published' ? { ...data, rejection: NO_REJECTION, sentAgain: false } : data
 
 const rebuildAfterChange: CollectionAfterChangeHook = async ({
   doc,
@@ -126,6 +130,36 @@ const rebuildAfterChange: CollectionAfterChangeHook = async ({
 
 const rebuildAfterDelete: CollectionAfterDeleteHook = async ({ doc, req, context }) => {
   if (doc._status === 'published') await rebuild(req, settingsOf(context), doc)
+}
+
+// The `story-values` rows of the story (stories/values.ts): from the newest version and
+// the published one, in the transaction of the change.
+const valuesAfterChange: CollectionAfterChangeHook = async ({ doc, req, context }) => {
+  const db = await dbOf(req.payload, req)
+  const [latest, main] = await Promise.all([
+    db.execute<{ wadm: unknown }>(
+      sql`select version_wadm as wadm from _stories_v where parent_id = ${doc.id} and latest`,
+    ),
+    db.execute<{ wadm: unknown; status: string | null }>(
+      sql`select wadm, _status as status from stories where id = ${doc.id}`,
+    ),
+  ])
+  const published = main.rows[0]?.status === 'published' ? main.rows[0].wadm : null
+  await writeValues(req, settingsOf(context).origin, {
+    id: doc.id,
+    newest: latest.rows[0]?.wadm ?? doc.wadm,
+    published,
+  })
+  return doc
+}
+
+// Before the delete: the foreign key would only set the rows' story to null.
+const valuesBeforeDelete: CollectionBeforeDeleteHook = async ({ id, req, context }) => {
+  await writeValues(req, settingsOf(context).origin, {
+    id: String(id),
+    newest: null,
+    published: null,
+  })
 }
 
 /** The media bodies of a story, each with its state, or null for an unknown URL. */
@@ -251,22 +285,20 @@ const recordingTitle = forOperator(async ({ data, req, context }) => {
 
 // The lifecycle of the row (design/ia.md §2.1), from the same data as `counts`: the stored
 // `processing` and `rejection`, and whether a published version exists under a draft.
-// The read of the published version must not run this hook again (`MAIN_READ`).
-const MAIN_READ = 'annoudio.mainRead'
-const lifecycleColumn = forOperator(async ({ data, req, context }) => {
-  if (!data?.id || context[MAIN_READ]) return null
+// The main row is read through the database adapter, with no hooks. A local API read with
+// `req` and a `context` writes that context into `req.context` (Payload's `createLocalReq`),
+// and every later row of the same list then reads it: a guard flag there emptied the State
+// cell of every row but the first (design/recordings, audit 1).
+const lifecycleColumn = forOperator(async ({ data, req }) => {
+  if (!data?.id) return null
   const draft = data._status !== 'published'
   const main = draft
-    ? await req.payload.findByID({
+    ? ((await req.payload.db.findOne({
         collection: STORIES,
-        id: data.id,
-        draft: false,
-        depth: 0,
-        disableErrors: true,
+        where: { id: { equals: data.id } },
         select: { _status: true },
-        context: { ...context, [MAIN_READ]: true },
         req,
-      })
+      })) as { _status?: string } | null)
     : null
   const rejection = rejectionOf(data.rejection)
   return lifecycle({
@@ -274,6 +306,7 @@ const lifecycleColumn = forOperator(async ({ data, req, context }) => {
     pendingRevision: main?._status === 'published',
     ...(rejection ? { rejection } : {}),
     ...(data.processing ? { mediaState: 'processing' as const } : {}),
+    ...(data.sentAgain ? { sentAgain: true } : {}),
   })
 })
 
@@ -315,7 +348,7 @@ export const storiesCollection: CollectionConfig = {
     group: false,
     useAsTitle: 'excerpt',
     description:
-      'Stories and replies that members tell on the Annotate page. Read each one, then publish it or return it to the member.',
+      'A story is a note that a member made on a time range of a recording. Read each story, then publish it or return it to the member.',
     defaultColumns: [
       'excerpt',
       'lifecycle',
@@ -375,14 +408,14 @@ export const storiesCollection: CollectionConfig = {
     // The columns below come from `wadm`. The hook writes them.
     {
       name: 'project',
-      label: 'Project (short name)',
+      label: 'Project (address name)',
       type: 'text',
       index: true,
       admin: { ...inPanel, disableListColumn: true },
     },
     {
       name: 'recording',
-      label: 'Recording ID',
+      label: 'Recording number',
       type: 'text',
       index: true,
       admin: { ...inPanel, disableListColumn: true },
@@ -433,6 +466,23 @@ export const storiesCollection: CollectionConfig = {
       type: 'text',
       access: { read: ({ req }) => req.user?.collection === 'users' },
       admin: { condition: () => false },
+    },
+    {
+      // The page of a `return` that is not on the website list of the project (or the
+      // admin preview page): the review screen offers "Add this website". A save with a
+      // listed `return` clears it. Operators only; never in the WADM record.
+      name: 'toldOnUnlisted',
+      type: 'text',
+      access: { read: ({ req }) => req.user?.collection === 'users' },
+      admin: { condition: () => false },
+    },
+    {
+      // True when the member changed the story after a return: it waits again. `saveDraft`
+      // sets it; a publish and a return clear it. The list badge says "Sent again".
+      name: 'sentAgain',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { hidden: true },
     },
     // The change that made this version, for History. The hook writes them.
     { name: 'lastAction', type: 'select', options: LAST_ACTIONS, admin: { hidden: true } },
@@ -505,7 +555,8 @@ export const storiesCollection: CollectionConfig = {
   hooks: {
     beforeValidate: [deriveColumns],
     beforeChange: [requireReadyMedia, clearRejectionOnPublish, recordChange],
-    afterChange: [rebuildAfterChange],
+    afterChange: [rebuildAfterChange, valuesAfterChange],
+    beforeDelete: [valuesBeforeDelete],
     afterDelete: [rebuildAfterDelete],
   },
 }

@@ -7,8 +7,11 @@ import { strings } from '../strings'
 
 const s = strings.review
 
-/** neutral: Processing; attention: Waiting; warning: Returned; success: Published. */
-export type Tone = 'neutral' | 'attention' | 'warning' | 'success'
+/**
+ * The colour of a state is whose move it is (design/design-system.md §3.4): processing
+ * (the system), waiting (the operator), returned (the member), published (nobody).
+ */
+export type Tone = 'processing' | 'waiting' | 'returned' | 'published'
 
 export interface Badge {
   label: string
@@ -20,26 +23,37 @@ export interface Badge {
 export function badgeOf(state: Lifecycle): Badge {
   switch (state.change) {
     case 'waiting':
-      return { label: s.badge.change, tone: 'attention', meaning: s.stateLong.change }
+      return { label: s.badge.change, tone: 'waiting', meaning: s.stateLong.change }
     case 'processing':
       return {
         label: s.badge.changeProcessing,
-        tone: 'success',
+        tone: 'published',
         meaning: s.stateLong.changeProcessing,
       }
     case 'returned':
-      return { label: s.badge.changeReturned, tone: 'success', meaning: s.stateLong.changeReturned }
+      return { label: s.badge.changeReturned, tone: 'published', meaning: s.stateLong.changeReturned }
   }
   switch (state.state) {
     case 'processing':
-      return { label: s.badge.processing, tone: 'neutral', meaning: s.stateLong.processing }
+      return { label: s.badge.processing, tone: 'processing', meaning: s.stateLong.processing }
     case 'waiting':
-      return { label: s.badge.waiting, tone: 'attention', meaning: s.stateLong.waiting }
+      return { label: s.badge.waiting, tone: 'waiting', meaning: s.stateLong.waiting }
     case 'returned':
       return state.automatic
-        ? { label: s.badge.automatic, tone: 'warning', meaning: s.stateLong.automatic }
-        : { label: s.badge.returned, tone: 'warning', meaning: s.stateLong.returned }
+        ? { label: s.badge.automatic, tone: 'returned', meaning: s.stateLong.automatic }
+        : { label: s.badge.returned, tone: 'returned', meaning: s.stateLong.returned }
     case 'published':
-      return { label: s.badge.published, tone: 'success', meaning: s.stateLong.published }
+      return { label: s.badge.published, tone: 'published', meaning: s.stateLong.published }
   }
+}
+
+/**
+ * The badges of a row: the state, then "Sent again" when the member changed the story
+ * after a return and it waits again (`Lifecycle.again`).
+ */
+export function badgesOf(state: Lifecycle): Badge[] {
+  const main = badgeOf(state)
+  return state.again
+    ? [main, { label: s.badge.sentAgain, tone: 'waiting', meaning: s.stateLong.sentAgain }]
+    : [main]
 }

@@ -8,13 +8,16 @@ import {
   initTransaction,
   killTransaction,
   type Payload,
+  type PayloadRequest,
 } from 'payload'
 
 import { mails } from '@/modules/mail'
 
 import { CODES, MEMBERS, SESSIONS } from './collections'
+import { makeInvites } from './invites'
 import { checkNickname, normaliseEmail } from './rules'
 import type {
+  Account,
   Contact,
   HasHeaders,
   MemberSession,
@@ -23,6 +26,7 @@ import type {
   RequestCodeOptions,
   RequestCodeResult,
   SessionCookie,
+  SignInOptions,
   VerifyCodeResult,
 } from './types'
 
@@ -35,6 +39,9 @@ const CODES_PER_HOUR = 100 // per stack, the default of `codesPerHour`
 const ATTEMPTS_PER_CODE = 5
 const HOUR = 60 * 60 * 1000
 const SESSION_LIFETIME = 30 * 24 * 60 * 60 // seconds
+
+/** The Drizzle handle of a locked transaction. */
+export type LockedDb = PostgresAdapter['drizzle']
 
 export function createMembership(config: MembershipConfig): Membership {
   const now = config.now ?? (() => new Date())
@@ -70,15 +77,71 @@ export function createMembership(config: MembershipConfig): Membership {
     maxAge,
   })
 
-  async function findMember(db: Payload, email: string) {
+  async function findMember(db: Payload, email: string, req?: PayloadRequest) {
     const { docs } = await db.find({
       collection: MEMBERS,
       where: { email: { equals: email } },
       limit: 1,
       pagination: false,
       depth: 0,
+      req,
     })
     return docs[0] ?? null
+  }
+
+  /**
+   * Run `work` in one transaction under a stack-wide advisory lock. Parallel calls with
+   * the same `key` wait for each other, so a count and the insert after it are one step.
+   */
+  async function withLock<T>(
+    db: Payload,
+    key: string,
+    work: (tx: LockedDb, req: PayloadRequest) => Promise<T>,
+  ): Promise<T> {
+    const req = await createLocalReq({}, db)
+    await initTransaction(req)
+    try {
+      const adapter = db.db as unknown as PostgresAdapter
+      const transactionID = await req.transactionID
+      const tx =
+        (transactionID !== undefined && adapter.sessions[transactionID]?.db) || adapter.drizzle
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${key}))`)
+      const result = await work(tx, req)
+      await commitTransaction(req)
+      return result
+    } catch (error) {
+      await killTransaction(req)
+      throw error
+    }
+  }
+
+  /** A new session for the member: the row and the cookie. Expired rows of the member go. */
+  async function startSession(
+    db: Payload,
+    member: { id: number | string; nickname: string },
+    time: Date,
+  ): Promise<{ ok: true; session: MemberSession; cookie: SessionCookie }> {
+    const token = randomBytes(32).toString('base64url')
+    await db.delete({
+      collection: SESSIONS,
+      where: {
+        and: [{ member: { equals: member.id } }, { expiresAt: { less_than: time.toISOString() } }],
+      },
+    })
+    await db.create({
+      collection: SESSIONS,
+      data: {
+        tokenHash: tokenHash(token),
+        member: Number(member.id),
+        expiresAt: new Date(time.getTime() + SESSION_LIFETIME * 1000).toISOString(),
+      },
+      depth: 0,
+    })
+    return {
+      ok: true,
+      session: { memberId: String(member.id), nickname: member.nickname },
+      cookie: cookie(token, SESSION_LIFETIME),
+    }
   }
 
   async function requestCode(
@@ -126,14 +189,7 @@ export function createMembership(config: MembershipConfig): Membership {
     code: { email: string; ipHash: string | null; codeHash: string; time: Date },
   ): Promise<{ id: number | string } | null> {
     const hourAgo = new Date(code.time.getTime() - HOUR).toISOString()
-    const req = await createLocalReq({}, db)
-    await initTransaction(req)
-    try {
-      const adapter = db.db as unknown as PostgresAdapter
-      const transactionID = await req.transactionID
-      const tx =
-        (transactionID !== undefined && adapter.sessions[transactionID]?.db) || adapter.drizzle
-      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('annoudio.login-codes'))`)
+    return withLock(db, 'annoudio.login-codes', async (tx, req) => {
       // Codes older than the rate-limit window count for nothing. Remove them.
       await tx.execute(sql`delete from login_codes where requested_at < ${hourAgo}`)
       const counts = await tx.execute<{ email: number; ip: number; total: number }>(
@@ -148,33 +204,28 @@ export function createMembership(config: MembershipConfig): Membership {
         count.email >= REQUESTS_PER_EMAIL ||
         count.ip >= REQUESTS_PER_IP ||
         count.total >= codesPerHour
-      const row = limited
-        ? null
-        : await db.create({
-            collection: CODES,
-            data: {
-              email: code.email,
-              codeHash: code.codeHash,
-              ipHash: code.ipHash,
-              requestedAt: code.time.toISOString(),
-              expiresAt: new Date(code.time.getTime() + CODE_LIFETIME).toISOString(),
-              attempts: 0,
-            },
-            depth: 0,
-            req,
-          })
-      await commitTransaction(req)
-      return row
-    } catch (error) {
-      await killTransaction(req)
-      throw error
-    }
+      if (limited) return null
+      return db.create({
+        collection: CODES,
+        data: {
+          email: code.email,
+          codeHash: code.codeHash,
+          ipHash: code.ipHash,
+          requestedAt: code.time.toISOString(),
+          expiresAt: new Date(code.time.getTime() + CODE_LIFETIME).toISOString(),
+          attempts: 0,
+        },
+        depth: 0,
+        req,
+      })
+    })
   }
 
   async function verifyCode(
     raw: string,
     rawCode: string,
     rawNickname?: string,
+    options: SignInOptions = {},
   ): Promise<VerifyCodeResult> {
     const email = normaliseEmail(raw)
     if (!email) return { ok: false, error: 'invalid-email' }
@@ -234,35 +285,23 @@ export function createMembership(config: MembershipConfig): Membership {
           where id = ${live.id} and used_at is null returning id`,
     )
     if (used.rows.length === 0) return { ok: false, error: 'no-code' }
+    // A login code proves the email: a member that an invite code made is now verified.
+    if (known && !known.emailVerified) {
+      await db.update({
+        collection: MEMBERS,
+        id: known.id,
+        data: { emailVerified: true },
+        depth: 0,
+      })
+    }
     const member =
       known ??
       (await db.create({
         collection: MEMBERS,
-        data: { email, nickname, status: 'active' },
+        data: { email, nickname, status: 'active', emailVerified: true, test: options.test === true },
         depth: 0,
       }))
-
-    const token = randomBytes(32).toString('base64url')
-    await db.delete({
-      collection: SESSIONS,
-      where: {
-        and: [{ member: { equals: member.id } }, { expiresAt: { less_than: time.toISOString() } }],
-      },
-    })
-    await db.create({
-      collection: SESSIONS,
-      data: {
-        tokenHash: tokenHash(token),
-        member: member.id,
-        expiresAt: new Date(time.getTime() + SESSION_LIFETIME * 1000).toISOString(),
-      },
-      depth: 0,
-    })
-    return {
-      ok: true,
-      session: { memberId: String(member.id), nickname: member.nickname },
-      cookie: cookie(token, SESSION_LIFETIME),
-    }
+    return startSession(db, member, time)
   }
 
   async function sessionFromRequest(request: HasHeaders): Promise<MemberSession | null> {
@@ -292,7 +331,7 @@ export function createMembership(config: MembershipConfig): Membership {
     return cookie('', 0)
   }
 
-  async function contact(memberId: string): Promise<Contact | null> {
+  async function account(memberId: string): Promise<Account | null> {
     if (!/^[1-9][0-9]*$/.test(memberId)) return null
     const db = await payload()
     const member = await db.findByID({
@@ -306,7 +345,15 @@ export function createMembership(config: MembershipConfig): Membership {
       email: member.email,
       nickname: member.nickname,
       mailNotices: member.mailNotices !== false,
+      emailVerified: member.emailVerified === true,
     }
+  }
+
+  /** The mail address of a member. Null when the email is not verified: no mail goes. */
+  async function contact(memberId: string): Promise<Contact | null> {
+    const found = await account(memberId)
+    if (!found?.emailVerified) return null
+    return { email: found.email, nickname: found.nickname, mailNotices: found.mailNotices }
   }
 
   async function updateAccount(
@@ -315,7 +362,7 @@ export function createMembership(config: MembershipConfig): Membership {
   ) {
     const nickname = change.nickname === undefined ? undefined : checkNickname(change.nickname)
     if (nickname === null) return { ok: false as const, error: 'invalid-nickname' as const }
-    if (!(await contact(session.memberId))) return { ok: false as const, error: 'gone' as const }
+    if (!(await account(session.memberId))) return { ok: false as const, error: 'gone' as const }
     const db = await payload()
     await db.update({
       collection: MEMBERS,
@@ -326,16 +373,42 @@ export function createMembership(config: MembershipConfig): Membership {
       },
       depth: 0,
     })
-    return { ok: true as const, account: (await contact(session.memberId))! }
+    return { ok: true as const, account: (await account(session.memberId))! }
   }
+
+  async function testMembers(): Promise<string[]> {
+    const db = await payload()
+    const { docs } = await db.find({
+      collection: MEMBERS,
+      where: { test: { equals: true } },
+      pagination: false,
+      depth: 0,
+      select: {},
+    })
+    return docs.map((doc) => String(doc.id))
+  }
+
+  const { redeemInvite, invites } = makeInvites({
+    payload,
+    now,
+    keyed,
+    limits: { perEmail: REQUESTS_PER_EMAIL, perIp: REQUESTS_PER_IP, perStack: codesPerHour },
+    signInOf: config.signInOf ?? (async () => null),
+    findMember,
+    withLock,
+    startSession,
+  })
 
   return {
     requestCode,
     verifyCode,
+    redeemInvite,
+    invites,
     sessionFromRequest,
+    testMembers,
     signOut,
     contact,
-    account: (session) => contact(session.memberId),
+    account: (session) => account(session.memberId),
     updateAccount,
   }
 }

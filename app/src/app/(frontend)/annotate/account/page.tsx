@@ -10,6 +10,7 @@ import { addressOf } from '@/modules/mail'
 import { signOut } from '../actions'
 import { Frame } from '../Frame'
 import { SignInForm } from '../SignInForm'
+import { memberPagesMode } from '../signInMode'
 import { strings } from '../strings'
 import { AccountForm } from './AccountForm'
 import '../annotate.css'
@@ -25,13 +26,22 @@ export default async function YourAccount() {
   return (
     <Frame title={s.title} project={null} back={back} session={session} after="/annotate/account">
       {!session || !account ? (
-        <SignInForm link={null} next="/annotate/account" heading={s.signIn} moment={s.moment} />
+        <SignInForm
+          link={null}
+          mode={memberPagesMode()}
+          next="/annotate/account"
+          heading={s.signIn}
+          moment={s.moment}
+        />
       ) : (
         <>
           <AccountForm
             email={account.email}
             nickname={account.nickname}
             mailNotices={account.mailNotices}
+            unverified={
+              account.emailVerified ? undefined : { canVerify: memberPagesMode() === 'both' }
+            }
           />
           <form action={signOut} className="sign-out">
             <input type="hidden" name="after" value="/annotate/account" />

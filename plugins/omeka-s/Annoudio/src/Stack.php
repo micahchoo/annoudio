@@ -100,7 +100,7 @@ class Stack
     /**
      * Reads one recording of the catalogue (CONTRACT.md 5.2). One request, no cache.
      *
-     * @param string $recording The recording number from the Annoudio admin ("Recording ID: 1").
+     * @param string $recording The recording number from the Annoudio admin ("Recording number: 1").
      * @return array{id:string, title:string, url:string}
      * @throws StackError
      */
@@ -109,7 +109,7 @@ class Stack
         $recording = trim($recording);
         if (!ctype_digit($recording)) {
             throw new StackError(StackError::BAD_RECORDING, sprintf(
-                '"%s" is not a recording ID. The ID is a number, for example 1. The Snippet panel of the Annoudio admin shows it: "Recording ID: 1".', // @translate
+                '"%s" is not a recording number. Type a number, for example 1. The Snippet panel of the Annoudio admin shows it: "Recording number: 1".', // @translate
                 $recording
             ));
         }
@@ -155,7 +155,7 @@ class Stack
         [$code, $body] = $this->get('/embed/v1/recordings/' . rawurlencode($this->project) . '/' . $recording . '.json', $timeout);
         if ($code === 404) {
             throw new StackError(StackError::NOT_FOUND, sprintf(
-                'The project "%2$s" has no recording with the ID "%1$s". Copy the number after "Recording ID:" in the Snippet panel of the Annoudio admin.', // @translate
+                'The project "%2$s" has no recording with the number "%1$s". Copy the number after "Recording number:" in the Snippet panel of the Annoudio admin.', // @translate
                 $recording,
                 $this->project
             ));

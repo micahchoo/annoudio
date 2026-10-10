@@ -116,7 +116,7 @@ describe('the delete of a project', () => {
   })
 
   it('leaves the stories of the other project served', async () => {
-    await publishDraft(stories, draft({ project: 'hill-songs', tags: [] }))
+    await publishDraft(stories, draft({ project: 'hill-songs', values: [] }))
     await deleteProject()
     expect(await status(`/stories/hill-songs/1/${storyId(1)}`)).toBe(200)
   })

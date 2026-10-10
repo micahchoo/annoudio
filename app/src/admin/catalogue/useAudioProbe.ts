@@ -3,7 +3,7 @@
 // The duration probe of the catalogue (design/phase5-notes.md, decision 1). The browser
 // loads the metadata of the audio address in an <audio> element and reads its duration.
 // So the operator never types a duration, and sees at once whether the audio plays in a
-// browser. The recording page and "Put a recording on a site" use it.
+// browser. The recording page and "Add a widget to a site" use it.
 
 import { useEffect, useState } from 'react'
 

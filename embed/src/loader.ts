@@ -7,7 +7,7 @@ declare const __ANNOUDIO_BUNDLE__: string;
 
 (function () {
   const NAME = "annoudio-player";
-  const MESSAGE = "The audio player could not load. Reload the page to try again.";
+  const MESSAGE = "The widget could not load. Reload the page to try again.";
 
   // Step 1: read our own URL synchronously, before any await (CONTRACT 2.3).
   let src = "";

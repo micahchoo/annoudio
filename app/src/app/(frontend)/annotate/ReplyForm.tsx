@@ -42,7 +42,9 @@ export function ReplyForm({ link, reply, submit, limits, pickerTypes }: Props) {
   const signedOut = state.error?.code === 'signed-out'
   // P9: keep the text when the session ended; take it back after the next sign-in. A new
   // reply gets a new id on each page load, so it keeps its text under its story.
-  const keepKey = reply.etag ? reply.id : `new-reply:${link.project}/${link.recording}/${link.replyTo}`
+  const keepKey = reply.etag
+    ? reply.id
+    : `new-reply:${link.project}/${link.recording}/${link.replyTo}`
   useEffect(() => {
     if (signedOut && textarea.current) keepText(keepKey, textarea.current.value)
   }, [signedOut, keepKey])
@@ -66,6 +68,7 @@ export function ReplyForm({ link, reply, submit, limits, pickerTypes }: Props) {
   return (
     <form action={action} aria-labelledby="reply-heading" noValidate>
       <h2 id="reply-heading">{reply.etag ? s.editHeading : s.newHeading}</h2>
+      <p className="intro">{s.intro}</p>
       <LinkFields link={link} />
       <input type="hidden" name="id" value={reply.id} />
       {reply.etag && <input type="hidden" name="ifMatch" value={reply.etag} />}
@@ -100,10 +103,12 @@ export function ReplyForm({ link, reply, submit, limits, pickerTypes }: Props) {
         onBusyChange={setUploading}
       />
 
-      <button type="submit" disabled={pending || uploading}>
-        {pending ? strings.form.saving : submit}
-      </button>
-      {uploading && <p className="hint">{strings.form.waitForUpload}</p>}
+      <div className="send-bar">
+        <button type="submit" disabled={pending || uploading}>
+          {pending ? strings.form.saving : submit}
+        </button>
+        {uploading && <p>{strings.form.waitForUpload}</p>}
+      </div>
     </form>
   )
 }

@@ -14,9 +14,10 @@ export function lifecycle(row: LifecycleRow): Lifecycle {
     return { state: 'published', change: null, automatic: false }
   }
   // The newest version is a draft. A published version under it is "Published · change waiting".
+  const again = row.sentAgain && newest.state !== 'returned' ? { again: true as const } : {}
   if (row.pendingRevision)
-    return { state: 'published', change: newest.state, automatic: newest.automatic }
-  return { state: newest.state, change: null, automatic: newest.automatic }
+    return { state: 'published', change: newest.state, automatic: newest.automatic, ...again }
+  return { state: newest.state, change: null, automatic: newest.automatic, ...again }
 }
 
 function draftState(row: LifecycleRow): {

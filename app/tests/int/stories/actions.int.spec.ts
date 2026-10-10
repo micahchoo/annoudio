@@ -180,20 +180,24 @@ describe('nextWaiting', () => {
     expect(await stories.nextWaiting(storyId(1))).toBe(storyId(3))
     // A change to a published story waits too.
     expect(await stories.nextWaiting(storyId(3))).toBe(storyId(5))
-    expect(await stories.nextWaiting(storyId(5))).toBeNull()
+    // After the newest waiting story: the oldest other one (Return and Publish alike).
+    expect(await stories.nextWaiting(storyId(5))).toBe(storyId(1))
 
     // After a publish, the story has left the tab; the next one is the same.
     await stories.publish(operator, storyId(1))
     expect(await stories.nextWaiting(storyId(1))).toBe(storyId(3))
     // An id that is gone gives the oldest.
     expect(await stories.nextWaiting(storyId(9))).toBe(storyId(3))
+    // The one waiting story has no next story.
+    await stories.publish(operator, storyId(3))
+    expect(await stories.nextWaiting(storyId(5))).toBeNull()
   })
 })
 
 describe('ownStories', () => {
   it('gives the stories and replies of the member in every project, newest first', async () => {
     await publishDraft(stories, draft({ id: storyId(1) }))
-    await saved(draft({ id: storyId(2), recording: '2', start: 1, end: 2, tags: [] }))
+    await saved(draft({ id: storyId(2), recording: '2', start: 1, end: 2, values: [] }))
     await saved(reply(3), ravi)
     const own = await stories.ownStories(leela)
     expect(own.map((s) => [s.id, s.project, s.recording])).toEqual([

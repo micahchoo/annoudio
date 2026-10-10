@@ -1,0 +1,81 @@
+{
+  "prefix": "dctypes",
+  "label": "Dublin Core types",
+  "namespace": "http://purl.org/dc/dcmitype/",
+  "url": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_type.ttl",
+  "licence": "CC BY 4.0 (DCMI)",
+  "terms": [
+    {
+      "iri": "http://purl.org/dc/dcmitype/Collection",
+      "kind": "class",
+      "label": "Collection",
+      "comment": "An aggregation of resources."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Dataset",
+      "kind": "class",
+      "label": "Dataset",
+      "comment": "Data encoded in a defined structure."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Event",
+      "kind": "class",
+      "label": "Event",
+      "comment": "A non-persistent, time-based occurrence."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Image",
+      "kind": "class",
+      "label": "Image",
+      "comment": "A visual representation other than text."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/InteractiveResource",
+      "kind": "class",
+      "label": "Interactive Resource",
+      "comment": "A resource requiring interaction from the user to be understood, executed, or experienced."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/MovingImage",
+      "kind": "class",
+      "label": "Moving Image",
+      "comment": "A series of visual representations imparting an impression of motion when shown in succession."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/PhysicalObject",
+      "kind": "class",
+      "label": "Physical Object",
+      "comment": "An inanimate, three-dimensional object or substance."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Service",
+      "kind": "class",
+      "label": "Service",
+      "comment": "A system that provides one or more functions."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Software",
+      "kind": "class",
+      "label": "Software",
+      "comment": "A computer program in source or compiled form."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Sound",
+      "kind": "class",
+      "label": "Sound",
+      "comment": "A resource primarily intended to be heard."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/StillImage",
+      "kind": "class",
+      "label": "Still Image",
+      "comment": "A static visual representation."
+    },
+    {
+      "iri": "http://purl.org/dc/dcmitype/Text",
+      "kind": "class",
+      "label": "Text",
+      "comment": "A resource consisting primarily of words for reading."
+    }
+  ]
+}

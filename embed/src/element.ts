@@ -5,13 +5,26 @@ import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, { type Region } from "wavesurfer.js/dist/plugins/regions.esm.js";
 import { clock } from "./format";
 import { isAbort } from "./shared";
-import { containerUrl, loadStories, type Reply, type Story, type StoryMedia, type StoriesResult } from "./stories";
+import {
+  containerUrl,
+  loadStories,
+  type Reply,
+  type Story,
+  type StoryMedia,
+  type StoryText,
+  type StoryValue,
+  type StoriesResult,
+} from "./stories";
 import { baseSheet, waveformSheet } from "./styles";
 import { uiText, type ErrorCode, type UiText } from "./text";
-import { themeFor, type Rights } from "./theme";
+import { themeFor, type FieldLabel, type Rights } from "./theme";
 import { loadPeaks } from "./waveform";
 
 export const NAME = "annoudio-player";
+/** The region of the `range` attribute, and the region that a drag on the waveform draws. */
+const RANGE_ID = "annoudio-range";
+const RANGE_DRAFT = "annoudio-range-draft";
+const RANGE_COLOR = "color-mix(in srgb, var(--annoudio-color-accent, #0b6e99) 28%, transparent)";
 const SHOW_CONTROLS_AFTER_MS = 500;
 /** `annoudio:timeupdate` fires at most once in this time (CONTRACT 4.1: at most 4 per second). */
 const TIMEUPDATE_MS = 250;
@@ -104,20 +117,26 @@ class Run {
   #wave: HTMLDivElement | null = null;
   #seek: HTMLInputElement | null = null;
   #list: HTMLOListElement | null = null;
+  #intro: HTMLParagraphElement | null = null;
   #annotate: HTMLAnchorElement | null = null;
-  /** The `rights` part (CONTRACT 3.2, rule 7). The Annotate link goes before it. */
-  #rights: HTMLParagraphElement | null = null;
   #probe: HTMLSpanElement | null = null;
   #audio: HTMLAudioElement | null = null;
 
   #wavesurfer: WaveSurfer | null = null;
   #regions: ReturnType<typeof RegionsPlugin.create> | null = null;
   #regionByStory = new Map<Story, Region>();
+  /** The `range` attribute as a region (CONTRACT 2.1): the story that a member is writing. */
+  #range: Region | null = null;
+  #rangeDrag: (() => void) | null = null;
   #observer: IntersectionObserver | null = null;
   #frameRequest = 0;
 
   #stories: Story[] = [];
   #storyItems = new Map<Story, HTMLLIElement>();
+  /** The answers of each story (`fields` and `tag` parts). They render again when the theme settles. */
+  #valueSlots = new Map<Story, HTMLDivElement>();
+  /** The field labels of the theme JSON (CONTRACT 3.2, rule 8), or null before or without them. */
+  #fieldLabels: FieldLabel[] | null = null;
   /** The thread under each story: its replies and its Reply link. It shows when the story is open. */
   #threads = new Map<Story, HTMLDivElement>();
   /** The story id (the last segment of its IRI), when the IRI is in this container. */
@@ -190,7 +209,7 @@ class Run {
     this.#frame = el("div", { part: "player", className: "frame" });
     this.#frame.setAttribute("role", "group");
     this.#frame.setAttribute("lang", this.#lang);
-    this.#frame.setAttribute("aria-label", this.#text.player);
+    this.#frame.setAttribute("aria-label", this.#text.frame);
     this.#message = el("p", { part: "message", className: "message" });
     this.#message.setAttribute("role", "status");
     this.#frame.appendChild(this.#message);
@@ -237,9 +256,11 @@ class Run {
     const theme = themeFor(this.#origin, project);
     this.#root.adoptedStyleSheets = [baseSheet(), theme.sheet];
     const themeSettled = theme.load(this.#signal).then(
-      (rights) => {
+      ({ rights, fields }) => {
         this.#recolor();
         this.#renderRights(rights);
+        this.#fieldLabels = fields;
+        for (const [story, slot] of this.#valueSlots) slot.replaceChildren(...this.#renderValues(story));
       },
       (error: unknown) => {
         if (!isAbort(error)) warn(error);
@@ -339,12 +360,16 @@ class Run {
     timeline.append(wave, seek);
     controls.append(play, time, timeline);
 
+    // The intro says what a story is (CONTRACT 3.3, part `intro`). It shows with stories.
+    const intro = el("p", { part: "intro", className: "intro", text: t.intro });
+    intro.hidden = true;
+    this.#intro = intro;
     const list = el("ol", { part: "stories", className: "stories" });
     list.setAttribute("aria-label", t.stories);
 
     const probe = el("span", { className: "probe" });
 
-    this.#frame.append(controls, list, probe);
+    this.#frame.append(controls, intro, list, probe);
     this.#controls = controls;
     this.#play = play;
     this.#time = time;
@@ -364,6 +389,7 @@ class Run {
     this.#lang = ui.lang;
     this.#frame.setAttribute("lang", ui.lang);
     this.#renderAnnotate();
+    this.#renderRange();
   }
 
   #renderAnnotate(): void {
@@ -389,7 +415,9 @@ class Run {
       link.addEventListener("focus", () => (link.href = this.#annotateHref()), { signal: this.#signal });
       link.addEventListener("pointerenter", () => (link.href = this.#annotateHref()), { signal: this.#signal });
       this.#annotate = link;
-      this.#frame.insertBefore(link, this.#rights);
+      // Under the controls, above the list: on a phone the member finds it without a
+      // scroll past every story (recordings audit, 10). The order of parts is not contract.
+      this.#frame.insertBefore(link, this.#intro);
     }
     this.#annotate.textContent = this.#text.annotate;
     this.#annotate.href = this.#annotateHref();
@@ -408,7 +436,7 @@ class Run {
   /** The rights line of the project, once, below the stories (CONTRACT 3.2, rule 7). */
   #renderRights(rights: Rights | null): void {
     if (this.#stopped || !rights) return;
-    const line = el("p", { part: "rights", className: "rights", text: `${this.#text.rights} ` });
+    const line = el("p", { part: "rights", className: "rights" });
     if (rights.iri) {
       const link = el("a", { text: rights.line });
       link.href = rights.iri;
@@ -417,7 +445,6 @@ class Run {
     } else {
       line.appendChild(document.createTextNode(rights.line));
     }
-    this.#rights = line;
     this.#frame.appendChild(line);
   }
 
@@ -496,6 +523,7 @@ class Run {
       list.appendChild(item);
     }
     this.#empty = result.stories.length === 0;
+    if (this.#intro) this.#intro.hidden = this.#empty;
     this.#renderEmpty(this.#annotate !== null);
     this.#renderReplyLinks();
     this.#addRegions();
@@ -535,18 +563,89 @@ class Run {
       item.appendChild(p);
     }
     for (const body of story.media) item.appendChild(this.#renderMedia(story, body));
-    if (story.tags.length) {
-      const tags = el("ul", { className: "tags" });
-      for (const tag of story.tags) {
+    const slot = el("div", { className: "values" });
+    slot.replaceChildren(...this.#renderValues(story));
+    this.#valueSlots.set(story, slot);
+    item.appendChild(slot);
+    item.appendChild(this.#renderThread(story));
+    return item;
+  }
+
+  /**
+   * The answers of a story (design/vocab.md §7.2): "Label: value" lines in a `fields` list,
+   * in the field order of the theme JSON; fields shown as tags in `tag` parts with no
+   * label; `showAs: none` not at all. A value whose field the theme does not name shows
+   * after the others with no label. Without field labels (no theme, an older stack), list
+   * values are tags and other values lines. All text goes in with `textContent`.
+   */
+  #renderValues(story: Story): HTMLElement[] {
+    const labels = this.#fieldLabels;
+    const tags: StoryText[] = [...story.tags];
+    const out: HTMLElement[] = [];
+    const known = new Set((labels ?? []).map((field) => field.property));
+    const fields = el("dl", { part: "fields", className: "fields" });
+    for (const field of labels ?? []) {
+      const values = story.values.filter((value) => value.property === field.property);
+      if (values.length === 0 || field.showAs === "none") continue;
+      if (field.showAs === "tags") {
+        tags.push(...values.map(({ text, language }) => ({ value: text, language })));
+        continue;
+      }
+      const group = el("div", { part: "field", className: "field" });
+      group.appendChild(el("dt", { part: "field-label", className: "field-label", text: field.label }));
+      for (const value of values) group.appendChild(this.#renderValue(value, "dd", field.link));
+      fields.appendChild(group);
+    }
+    if (fields.childElementCount > 0) out.push(fields);
+    const rest = story.values.filter((value) => !known.has(value.property));
+    for (const value of rest) {
+      if (!labels && value.tagging) tags.push({ value: value.text, language: value.language });
+      else out.push(this.#renderValue(value, "p", false));
+    }
+    if (tags.length > 0) {
+      const list = el("ul", { className: "tags" });
+      for (const tag of tags) {
         const li = el("li", { part: "tag", className: "tag" });
         li.textContent = tag.value;
         if (tag.language) li.lang = tag.language;
-        tags.appendChild(li);
+        list.appendChild(li);
       }
-      item.appendChild(tags);
+      out.push(list);
     }
-    item.appendChild(this.#renderThread(story));
-    return item;
+    return out;
+  }
+
+  /** One value: a date at its stored precision, a link for an http(s) address of a link field. */
+  #renderValue(value: StoryValue, tag: "dd" | "p", link: boolean): HTMLElement {
+    // A list item keeps the part `tag` too, so host CSS for ::part(tag) still works.
+    const node = el(tag, { part: value.tagging ? "field-value tag" : "field-value", className: "field-value" });
+    if (value.language) node.lang = value.language;
+    const text = value.date ? this.#dateValue(value.date) : value.text;
+    if (link && value.href) {
+      const a = el("a", { text });
+      a.href = value.href;
+      a.rel = "nofollow ugc";
+      node.appendChild(a);
+    } else node.textContent = text;
+    return node;
+  }
+
+  /** `1962`, `May 1962`, `4 May 1962`: the stored precision, in the UI language. */
+  #dateValue(date: NonNullable<StoryValue["date"]>): string {
+    const [y, m = "1", d = "1"] = date.value.split("-");
+    const when = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+    if (Number.isNaN(when.getTime())) return date.value;
+    const options: Intl.DateTimeFormatOptions =
+      date.precision === "year"
+        ? { year: "numeric", timeZone: "UTC" }
+        : date.precision === "month"
+          ? { year: "numeric", month: "long", timeZone: "UTC" }
+          : { dateStyle: "medium", timeZone: "UTC" };
+    try {
+      return new Intl.DateTimeFormat(this.#lang, options).format(when);
+    } catch {
+      return date.value;
+    }
   }
 
   /** The replies of a story, in container order. The Reply link comes later (#renderReplyLinks). */
@@ -708,17 +807,29 @@ class Run {
       // Regions live in wavesurfer's own shadow tree. Export their parts so that
       // `annoudio-player::part(region)` works with no exportparts on the host (CONTRACT 3.3, rule 1).
       const inner = wave.lastElementChild;
-      inner?.setAttribute("exportparts", "region, active");
+      inner?.setAttribute("exportparts", "region, active, range");
       if (inner?.shadowRoot) inner.shadowRoot.adoptedStyleSheets = [waveformSheet()];
       regions.on("region-clicked", (region, event) => {
         event.stopPropagation(); // Do not let wavesurfer seek to the click point.
         const story = [...this.#regionByStory].find(([, r]) => r === region)?.[0];
         if (story) this.#open(story);
       });
+      regions.on("region-created", (region) => {
+        if (region.id === RANGE_DRAFT) this.#adoptRange(region);
+      });
+      regions.on("region-updated", (region) => {
+        if (region !== this.#range) return;
+        this.#markRange(region);
+        this.#emitRange(region);
+      });
       this.#wavesurfer = ws;
       this.#regions = regions;
-      ws.on("ready", () => this.#addRegions());
+      ws.on("ready", () => {
+        this.#addRegions();
+        this.#renderRange();
+      });
       this.#addRegions();
+      this.#renderRange();
     } catch (error) {
       warn("the timeline could not start:", error);
     }
@@ -734,7 +845,7 @@ class Run {
         id: `annoudio-${index}`,
         start: story.start,
         end: Math.max(this.#storyEnd(story), story.start + 0.25),
-        color: "var(--annoudio-color-region, #d5e3f3)",
+        color: "var(--annoudio-color-region, #d6eaf5)",
         drag: false,
         resize: false,
       });
@@ -746,15 +857,99 @@ class Run {
       }
       this.#regionByStory.set(story, region);
     });
+    this.#renderRange();
+  }
+
+  /** The `range` attribute: "start,end" in seconds, end after start. Null when absent or bad. */
+  #rangeValue(): { start: number; end: number } | null {
+    const value = attr(this.#host, "range");
+    if (value === null) return null;
+    const match = /^(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)$/.exec(value);
+    const start = match ? Number(match[1]) : NaN;
+    const end = match ? Number(match[2]) : NaN;
+    if (!(end > start)) {
+      warn(`the range value "${value}" is not "start,end" in seconds. The widget shows no range.`);
+      return null;
+    }
+    return { start, end };
+  }
+
+  /**
+   * CONTRACT 2.1, `range`: draw the range as the part `range`, and let the visitor drag on
+   * the waveform to choose a new one, or drag one of its edges. Each change by the visitor
+   * dispatches `annoudio:range` (4.1).
+   */
+  #renderRange(): void {
+    const regions = this.#regions;
+    if (!regions || this.#stopped || !(this.#wavesurfer && this.#wavesurfer.getDuration() > 0)) return;
+    const value = this.#rangeValue();
+    // While a member chooses a range, a drag over a story's range chooses too: the story
+    // regions take no pointer (wavesurfer cancels the drag selection over a region).
+    const choosing = attr(this.#host, "range") !== null;
+    for (const region of this.#regionByStory.values()) {
+      if (region.element) region.element.style.pointerEvents = choosing ? "none" : "all";
+    }
+    if (!choosing) {
+      this.#rangeDrag?.();
+      this.#rangeDrag = null;
+      this.#range?.remove();
+      this.#range = null;
+      return;
+    }
+    if (!this.#rangeDrag) {
+      this.#rangeDrag = regions.enableDragSelection({ id: RANGE_DRAFT, color: RANGE_COLOR });
+    }
+    if (!value) return;
+    const duration = this.#wavesurfer.getDuration();
+    const start = Math.min(value.start, duration);
+    const end = Math.min(value.end, duration);
+    if (this.#range) {
+      if (Math.abs(this.#range.start - start) > 0.01 || Math.abs(this.#range.end - end) > 0.01) {
+        this.#range.setOptions({ start, end });
+        this.#markRange(this.#range);
+      }
+      return;
+    }
+    this.#adoptRange(regions.addRegion({ id: RANGE_ID, start, end, color: RANGE_COLOR, drag: false, resize: true }), false);
+  }
+
+  /** A region becomes the range: the old one goes. A region that the visitor drew is news. */
+  #adoptRange(region: Region, drawn = true): void {
+    if (this.#range && this.#range !== region) this.#range.remove();
+    this.#range = region;
+    this.#markRange(region);
+    if (drawn) this.#emitRange(region);
+  }
+
+  /**
+   * wavesurfer writes its own `part` on a region at each change of its options: write ours
+   * again. The range takes no pointer, so a drag inside it chooses a new range; its two
+   * edges take the pointer, so a drag of an edge changes it.
+   */
+  #markRange(region: Region): void {
+    const element = region.element;
+    if (!element) return;
+    element.setAttribute("part", "range");
+    element.setAttribute("aria-hidden", "true");
+    element.style.zIndex = "4";
+    element.style.pointerEvents = "none";
+    for (const handle of element.querySelectorAll<HTMLElement>('[part*="region-handle"]')) {
+      handle.style.pointerEvents = "all";
+    }
+  }
+
+  #emitRange(region: Region): void {
+    const round = (n: number) => Math.round(n * 1000) / 1000;
+    this.#emit("annoudio:range", { start: round(region.start), end: round(region.end) });
   }
 
   /** Canvas colours cannot read var(); read the tokens from a probe element. */
   #colors(): { wave: string; accent: string } {
     const probe = this.#probe as HTMLSpanElement;
-    probe.style.color = "var(--annoudio-color-wave, #8c8c8c)";
-    probe.style.backgroundColor = "var(--annoudio-color-accent, #0b5cad)";
+    probe.style.color = "var(--annoudio-color-wave, #848484)";
+    probe.style.backgroundColor = "var(--annoudio-color-accent, #0b6e99)";
     const style = getComputedStyle(probe);
-    return { wave: style.color || "#8c8c8c", accent: style.backgroundColor || "#0b5cad" };
+    return { wave: style.color || "#848484", accent: style.backgroundColor || "#0b6e99" };
   }
 
   #recolor(): void {
@@ -991,7 +1186,7 @@ class Run {
 
 export class AnnoudioPlayer extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["project", "recording", "src", "origin", "annotate", "lang"];
+    return ["project", "recording", "src", "origin", "annotate", "lang", "range"];
   }
 
   #run: Run | null = null;

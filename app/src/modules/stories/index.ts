@@ -10,6 +10,7 @@
 export { createStories } from './create'
 export { lifecycle } from './lifecycle'
 export { storiesCollection, storyRepresentationsCollection } from './collection'
+export { storyValuesCollection } from './values'
 export type {
   Annotation,
   BodyInput,
@@ -30,6 +31,7 @@ export type {
   PublishedStory,
   RecentCounts,
   RecordingId,
+  ResolvedValue,
   Rejection,
   ReplyAnnotation,
   SaveError,
@@ -44,4 +46,7 @@ export type {
   StoryId,
   StoryReview,
   Tally,
+  ValueBody,
+  ValueErrorCode,
+  ValueInput,
 } from './types'

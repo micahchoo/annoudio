@@ -1,0 +1,514 @@
+{
+  "prefix": "foaf",
+  "label": "FOAF",
+  "namespace": "http://xmlns.com/foaf/0.1/",
+  "url": "http://xmlns.com/foaf/spec/index.rdf",
+  "licence": "CC BY 1.0",
+  "terms": [
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Agent",
+      "kind": "class",
+      "label": "Agent",
+      "comment": "An agent (eg. person, group, software or physical artifact)."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Document",
+      "kind": "class",
+      "label": "Document",
+      "comment": "A document."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Group",
+      "kind": "class",
+      "label": "Group",
+      "comment": "A class of Agents."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Image",
+      "kind": "class",
+      "label": "Image",
+      "comment": "An image."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/LabelProperty",
+      "kind": "class",
+      "label": "Label Property",
+      "comment": "A foaf:LabelProperty is any RDF property with texual values that serve as labels."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/OnlineAccount",
+      "kind": "class",
+      "label": "Online Account",
+      "comment": "An online account."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/OnlineChatAccount",
+      "kind": "class",
+      "label": "Online Chat Account",
+      "comment": "An online chat account."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/OnlineEcommerceAccount",
+      "kind": "class",
+      "label": "Online E-commerce Account",
+      "comment": "An online e-commerce account."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/OnlineGamingAccount",
+      "kind": "class",
+      "label": "Online Gaming Account",
+      "comment": "An online gaming account."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Organization",
+      "kind": "class",
+      "label": "Organization",
+      "comment": "An organization."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Person",
+      "kind": "class",
+      "label": "Person",
+      "comment": "A person."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/PersonalProfileDocument",
+      "kind": "class",
+      "label": "PersonalProfileDocument",
+      "comment": "A personal profile RDF document."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/Project",
+      "kind": "class",
+      "label": "Project",
+      "comment": "A project (a collective endeavour of some kind)."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/account",
+      "kind": "property",
+      "label": "account",
+      "comment": "Indicates an account held by this agent.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/OnlineAccount"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/accountName",
+      "kind": "property",
+      "label": "account name",
+      "comment": "Indicates the name (identifier) associated with this online account.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/accountServiceHomepage",
+      "kind": "property",
+      "label": "account service homepage",
+      "comment": "Indicates a homepage of the service provide for this online account.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/age",
+      "kind": "property",
+      "label": "age",
+      "comment": "The age in years of some agent.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/aimChatID",
+      "kind": "property",
+      "label": "AIM chat ID",
+      "comment": "An AIM chat ID",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/based_near",
+      "kind": "property",
+      "label": "based near",
+      "comment": "A location that something is based near, for some broadly human notion of near.",
+      "rangeHint": "http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/birthday",
+      "kind": "property",
+      "label": "birthday",
+      "comment": "The birthday of this Agent, represented in mm-dd string form, eg. '12-31'.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/currentProject",
+      "kind": "property",
+      "label": "current project",
+      "comment": "A current project this person works on.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/depiction",
+      "kind": "property",
+      "label": "depiction",
+      "comment": "A depiction of some thing.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Image"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/depicts",
+      "kind": "property",
+      "label": "depicts",
+      "comment": "A thing depicted in this representation.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/dnaChecksum",
+      "kind": "property",
+      "label": "DNA checksum",
+      "comment": "A checksum for the DNA of some thing. Joke.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/familyName",
+      "kind": "property",
+      "label": "familyName",
+      "comment": "The family name of some person.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/family_name",
+      "kind": "property",
+      "label": "family_name",
+      "comment": "The family name of some person.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/firstName",
+      "kind": "property",
+      "label": "firstName",
+      "comment": "The first name of a person.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/focus",
+      "kind": "property",
+      "label": "focus",
+      "comment": "The underlying or 'focal' entity associated with some SKOS-described concept.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/fundedBy",
+      "kind": "property",
+      "label": "funded by",
+      "comment": "An organization funding a project or person.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/geekcode",
+      "kind": "property",
+      "label": "geekcode",
+      "comment": "A textual geekcode for this person, see http://www.geekcode.com/geek.html",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/gender",
+      "kind": "property",
+      "label": "gender",
+      "comment": "The gender of this Agent (typically but not necessarily 'male' or 'female').",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/givenName",
+      "kind": "property",
+      "label": "Given name",
+      "comment": "The given name of some person."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/givenname",
+      "kind": "property",
+      "label": "Given name",
+      "comment": "The given name of some person."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/holdsAccount",
+      "kind": "property",
+      "label": "account",
+      "comment": "Indicates an account held by this agent.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/OnlineAccount"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/homepage",
+      "kind": "property",
+      "label": "homepage",
+      "comment": "A homepage for some thing.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/icqChatID",
+      "kind": "property",
+      "label": "ICQ chat ID",
+      "comment": "An ICQ chat ID",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/img",
+      "kind": "property",
+      "label": "image",
+      "comment": "An image that can be used to represent some thing (ie. those depictions which are particularly representative of something, eg. one's photo on a homepage).",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Image"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/interest",
+      "kind": "property",
+      "label": "interest",
+      "comment": "A page about a topic of interest to this person.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/isPrimaryTopicOf",
+      "kind": "property",
+      "label": "is primary topic of",
+      "comment": "A document that this thing is the primary topic of.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/jabberID",
+      "kind": "property",
+      "label": "jabber ID",
+      "comment": "A jabber ID for something.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/knows",
+      "kind": "property",
+      "label": "knows",
+      "comment": "A person known by this person (indicating some level of reciprocated interaction between the parties).",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Person"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/lastName",
+      "kind": "property",
+      "label": "lastName",
+      "comment": "The last name of a person.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/logo",
+      "kind": "property",
+      "label": "logo",
+      "comment": "A logo representing some thing.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/made",
+      "kind": "property",
+      "label": "made",
+      "comment": "Something that was made by this agent.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/maker",
+      "kind": "property",
+      "label": "maker",
+      "comment": "An agent that made this thing.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Agent"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/mbox",
+      "kind": "property",
+      "label": "personal mailbox",
+      "comment": "A personal mailbox, ie. an Internet mailbox associated with exactly one owner, the first owner of this mailbox. This is a 'static inverse functional property', in that there is (across time and change) at most one individual that ever has any particular value for foaf:mbox.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/mbox_sha1sum",
+      "kind": "property",
+      "label": "sha1sum of a personal mailbox URI name",
+      "comment": "The sha1sum of the URI of an Internet mailbox associated with exactly one owner, the first owner of the mailbox.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/member",
+      "kind": "property",
+      "label": "member",
+      "comment": "Indicates a member of a Group",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Agent"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/membershipClass",
+      "kind": "property",
+      "label": "membershipClass",
+      "comment": "Indicates the class of individuals that are a member of a Group"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/msnChatID",
+      "kind": "property",
+      "label": "MSN chat ID",
+      "comment": "An MSN chat ID",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/myersBriggs",
+      "kind": "property",
+      "label": "myersBriggs",
+      "comment": "A Myers Briggs (MBTI) personality classification.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/name",
+      "kind": "property",
+      "label": "name",
+      "comment": "A name for some thing.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/nick",
+      "kind": "property",
+      "label": "nickname",
+      "comment": "A short informal nickname characterising an agent (includes login identifiers, IRC and other chat nicknames)."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/openid",
+      "kind": "property",
+      "label": "openid",
+      "comment": "An OpenID for an Agent.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/page",
+      "kind": "property",
+      "label": "page",
+      "comment": "A page or document about this thing.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/pastProject",
+      "kind": "property",
+      "label": "past project",
+      "comment": "A project this person has previously worked on.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/phone",
+      "kind": "property",
+      "label": "phone",
+      "comment": "A phone, specified using fully qualified tel: URI scheme (refs: http://www.w3.org/Addressing/schemes.html#tel)."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/plan",
+      "kind": "property",
+      "label": "plan",
+      "comment": "A .plan comment, in the tradition of finger and '.plan' files.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/primaryTopic",
+      "kind": "property",
+      "label": "primary topic",
+      "comment": "The primary topic of some page or document.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/publications",
+      "kind": "property",
+      "label": "publications",
+      "comment": "A link to the publications of this person.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/schoolHomepage",
+      "kind": "property",
+      "label": "schoolHomepage",
+      "comment": "A homepage of a school attended by the person.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/sha1",
+      "kind": "property",
+      "label": "sha1sum (hex)",
+      "comment": "A sha1sum hash, in hex."
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/skypeID",
+      "kind": "property",
+      "label": "Skype ID",
+      "comment": "A Skype ID",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/status",
+      "kind": "property",
+      "label": "status",
+      "comment": "A string expressing what the user is happy for the general public (normally) to know about their current activity.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/surname",
+      "kind": "property",
+      "label": "Surname",
+      "comment": "The surname of some person.",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/theme",
+      "kind": "property",
+      "label": "theme",
+      "comment": "A theme.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/thumbnail",
+      "kind": "property",
+      "label": "thumbnail",
+      "comment": "A derived thumbnail image.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Image"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/tipjar",
+      "kind": "property",
+      "label": "tipjar",
+      "comment": "A tipjar document for this agent, describing means for payment and reward.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/title",
+      "kind": "property",
+      "label": "title",
+      "comment": "Title (Mr, Mrs, Ms, Dr. etc)"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/topic",
+      "kind": "property",
+      "label": "topic",
+      "comment": "A topic of some page or document.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/topic_interest",
+      "kind": "property",
+      "label": "topic_interest",
+      "comment": "A thing of interest to this person.",
+      "rangeHint": "http://www.w3.org/2002/07/owl#Thing"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/weblog",
+      "kind": "property",
+      "label": "weblog",
+      "comment": "A weblog of some thing (whether person, group, company etc.).",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/workInfoHomepage",
+      "kind": "property",
+      "label": "work info homepage",
+      "comment": "A work info homepage of some person; a page about their work for some organization.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/workplaceHomepage",
+      "kind": "property",
+      "label": "workplace homepage",
+      "comment": "A workplace homepage of some person; the homepage of an organization they work for.",
+      "rangeHint": "http://xmlns.com/foaf/0.1/Document"
+    },
+    {
+      "iri": "http://xmlns.com/foaf/0.1/yahooChatID",
+      "kind": "property",
+      "label": "Yahoo chat ID",
+      "comment": "A Yahoo chat ID",
+      "rangeHint": "http://www.w3.org/2000/01/rdf-schema#Literal"
+    }
+  ]
+}

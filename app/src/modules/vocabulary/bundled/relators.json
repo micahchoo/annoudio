@@ -1,0 +1,1534 @@
+{
+  "prefix": "relators",
+  "label": "MARC relators",
+  "namespace": "http://id.loc.gov/vocabulary/relators/",
+  "url": "https://id.loc.gov/vocabulary/relators.nt",
+  "licence": "Public domain (Library of Congress)",
+  "terms": [
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/abr",
+      "kind": "property",
+      "label": "abridger"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/acp",
+      "kind": "property",
+      "label": "art copyist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/act",
+      "kind": "property",
+      "label": "actor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/adi",
+      "kind": "property",
+      "label": "art director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/adp",
+      "kind": "property",
+      "label": "adapter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aft",
+      "kind": "property",
+      "label": "author of afterword, colophon, etc."
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/anc",
+      "kind": "property",
+      "label": "announcer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/anl",
+      "kind": "property",
+      "label": "analyst"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/anm",
+      "kind": "property",
+      "label": "animator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ann",
+      "kind": "property",
+      "label": "annotator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ant",
+      "kind": "property",
+      "label": "bibliographic antecedent"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ape",
+      "kind": "property",
+      "label": "appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/apl",
+      "kind": "property",
+      "label": "appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/app",
+      "kind": "property",
+      "label": "applicant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aqt",
+      "kind": "property",
+      "label": "author in quotations or text abstracts"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/arc",
+      "kind": "property",
+      "label": "architect"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ard",
+      "kind": "property",
+      "label": "artistic director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/arr",
+      "kind": "property",
+      "label": "arranger"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/art",
+      "kind": "property",
+      "label": "artist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/asg",
+      "kind": "property",
+      "label": "assignee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/asn",
+      "kind": "property",
+      "label": "associated name"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ato",
+      "kind": "property",
+      "label": "autographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/att",
+      "kind": "property",
+      "label": "attributed name"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/auc",
+      "kind": "property",
+      "label": "auctioneer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aud",
+      "kind": "property",
+      "label": "author of dialog"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aue",
+      "kind": "property",
+      "label": "audio engineer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aui",
+      "kind": "property",
+      "label": "author of introduction, etc."
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aup",
+      "kind": "property",
+      "label": "audio producer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aus",
+      "kind": "property",
+      "label": "screenwriter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/aut",
+      "kind": "property",
+      "label": "author"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bdd",
+      "kind": "property",
+      "label": "binding designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bjd",
+      "kind": "property",
+      "label": "bookjacket designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bka",
+      "kind": "property",
+      "label": "book artist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bkd",
+      "kind": "property",
+      "label": "book designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bkp",
+      "kind": "property",
+      "label": "book producer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/blw",
+      "kind": "property",
+      "label": "blurb writer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bnd",
+      "kind": "property",
+      "label": "binder"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bpd",
+      "kind": "property",
+      "label": "bookplate designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/brd",
+      "kind": "property",
+      "label": "broadcaster"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/brl",
+      "kind": "property",
+      "label": "braille embosser"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/bsl",
+      "kind": "property",
+      "label": "bookseller"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cad",
+      "kind": "property",
+      "label": "casting director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cas",
+      "kind": "property",
+      "label": "caster"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ccp",
+      "kind": "property",
+      "label": "conceptor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/chr",
+      "kind": "property",
+      "label": "choreographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cli",
+      "kind": "property",
+      "label": "client"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cll",
+      "kind": "property",
+      "label": "calligrapher"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/clr",
+      "kind": "property",
+      "label": "colorist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/clt",
+      "kind": "property",
+      "label": "collotyper"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cmm",
+      "kind": "property",
+      "label": "commentator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cmp",
+      "kind": "property",
+      "label": "composer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cmt",
+      "kind": "property",
+      "label": "compositor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cnd",
+      "kind": "property",
+      "label": "conductor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cng",
+      "kind": "property",
+      "label": "cinematographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cns",
+      "kind": "property",
+      "label": "censor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/coe",
+      "kind": "property",
+      "label": "contestant-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/col",
+      "kind": "property",
+      "label": "collector"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/com",
+      "kind": "property",
+      "label": "compiler"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/con",
+      "kind": "property",
+      "label": "conservator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cop",
+      "kind": "property",
+      "label": "camera operator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cor",
+      "kind": "property",
+      "label": "collection registrar"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cos",
+      "kind": "property",
+      "label": "contestant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cot",
+      "kind": "property",
+      "label": "contestant-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cou",
+      "kind": "property",
+      "label": "court governed"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cov",
+      "kind": "property",
+      "label": "cover designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cpc",
+      "kind": "property",
+      "label": "copyright claimant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cpe",
+      "kind": "property",
+      "label": "complainant-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cph",
+      "kind": "property",
+      "label": "copyright holder"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cpl",
+      "kind": "property",
+      "label": "complainant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cpt",
+      "kind": "property",
+      "label": "complainant-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cre",
+      "kind": "property",
+      "label": "creator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/crp",
+      "kind": "property",
+      "label": "correspondent"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/crr",
+      "kind": "property",
+      "label": "corrector"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/crt",
+      "kind": "property",
+      "label": "court reporter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/csl",
+      "kind": "property",
+      "label": "consultant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/csp",
+      "kind": "property",
+      "label": "consultant to a project"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cst",
+      "kind": "property",
+      "label": "costume designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ctb",
+      "kind": "property",
+      "label": "contributor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cte",
+      "kind": "property",
+      "label": "contestee-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ctg",
+      "kind": "property",
+      "label": "cartographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ctr",
+      "kind": "property",
+      "label": "contractor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cts",
+      "kind": "property",
+      "label": "contestee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ctt",
+      "kind": "property",
+      "label": "contestee-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cur",
+      "kind": "property",
+      "label": "curator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/cwt",
+      "kind": "property",
+      "label": "commentator for written text"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dbd",
+      "kind": "property",
+      "label": "dubbing director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dbp",
+      "kind": "property",
+      "label": "distribution place"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dfd",
+      "kind": "property",
+      "label": "defendant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dfe",
+      "kind": "property",
+      "label": "defendant-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dft",
+      "kind": "property",
+      "label": "defendant-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dgc",
+      "kind": "property",
+      "label": "degree committee member"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dgg",
+      "kind": "property",
+      "label": "degree granting institution"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dgs",
+      "kind": "property",
+      "label": "degree supervisor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dis",
+      "kind": "property",
+      "label": "dissertant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/djo",
+      "kind": "property",
+      "label": "dj"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dln",
+      "kind": "property",
+      "label": "delineator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dnc",
+      "kind": "property",
+      "label": "dancer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dnr",
+      "kind": "property",
+      "label": "donor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dpc",
+      "kind": "property",
+      "label": "depicted"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dpt",
+      "kind": "property",
+      "label": "depositor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/drm",
+      "kind": "property",
+      "label": "draftsman"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/drt",
+      "kind": "property",
+      "label": "director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dsr",
+      "kind": "property",
+      "label": "designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dst",
+      "kind": "property",
+      "label": "distributor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dtc",
+      "kind": "property",
+      "label": "data contributor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dte",
+      "kind": "property",
+      "label": "dedicatee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dtm",
+      "kind": "property",
+      "label": "data manager"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dto",
+      "kind": "property",
+      "label": "dedicator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/dub",
+      "kind": "property",
+      "label": "dubious author"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/edc",
+      "kind": "property",
+      "label": "editor of compilation"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/edd",
+      "kind": "property",
+      "label": "editorial director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/edm",
+      "kind": "property",
+      "label": "editor of moving image work"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/edt",
+      "kind": "property",
+      "label": "editor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/egr",
+      "kind": "property",
+      "label": "engraver"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/elg",
+      "kind": "property",
+      "label": "electrician"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/elt",
+      "kind": "property",
+      "label": "electrotyper"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/eng",
+      "kind": "property",
+      "label": "engineer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/enj",
+      "kind": "property",
+      "label": "enacting jurisdiction"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/etr",
+      "kind": "property",
+      "label": "etcher"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/evp",
+      "kind": "property",
+      "label": "event place"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/exp",
+      "kind": "property",
+      "label": "expert"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fac",
+      "kind": "property",
+      "label": "facsimilist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fds",
+      "kind": "property",
+      "label": "film distributor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fld",
+      "kind": "property",
+      "label": "field director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/flm",
+      "kind": "property",
+      "label": "film editor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fmd",
+      "kind": "property",
+      "label": "film director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fmk",
+      "kind": "property",
+      "label": "filmmaker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fmo",
+      "kind": "property",
+      "label": "former owner"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fmp",
+      "kind": "property",
+      "label": "film producer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fnd",
+      "kind": "property",
+      "label": "funder"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fon",
+      "kind": "property",
+      "label": "founder"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/fpy",
+      "kind": "property",
+      "label": "first party"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/frg",
+      "kind": "property",
+      "label": "forger"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/gdv",
+      "kind": "property",
+      "label": "game developer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/gis",
+      "kind": "property",
+      "label": "geographic information specialist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/his",
+      "kind": "property",
+      "label": "host institution"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/hnr",
+      "kind": "property",
+      "label": "honoree"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/hst",
+      "kind": "property",
+      "label": "host"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ill",
+      "kind": "property",
+      "label": "illustrator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ilu",
+      "kind": "property",
+      "label": "illuminator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ink",
+      "kind": "property",
+      "label": "inker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ins",
+      "kind": "property",
+      "label": "inscriber"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/inv",
+      "kind": "property",
+      "label": "inventor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/isb",
+      "kind": "property",
+      "label": "issuing body"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/itr",
+      "kind": "property",
+      "label": "instrumentalist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ive",
+      "kind": "property",
+      "label": "interviewee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ivr",
+      "kind": "property",
+      "label": "interviewer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/jud",
+      "kind": "property",
+      "label": "judge"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/jug",
+      "kind": "property",
+      "label": "jurisdiction governed"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lbr",
+      "kind": "property",
+      "label": "laboratory"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lbt",
+      "kind": "property",
+      "label": "librettist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ldr",
+      "kind": "property",
+      "label": "laboratory director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/led",
+      "kind": "property",
+      "label": "lead"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lee",
+      "kind": "property",
+      "label": "libelee-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lel",
+      "kind": "property",
+      "label": "libelee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/len",
+      "kind": "property",
+      "label": "lender"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/let",
+      "kind": "property",
+      "label": "libelee-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lgd",
+      "kind": "property",
+      "label": "lighting designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lie",
+      "kind": "property",
+      "label": "libelant-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lil",
+      "kind": "property",
+      "label": "libelant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lit",
+      "kind": "property",
+      "label": "libelant-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lsa",
+      "kind": "property",
+      "label": "landscape architect"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lse",
+      "kind": "property",
+      "label": "licensee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lso",
+      "kind": "property",
+      "label": "licensor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ltg",
+      "kind": "property",
+      "label": "lithographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ltr",
+      "kind": "property",
+      "label": "letterer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/lyr",
+      "kind": "property",
+      "label": "lyricist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mcp",
+      "kind": "property",
+      "label": "music copyist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mdc",
+      "kind": "property",
+      "label": "metadata contact"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/med",
+      "kind": "property",
+      "label": "medium"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mfp",
+      "kind": "property",
+      "label": "manufacture place"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mfr",
+      "kind": "property",
+      "label": "manufacturer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mka",
+      "kind": "property",
+      "label": "makeup artist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mod",
+      "kind": "property",
+      "label": "moderator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mon",
+      "kind": "property",
+      "label": "monitor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mrb",
+      "kind": "property",
+      "label": "marbler"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mrk",
+      "kind": "property",
+      "label": "markup editor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/msd",
+      "kind": "property",
+      "label": "musical director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mte",
+      "kind": "property",
+      "label": "metal engraver"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mtk",
+      "kind": "property",
+      "label": "minute taker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mup",
+      "kind": "property",
+      "label": "music programmer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mus",
+      "kind": "property",
+      "label": "musician"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/mxe",
+      "kind": "property",
+      "label": "mixing engineer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/nan",
+      "kind": "property",
+      "label": "news anchor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/nrt",
+      "kind": "property",
+      "label": "narrator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/onp",
+      "kind": "property",
+      "label": "onscreen participant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/opn",
+      "kind": "property",
+      "label": "opponent"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/org",
+      "kind": "property",
+      "label": "originator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/orm",
+      "kind": "property",
+      "label": "organizer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/osp",
+      "kind": "property",
+      "label": "onscreen presenter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/oth",
+      "kind": "property",
+      "label": "other"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/own",
+      "kind": "property",
+      "label": "owner"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pad",
+      "kind": "property",
+      "label": "place of address"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pan",
+      "kind": "property",
+      "label": "panelist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pat",
+      "kind": "property",
+      "label": "patron"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pbd",
+      "kind": "property",
+      "label": "publisher director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pbl",
+      "kind": "property",
+      "label": "publisher"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pdr",
+      "kind": "property",
+      "label": "project director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pfr",
+      "kind": "property",
+      "label": "proofreader"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pht",
+      "kind": "property",
+      "label": "photographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/plt",
+      "kind": "property",
+      "label": "platemaker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pma",
+      "kind": "property",
+      "label": "permitting agency"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pmn",
+      "kind": "property",
+      "label": "production manager"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pnc",
+      "kind": "property",
+      "label": "penciller"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pop",
+      "kind": "property",
+      "label": "printer of plates"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ppm",
+      "kind": "property",
+      "label": "papermaker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ppt",
+      "kind": "property",
+      "label": "puppeteer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pra",
+      "kind": "property",
+      "label": "praeses"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prc",
+      "kind": "property",
+      "label": "process contact"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prd",
+      "kind": "property",
+      "label": "production personnel"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pre",
+      "kind": "property",
+      "label": "presenter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prf",
+      "kind": "property",
+      "label": "performer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prg",
+      "kind": "property",
+      "label": "programmer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prm",
+      "kind": "property",
+      "label": "printmaker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prn",
+      "kind": "property",
+      "label": "production company"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pro",
+      "kind": "property",
+      "label": "producer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prp",
+      "kind": "property",
+      "label": "production place"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prs",
+      "kind": "property",
+      "label": "production designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prt",
+      "kind": "property",
+      "label": "printer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/prv",
+      "kind": "property",
+      "label": "provider"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pta",
+      "kind": "property",
+      "label": "patent applicant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pte",
+      "kind": "property",
+      "label": "plaintiff-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ptf",
+      "kind": "property",
+      "label": "plaintiff"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pth",
+      "kind": "property",
+      "label": "patent holder"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ptt",
+      "kind": "property",
+      "label": "plaintiff-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/pup",
+      "kind": "property",
+      "label": "publication place"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rap",
+      "kind": "property",
+      "label": "rapporteur"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rbr",
+      "kind": "property",
+      "label": "rubricator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rcd",
+      "kind": "property",
+      "label": "recordist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rce",
+      "kind": "property",
+      "label": "recording engineer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rcp",
+      "kind": "property",
+      "label": "addressee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rdd",
+      "kind": "property",
+      "label": "radio director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/red",
+      "kind": "property",
+      "label": "redaktor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ren",
+      "kind": "property",
+      "label": "renderer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/res",
+      "kind": "property",
+      "label": "researcher"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rev",
+      "kind": "property",
+      "label": "reviewer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rpc",
+      "kind": "property",
+      "label": "radio producer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rps",
+      "kind": "property",
+      "label": "repository"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rpt",
+      "kind": "property",
+      "label": "reporter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rpy",
+      "kind": "property",
+      "label": "responsible party"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rse",
+      "kind": "property",
+      "label": "respondent-appellee"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rsg",
+      "kind": "property",
+      "label": "restager"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rsp",
+      "kind": "property",
+      "label": "respondent"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rsr",
+      "kind": "property",
+      "label": "restorationist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rst",
+      "kind": "property",
+      "label": "respondent-appellant"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rth",
+      "kind": "property",
+      "label": "research team head"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rtm",
+      "kind": "property",
+      "label": "research team member"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/rxa",
+      "kind": "property",
+      "label": "remix artist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sad",
+      "kind": "property",
+      "label": "scientific advisor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sce",
+      "kind": "property",
+      "label": "scenarist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/scl",
+      "kind": "property",
+      "label": "sculptor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/scr",
+      "kind": "property",
+      "label": "scribe"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sde",
+      "kind": "property",
+      "label": "sound engineer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sds",
+      "kind": "property",
+      "label": "sound designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sec",
+      "kind": "property",
+      "label": "secretary"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sfx",
+      "kind": "property",
+      "label": "special effects provider"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sgd",
+      "kind": "property",
+      "label": "stage director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sgn",
+      "kind": "property",
+      "label": "signer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sht",
+      "kind": "property",
+      "label": "supporting host"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sll",
+      "kind": "property",
+      "label": "seller"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/sng",
+      "kind": "property",
+      "label": "singer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/spk",
+      "kind": "property",
+      "label": "speaker"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/spn",
+      "kind": "property",
+      "label": "sponsor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/spy",
+      "kind": "property",
+      "label": "second party"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/srv",
+      "kind": "property",
+      "label": "surveyor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/std",
+      "kind": "property",
+      "label": "set designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/stg",
+      "kind": "property",
+      "label": "setting"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/stl",
+      "kind": "property",
+      "label": "storyteller"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/stm",
+      "kind": "property",
+      "label": "stage manager"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/stn",
+      "kind": "property",
+      "label": "standards body"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/str",
+      "kind": "property",
+      "label": "stereotyper"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/swd",
+      "kind": "property",
+      "label": "software developer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tad",
+      "kind": "property",
+      "label": "technical advisor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tau",
+      "kind": "property",
+      "label": "television writer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tcd",
+      "kind": "property",
+      "label": "technical director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tch",
+      "kind": "property",
+      "label": "teacher"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/ths",
+      "kind": "property",
+      "label": "thesis advisor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tld",
+      "kind": "property",
+      "label": "television director"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tlg",
+      "kind": "property",
+      "label": "television guest"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tlh",
+      "kind": "property",
+      "label": "television host"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tlp",
+      "kind": "property",
+      "label": "television producer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/trc",
+      "kind": "property",
+      "label": "transcriber"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/trl",
+      "kind": "property",
+      "label": "translator"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tyd",
+      "kind": "property",
+      "label": "type designer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/tyg",
+      "kind": "property",
+      "label": "typographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/uvp",
+      "kind": "property",
+      "label": "university place"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/vac",
+      "kind": "property",
+      "label": "voice actor"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/vdg",
+      "kind": "property",
+      "label": "videographer"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/vfx",
+      "kind": "property",
+      "label": "visual effects provider"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/voc",
+      "kind": "property",
+      "label": "vocalist"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wac",
+      "kind": "property",
+      "label": "writer of added commentary"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wal",
+      "kind": "property",
+      "label": "writer of added lyrics"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wam",
+      "kind": "property",
+      "label": "writer of accompanying material"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wat",
+      "kind": "property",
+      "label": "writer of added text"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/waw",
+      "kind": "property",
+      "label": "writer of afterword"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wdc",
+      "kind": "property",
+      "label": "woodcutter"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wde",
+      "kind": "property",
+      "label": "wood engraver"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wfs",
+      "kind": "property",
+      "label": "writer of film story"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wft",
+      "kind": "property",
+      "label": "writer of intertitles"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wfw",
+      "kind": "property",
+      "label": "writer of foreword"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/win",
+      "kind": "property",
+      "label": "writer of introduction"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wit",
+      "kind": "property",
+      "label": "witness"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wpr",
+      "kind": "property",
+      "label": "writer of preface"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wst",
+      "kind": "property",
+      "label": "writer of supplementary textual content"
+    },
+    {
+      "iri": "http://id.loc.gov/vocabulary/relators/wts",
+      "kind": "property",
+      "label": "writer of television story"
+    }
+  ]
+}

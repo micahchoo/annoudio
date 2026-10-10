@@ -15,7 +15,16 @@ const s = strings.vocabulary
 type Errors = keyof typeof s.errors
 
 /** `maxBytes`: the largest file that `importSkos` takes (IMPORT_LIMITS). */
-export function SkosTools({ project, maxBytes }: { project: string; maxBytes: number }) {
+export function SkosTools({
+  project,
+  maxBytes,
+  list,
+}: {
+  project: string
+  maxBytes: number
+  /** The key of the list. Default: Topics. */
+  list?: string
+}) {
   const router = useRouter()
   const inputId = useId()
   const [pending, startTransition] = useTransition()
@@ -24,7 +33,7 @@ export function SkosTools({ project, maxBytes }: { project: string; maxBytes: nu
 
   const download = (format: SkosFormat) =>
     startTransition(async () => {
-      const result = await downloadSkos(project, format)
+      const result = await downloadSkos(project, format, list)
       if ('error' in result) return setError(s.errors[result.error])
       const link = document.createElement('a')
       link.href = URL.createObjectURL(new Blob([result.body], { type: result.contentType }))
@@ -36,7 +45,7 @@ export function SkosTools({ project, maxBytes }: { project: string; maxBytes: nu
   const send = (text: string, apply: boolean) =>
     startTransition(async () => {
       setError(null)
-      const result = await uploadSkos(project, text, apply)
+      const result = await uploadSkos(project, text, apply, list)
       if (!result.ok) {
         setFile(null)
         return setError(s.errors[result.error as Errors])

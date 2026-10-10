@@ -1,0 +1,226 @@
+/* The questions of the Annotate page (FieldControls.tsx), with the components of the
+   design system (design/design-system.md §5: form field, dropdown, topic pills). The
+   --ao-* tokens read the page's own colours, which follow the project theme tokens
+   (annotate.css). Scoped to .questions, so no other part of the page changes. */
+
+.annotate .questions {
+  --ao-text: var(--ink);
+  --ao-text-muted: var(--muted);
+  --ao-surface: var(--paper);
+  --ao-border-control: var(--line);
+  --ao-accent: var(--accent);
+  --ao-accent-subtle: color-mix(in srgb, var(--accent) 10%, var(--paper));
+  --ao-accent-text: var(--accent);
+  --ao-danger: var(--error);
+  --ao-danger-text: var(--error);
+  --ao-focus: var(--accent);
+  --ao-radius-m: var(--radius);
+  --ao-radius-pill: 999px;
+  --ao-hit: 44px;
+  --ao-space-1: 0.25rem;
+  --ao-space-2: 0.5rem;
+  --ao-space-3: 0.75rem;
+  --ao-space-4: 1rem;
+  --ao-space-6: 2rem;
+  --ao-text-sm: 0.875rem;
+
+  display: grid;
+  gap: var(--ao-space-4);
+  margin-block: 1.5rem;
+  padding-block-start: var(--ao-space-3);
+  border-block-start: 1px solid var(--line);
+}
+
+.annotate .questions h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.questions .ao-field {
+  display: grid;
+  gap: var(--ao-space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.questions .ao-field > label,
+.questions .ao-field > legend,
+.questions .ao-label {
+  margin: 0;
+  padding: 0;
+  font-weight: 600;
+}
+
+.questions .questions__optional {
+  color: var(--ao-text-muted);
+  font-weight: 400;
+}
+
+.questions .ao-field__help {
+  margin: 0;
+  color: var(--ao-text-muted);
+  font-size: var(--ao-text-sm);
+}
+
+.questions .ao-field__help:empty {
+  display: none;
+}
+
+.questions .ao-field__error {
+  margin: 0;
+  color: var(--ao-danger-text);
+  font-size: var(--ao-text-sm);
+  font-weight: 600;
+}
+
+.questions .ao-input,
+.questions .ao-select select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--ao-hit);
+  padding: var(--ao-space-2) var(--ao-space-3);
+  border: 1px solid var(--ao-border-control);
+  border-radius: var(--ao-radius-m);
+  background: var(--ao-surface);
+  color: var(--ao-text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.questions .ao-input[aria-invalid='true'] {
+  border-color: var(--ao-danger);
+  box-shadow: inset 0 0 0 1px var(--ao-danger);
+}
+
+/* A text answer grows to five lines. */
+.questions .questions__text {
+  min-height: var(--ao-hit);
+  max-height: calc(5lh + 1rem);
+  field-sizing: content;
+  resize: vertical;
+}
+
+.questions .questions__date {
+  display: grid;
+  grid-template-columns: minmax(5rem, 1fr) minmax(8rem, 2fr) minmax(5rem, 1fr);
+  gap: var(--ao-space-2);
+}
+
+.questions .questions__date > span {
+  display: grid;
+  gap: var(--ao-space-1);
+}
+
+.questions .ao-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ao-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.questions .ao-topic {
+  position: relative;
+}
+
+.questions .ao-topic input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.questions .ao-topic span,
+.questions .questions__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ao-space-1);
+  min-height: var(--ao-hit);
+  padding: 0 var(--ao-space-4);
+  border-radius: var(--ao-radius-pill);
+  box-shadow: inset 0 0 0 1px var(--ao-border-control);
+}
+
+.questions .ao-topic input:checked + span,
+.questions .questions__chip {
+  background: var(--ao-accent-subtle);
+  color: var(--ao-accent-text);
+  box-shadow: inset 0 0 0 2px var(--ao-accent);
+  font-weight: 600;
+}
+
+.questions .ao-topic input:focus-visible + span,
+.questions :is(input, select, textarea, button, summary):focus-visible {
+  outline: 2px solid var(--ao-focus);
+  outline-offset: 2px;
+}
+
+.questions .questions__chip {
+  padding-inline-end: var(--ao-space-1);
+}
+
+.questions .questions__chip button {
+  min-width: var(--ao-hit);
+  min-height: var(--ao-hit);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.questions .questions__combo {
+  position: relative;
+}
+
+.questions .questions__list {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  max-height: 16rem;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0;
+  overflow-y: auto;
+  border: 1px solid var(--ao-border-control);
+  border-radius: var(--ao-radius-m);
+  background: var(--ao-surface);
+  list-style: none;
+}
+
+.questions .questions__list [role='option'] {
+  display: flex;
+  align-items: center;
+  min-height: var(--ao-hit);
+  padding: 0 var(--ao-space-3);
+  cursor: pointer;
+}
+
+.questions .questions__list [aria-selected='true'] {
+  background: var(--ao-accent-subtle);
+  color: var(--ao-accent-text);
+}
+
+.questions .questions__more > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--ao-hit);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.questions .questions__more[open] {
+  display: grid;
+  gap: var(--ao-space-4);
+}
+
+.questions .questions__kept {
+  color: var(--ao-text-muted);
+}
+
+.questions .questions__kept p {
+  margin: 0;
+}

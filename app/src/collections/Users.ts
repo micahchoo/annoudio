@@ -15,8 +15,9 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     defaultColumns: ['email', 'createdAt'],
     description:
-      'Team members who sign in to this admin. Each operator has an email and a password.',
+      'An operator decides which stories about your recordings visitors see. Select "Create new" to give a colleague access.',
     hideAPIURL: true,
+      components: { beforeListTable: ['/admin/ListEmpty#OperatorsEmpty'] },
   },
   auth: {
     // M7 (design/ia.md §2.3). The link goes to the admin of this stack.
@@ -50,7 +51,10 @@ export const Users: CollectionConfig = {
         { label: 'For each story that a member sends', value: 'each' },
         { label: 'Never', value: 'never' },
       ],
-      admin: { description: 'A mail tells you that stories wait for review.' },
+      admin: {
+        description: 'How often a mail tells you that stories wait for review.',
+        components: { Field: '/admin/ui/SelectField#SelectField' },
+      },
     },
     // The setup checklist of Today: "I pasted it" (step 3) and "Hide the list".
     { name: 'snippetPasted', type: 'checkbox', defaultValue: false, admin: { hidden: true } },

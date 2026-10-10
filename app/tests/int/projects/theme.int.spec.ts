@@ -48,6 +48,40 @@ beforeEach(async () => {
 })
 
 describe('theme', () => {
+  it('has the field labels of the project when the route gives them, in field order', async () => {
+    const fields = [
+      {
+        property: 'http://purl.org/dc/terms/title',
+        label: 'Short title',
+        showAs: 'line' as const,
+        valueType: 'text',
+      },
+      {
+        property: 'http://purl.org/dc/terms/subject',
+        label: 'Topics',
+        showAs: 'tags' as const,
+        valueType: 'list',
+      },
+    ]
+    let labels = fields
+    const withLabels = (file: string) =>
+      handleTheme(
+        { payload, labels: async () => labels },
+        new Request(`https://org.example/embed/v1/themes/${file}`),
+        file,
+      )
+    const first = await withLabels('river-voices.json')
+    expect((await first.json()).fields).toEqual(fields)
+    // A relabel changes the JSON and its ETag: hosts get it within the cache time.
+    labels = [{ ...fields[0], label: 'Title' }, fields[1]]
+    const second = await withLabels('river-voices.json')
+    expect((await second.json()).fields[0].label).toBe('Title')
+    expect(second.headers.get('ETag')).not.toBe(first.headers.get('ETag'))
+    // No fields: no key.
+    labels = []
+    expect(await (await withLabels('river-voices.json')).json()).not.toHaveProperty('fields')
+  })
+
   it('gives only the set tokens, trimmed, in the order of CONTRACT table 3.1', async () => {
     const json = await theme({ payload }, 'river-voices')
     expect(json).toEqual({
@@ -57,7 +91,7 @@ describe('theme', () => {
         radius: '0px',
       },
       name: 'River Voices',
-      rightsLine: 'CC BY 4.0',
+      rightsLine: 'Stories on this page are shared under CC BY 4.0.',
       rightsIri: 'https://creativecommons.org/licenses/by/4.0/',
     })
     expect(Object.keys(json!.tokens)).toEqual(['color-accent', 'font-family', 'radius'])
@@ -113,7 +147,7 @@ describe('handleTheme', () => {
           radius: '0px',
         },
         name: 'River Voices',
-        rightsLine: 'CC BY 4.0',
+        rightsLine: 'Stories on this page are shared under CC BY 4.0.',
         rightsIri: 'https://creativecommons.org/licenses/by/4.0/',
       }),
     )
@@ -122,7 +156,8 @@ describe('handleTheme', () => {
       'cross-origin-resource-policy': 'cross-origin',
       'x-content-type-options': 'nosniff',
       'content-type': 'application/json',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=86400',
+      // Kept, but checked on each page load: a saved theme shows at the next load.
+      'cache-control': 'public, no-cache',
       etag: expect.stringMatching(/^"[A-Za-z0-9_-]{43}"$/),
     })
   })

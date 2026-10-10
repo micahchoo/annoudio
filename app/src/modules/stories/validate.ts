@@ -3,7 +3,7 @@ import type { DraftInput, SaveError } from './types'
 
 export interface Limits {
   bodies: number
-  tags: number
+  values: number
   text: number
 }
 
@@ -19,8 +19,8 @@ export function checkDraft(
 ): SaveError | null {
   if (input.replyTo !== undefined) {
     if (input.start !== undefined || input.end !== undefined) return { code: 'reply-and-range' }
-    // Tags classify a time range of the recording. A reply is about a story.
-    if ((input.tags ?? []).length > 0) return { code: 'reply-and-tags' }
+    // Values are statements about a time range of the recording. A reply is about a story.
+    if ((input.values ?? []).length > 0) return { code: 'reply-and-values' }
   } else {
     const start = Number.isFinite(input.start) ? roundSeconds(input.start!) : NaN
     const end = Number.isFinite(input.end) ? roundSeconds(input.end!) : NaN
@@ -36,7 +36,10 @@ export function checkDraft(
   // CONTEXT.md, fixed decisions: a required short text with every media body.
   if (!input.bodies.some((body) => body.kind === 'text')) return { code: 'media-needs-text' }
   if (input.bodies.length > limits.bodies) return { code: 'too-many-bodies' }
-  if ((input.tags ?? []).length > limits.tags) return { code: 'too-many-tags' }
+  const values = input.values ?? []
+  if (values.length > limits.values) {
+    return { code: 'values-invalid', errors: [{ property: values[0].property, code: 'too-many' }] }
+  }
   const long = input.bodies.findIndex(
     (body) => body.kind === 'text' && [...body.value].length > limits.text,
   )

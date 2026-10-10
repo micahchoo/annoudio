@@ -5,6 +5,8 @@
 
 import { stories } from '@payload-config'
 
+import { addSiteOrigin } from '@/modules/projects'
+
 import { requestOperator } from '../operator'
 
 export type ActionResult =
@@ -20,7 +22,10 @@ async function act(id: string, run: Act): Promise<ActionResult> {
     await run(session.operator)
   } catch (error) {
     const { name, code } = error as { name?: string; code?: string }
-    if (name === 'StoriesError' && (code === 'not-found' || code === 'no-reason' || code === 'media-not-ready')) {
+    if (
+      name === 'StoriesError' &&
+      (code === 'not-found' || code === 'no-reason' || code === 'media-not-ready')
+    ) {
       return { ok: false, error: code }
     }
     throw error
@@ -41,4 +46,22 @@ export async function returnStory(id: string, reason: string): Promise<ActionRes
 /** Remove (O5c): `stories.remove`, with its replies. */
 export async function removeStory(id: string, reason: string): Promise<ActionResult> {
   return act(id, (operator) => stories.remove(operator, id, reason))
+}
+
+/**
+ * "Add this website" (workflow-audit 7): the website of the page where a member told a
+ * story goes on the website list of its project, so the next member comes back to it.
+ */
+export async function addWebsite(
+  project: string,
+  page: string,
+): Promise<{ ok: true; host: string } | { ok: false }> {
+  const session = await requestOperator()
+  if (!session) return { ok: false }
+  const result = await addSiteOrigin(
+    { payload: session.payload, origin: process.env.ANNOUDIO_ORIGIN || '' },
+    project,
+    page,
+  )
+  return result.ok ? { ok: true, host: new URL(result.origin).host } : { ok: false }
 }

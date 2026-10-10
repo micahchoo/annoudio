@@ -53,7 +53,16 @@ test.beforeAll(async ({ browser }) => {
         ...extra,
       },
     )
-  await save(1, 'm-a', { start: 1, end: 2, tags: [`${E2E_ORIGIN}/vocab/river-voices/c/ferry`] })
+  await save(1, 'm-a', {
+    start: 1,
+    end: 2,
+    values: [
+      {
+        property: 'http://purl.org/dc/terms/subject',
+        item: `${E2E_ORIGIN}/vocab/river-voices/c/ferry`,
+      },
+    ],
+  })
   await app.stories.publish({ operatorId: 'op' }, story(1))
   await save(2, 'm-b', { start: 3, end: 4 })
   await save(3, 'm-b', { replyTo: story(1) })
@@ -61,29 +70,35 @@ test.beforeAll(async ({ browser }) => {
   await login({ page, user: testUser })
 })
 
-test('Concepts in the sidebar opens the tree; a picker chooses between two projects', async () => {
-  await page.goto('/admin')
-  await expect(
-    page.locator('.annoudio-nav').getByRole('link', { name: 'Concepts' }),
-  ).toHaveAttribute('href', '/admin/concepts')
+test('Lists opens from the Vocabulary page; a picker chooses between two projects; Open shows the tree', async () => {
+  await page.goto('/admin/vocabulary/river-voices')
+  await expect(page.getByRole('link', { name: 'Lists', exact: true })).toHaveAttribute(
+    'href',
+    '/admin/concepts/river-voices',
+  )
   await page.goto('/admin/concepts')
-  await expect(page).toHaveURL(/\/admin\/concepts$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Concepts' })).toBeVisible()
-  await expect(page.getByText('Members see concepts as topics.')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Lists' })).toBeVisible()
   const picker = page.getByRole('navigation', { name: 'Project' })
-  // Projects in name order: Hill Songs first.
+  // Projects in name order: Hill Songs first. It has no lists yet.
   await expect(picker.getByRole('link', { name: 'Hill Songs' })).toHaveAttribute(
     'aria-current',
     'page',
   )
-  await expect(page.getByText('No concepts yet. Members see no topics.')).toBeVisible()
+  await expect(page.getByText('No lists yet.')).toBeVisible()
   await picker.getByRole('link', { name: 'River Voices' }).click()
   await expect(page).toHaveURL(/\/admin\/concepts\/river-voices$/)
+  await expect(page.locator('[data-list="Topics"]')).toContainText('1 item')
+  await expect(page.locator('[data-list="Topics"]')).toContainText('asked by: Topics')
+  await page.getByRole('link', { name: 'Open Topics' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Topics' })).toBeVisible()
   await expect(page.locator('[data-concept="Ferry"]')).toContainText('1 story')
 
-  await page.getByRole('link', { name: 'Add a concept' }).click()
-  await expect(page).toHaveURL(new RegExp(`/admin/collections/concepts/create\\?project=${river}$`))
+  await page.getByRole('link', { name: 'Add an item' }).click()
+  await expect(page).toHaveURL(
+    new RegExp(`/admin/collections/concepts/create\\?project=${river}&list=\\d+$`),
+  )
   await expect(page.locator('#field-project')).toContainText('River Voices')
+  await expect(page.locator('#field-list')).toContainText('Topics')
 })
 
 test('the Overview tab of a project comes first; its counts are the counts of stories', async () => {
@@ -92,14 +107,19 @@ test('the Overview tab of a project comes first; its counts are the counts of st
   await expect(tabs).toHaveText(/^\s*Overview\s*Settings/)
   const counts = await app.stories.counts({ project: 'river-voices' })
   expect(counts.waiting).toEqual({ stories: 1, replies: 1 })
-  const state = (name: string) => page.locator(`[data-state="${name}"] dd`)
-  await expect(state('waiting')).toHaveText('1 story and 1 reply')
-  await expect(state('published')).toHaveText('1 story')
-  await expect(state('processing')).toHaveText('no stories')
+  // Each state is a stat with its count (stories and replies), and opens its list.
+  const state = (name: string) => page.locator(`[data-state="${name}"] .ao-stat__n`)
+  await expect(state('waiting')).toHaveText('2')
+  await expect(state('published')).toHaveText('1')
+  await expect(state('processing')).toHaveText('0')
   await expect(page.getByText('Ferry crossing, 1962')).toBeVisible()
-  await expect(page.locator('.annoudio-overview__recordings')).toContainText('2 stories')
-  await expect(page.getByText('1 concept')).toBeVisible()
+  // The widget's chip says what it counts: stories by state, replies apart.
+  await expect(page.locator('.annoudio-overview__recordings')).toContainText('1 published · 1 waiting')
+  await expect(page.getByText('1 item in lists')).toBeVisible()
   await expect(page.getByText('2 members told stories here.')).toBeVisible()
-  await page.getByRole('link', { name: 'Review the stories of this project' }).click()
+  await page.locator('[data-state="waiting"] a').click()
   await expect(page.locator('tbody tr')).toHaveCount(2)
+  await page.goBack()
+  await page.getByRole('link', { name: 'All stories of this project' }).click()
+  await expect(page.locator('tbody tr')).toHaveCount(3)
 })

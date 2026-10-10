@@ -17,7 +17,7 @@ export interface RecordedEvent {
   at: number;
 }
 
-const EVENT_NAMES = ["ready", "error", "play", "pause", "story-open", "annotate", "timeupdate"];
+const EVENT_NAMES = ["ready", "error", "play", "pause", "story-open", "annotate", "timeupdate", "range"];
 
 /**
  * Records every annoudio:* event on window (capture phase), with the time it came

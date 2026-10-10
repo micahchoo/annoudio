@@ -6,6 +6,7 @@ import { sql } from '@payloadcms/db-postgres'
 import { getPayload, type Payload } from 'payload'
 
 import { createStories, type DraftInput, type Stories, type StoriesConfig } from '@/modules/stories'
+import { createVocabulary } from '@/modules/vocabulary'
 import config from '@/payload.config'
 
 export const ORIGIN = 'https://org.example'
@@ -14,6 +15,10 @@ export const CONTAINER = '/stories/river-voices/1/'
 export const FERRY = `${ORIGIN}/vocab/river-voices/c/ferry`
 export const BOAT = `${ORIGIN}/vocab/river-voices/c/boat`
 export const GOAT = `${ORIGIN}/vocab/hill-songs/c/goat`
+/** The property of the field Topics. Each project with items in Topics has the field. */
+export const SUBJECT = 'http://purl.org/dc/terms/subject'
+/** The value input of an item of Topics. */
+export const topic = (item: string) => ({ property: SUBJECT, item })
 export const T0 = '2026-10-09T10:14:00.000Z'
 
 export const leela = { memberId: 'm-118', nickname: 'Leela' }
@@ -26,7 +31,8 @@ export function startPayload(): Promise<Payload> {
 
 /**
  * Delete every row, then seed. Recording 1 ("Ferry crossing, 1962") has a duration
- * of 120 seconds; recording 2 has no duration.
+ * of 120 seconds; recording 2 has no duration. The concepts go into the list Topics of
+ * their project, which also gets the field Topics.
  */
 export async function seed(payload: Payload): Promise<void> {
   const db = payload.db as unknown as PostgresAdapter
@@ -67,9 +73,20 @@ export async function seed(payload: Payload): Promise<void> {
   for (const data of concepts) await payload.create({ collection: 'concepts', data })
 }
 
-/** A `Stories` instance with a fixed clock at T0, unless `options` say otherwise. */
+/**
+ * A `Stories` instance with a fixed clock at T0, unless `options` say otherwise, and its
+ * `vocabulary`.
+ */
 export function makeStories(payload: Payload, options: Partial<StoriesConfig> = {}): Stories {
-  return createStories({ payload, origin: ORIGIN, now: () => new Date(T0), ...options })
+  const vocabulary = createVocabulary({ payload, origin: ORIGIN, stories: () => stories })
+  const stories: Stories = createStories({
+    payload,
+    origin: ORIGIN,
+    vocabulary,
+    now: () => new Date(T0),
+    ...options,
+  })
+  return stories
 }
 
 /** A clock that moves only when the test says so. */
@@ -104,7 +121,7 @@ export function draft(overrides: Partial<DraftInput> = {}): DraftInput {
     start: 42,
     end: 51,
     bodies: [{ kind: 'text', value: 'My grandmother sang this on the ferry.' }],
-    tags: [FERRY],
+    values: [topic(FERRY)],
     ...overrides,
   }
 }

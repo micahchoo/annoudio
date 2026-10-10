@@ -105,7 +105,7 @@ describe('snippet', () => {
       .replace('https://ORG', ORIGIN)
       .replace('project="…"', 'project="river-voices"')
       .replace('recording="…"', 'recording="7"')
-      .replace('src="…"', 'src="https://media.example/fish.m4a"')
+      .replaceAll('src="…"', 'src="https://media.example/fish.m4a"')
     expect(
       snippet(ORIGIN, {
         project: 'river-voices',

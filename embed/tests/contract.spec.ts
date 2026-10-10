@@ -215,7 +215,7 @@ test.describe("16.5 parts", () => {
   const ALL = [
     "player", "controls", "play-button", "time", "timeline", "waveform", "region", "stories",
     "story", "story-text", "story-media", "story-meta", "tag", "annotate-link", "message",
-    "replies", "reply", "reply-text", "reply-meta", "reply-link",
+    "replies", "reply", "reply-text", "reply-meta", "reply-link", "intro",
   ];
 
   test("each part in table 3.3 can be styled with ::part()", async ({ page }) => {
@@ -602,17 +602,17 @@ test.describe("16.10 the project frame and the new fragment keys (added 2026-10-
     await mount(page, player({ ...defaults, project: "framed" }));
     await waitForEvent(page, "annoudio:ready");
     const rights = part(page, "rights");
-    await expect(rights).toHaveText("Stories here: CC BY 4.0");
+    await expect(rights).toHaveText("CC BY 4.0");
     await expect(rights.getByRole("link", { name: "CC BY 4.0" })).toHaveAttribute(
       "href",
       "https://creativecommons.org/licenses/by/4.0/",
     );
     expect(await partCount(page, "rights")).toBe(1);
-    // Below the stories, and after the Annotate link.
+    // Below the stories; the Annotate link is above them (recordings audit, 10).
     const order = await page.evaluate(() => {
       const root = document.querySelector("annoudio-player")?.shadowRoot;
       const parts = [...(root?.querySelectorAll("[part]") ?? [])].map((n) => n.getAttribute("part"));
-      return ["stories", "annotate-link", "rights"].map((name) => parts.indexOf(name));
+      return ["annotate-link", "stories", "rights"].map((name) => parts.indexOf(name));
     });
     expect(order[0]).toBeLessThan(order[1] ?? -1);
     expect(order[1]).toBeLessThan(order[2] ?? -1);
@@ -622,9 +622,9 @@ test.describe("16.10 the project frame and the new fragment keys (added 2026-10-
     await mount(page, `${player(defaults)}${player({ ...defaults, project: "rightsonly" })}${player({ ...defaults, project: "unsafe" })}`);
     await waitForEvent(page, "annoudio:ready", 3);
     expect(await partCount(page, "rights", 0)).toBe(0);
-    await expect(part(page, "rights", 1)).toHaveText("Stories here: © 2026 Kochi Heritage Trust");
+    await expect(part(page, "rights", 1)).toHaveText("© 2026 Kochi Heritage Trust");
     await expect(part(page, "rights", 1).getByRole("link")).toHaveCount(0);
-    await expect(part(page, "rights", 2)).toHaveText("Stories here: Some rights");
+    await expect(part(page, "rights", 2)).toHaveText("Some rights");
     await expect(part(page, "rights", 2).getByRole("link")).toHaveCount(0);
   });
 
@@ -682,6 +682,171 @@ test.describe("16.10 the project frame and the new fragment keys (added 2026-10-
   });
 });
 
+test.describe("16.11 answers: fields, field, field-label, field-value (added 2026-10-09)", () => {
+  const values = { ...defaults, project: "fielded", recording: "rec-values" };
+  /** The "Label: value" lines of the n-th story, as [label, [values]]. */
+  const lines = (page: Page, story = 0) =>
+    part(page, "story")
+      .nth(story)
+      .locator('[part~="field"]')
+      .evaluateAll((fields) =>
+        fields.map((field) => [
+          field.querySelector('[part~="field-label"]')?.textContent,
+          [...field.querySelectorAll('[part~="field-value"]')].map((v) => v.textContent),
+        ]),
+      );
+
+  test("value bodies show as Label: value in field order; tags with no label; none hidden; no label last", async ({ page }) => {
+    await mount(page, player(values));
+    await waitForEvent(page, "annoudio:ready");
+    const first = part(page, "story").first();
+    await expect(first.locator('[part~="fields"]')).toHaveCount(1);
+    expect(await lines(page)).toEqual([
+      ["Short title", ["The last ferry"]],
+      ["When it happened", ["1962"]],
+      ["Place", ["Fort Kochi"]],
+      ["Who is speaking", ["K. Joseph", "Ravi"]],
+      ["Link to more", ["Archive", "Bad link"]],
+    ]);
+    // "Place: Fort Kochi": the label ends in a colon (drawn by CSS, so its text stays "Place").
+    expect(
+      await first.locator('[part~="field-label"]').first().evaluate((label) => getComputedStyle(label, "::after").content),
+    ).toBe('":"');
+    // A list value keeps the part `tag`; a field shown as tags is `tag` parts with no label.
+    await expect(first.locator('[part~="field-value"][part~="tag"]')).toHaveText(["Fort Kochi"]);
+    await expect(first.locator('li[part~="tag"]')).toHaveText(["Ferries", "Work"]);
+    // showAs none: not shown. A field with no answer: no line.
+    await expect(first).not.toContainText("Engine noise");
+    await expect(first).not.toContainText("Where you know this from");
+    // A value whose field the theme does not name: after the others, no label, as text.
+    const last = first.locator('p[part~="field-value"]');
+    await expect(last).toHaveText("<b>Kerala Queen</b>");
+    expect(await last.locator("b").count()).toBe(0);
+    // A link only for https; the javascript: address is text.
+    const archive = first.getByRole("link", { name: "Archive" });
+    await expect(archive).toHaveAttribute("href", "https://archive.example/ferry");
+    await expect(archive).toHaveAttribute("rel", "nofollow ugc");
+    await expect(first.getByRole("link", { name: "Bad link" })).toHaveCount(0);
+    // A story with no "Label: value" answers but a date: its own line, at month precision.
+    expect(await lines(page, 1)).toEqual([["When it happened", ["May 1962"]]]);
+    // The story text is not mixed with the answers.
+    await expect(first.locator('[part~="story-text"]')).toHaveText(["My father ran this ferry from Fort Kochi."]);
+  });
+
+  test("a relabel in the theme changes the label; the stories are the same", async ({ page }) => {
+    await mount(page, player({ ...values, project: "relabeled" }));
+    await waitForEvent(page, "annoudio:ready");
+    expect((await lines(page))[2]).toEqual(["Where", ["Fort Kochi"]]);
+  });
+
+  test("with no theme fields, list values are tags and other values lines with no label", async ({ page }) => {
+    await mount(page, player({ ...values, project: "plain" }));
+    await waitForEvent(page, "annoudio:ready");
+    const first = part(page, "story").first();
+    expect(await partCount(page, "fields")).toBe(0);
+    await expect(first.locator('li[part~="tag"]')).toHaveText(["Fort Kochi", "Ferries", "Work"]);
+    await expect(first.locator('p[part~="field-value"]').first()).toHaveText("The last ferry");
+  });
+
+  test("the new parts can be styled with ::part(); axe finds no violations", async ({ page }) => {
+    const css = ["fields", "field", "field-label", "field-value"]
+      .map((name) => `annoudio-player::part(${name}) { outline: 3px dashed rgb(7, 8, 9); }`)
+      .join("\n");
+    await mount(page, `<style>${css}</style>${player(values)}`);
+    await waitForEvent(page, "annoudio:ready");
+    for (const name of ["fields", "field", "field-label", "field-value"]) {
+      expect(await partStyle(page, name, ["outline-style", "outline-color"]), name).toEqual({
+        "outline-style": "dashed",
+        "outline-color": "rgb(7, 8, 9)",
+      });
+    }
+    const result = await new AxeBuilder({ page }).include("annoudio-player").analyze();
+    expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+  });
+});
+
+test.describe("16.12 the range of a story being written and the intro (added 2026-10-09)", () => {
+  /** The box of the waveform in page coordinates. */
+  async function wave(page: Page) {
+    await expect.poll(() => partCount(page, "waveform")).toBe(1);
+    const box = await part(page, "waveform").boundingBox();
+    if (!box) throw new Error("no waveform box");
+    return box;
+  }
+
+  test("range draws one range part over the stories; it can be styled with ::part()", async ({ page }) => {
+    const css = `annoudio-player::part(range) { outline: 3px dashed rgb(7, 8, 9); }`;
+    await mount(page, `<style>${css}</style>${player({ ...defaults, range: "2,5" })}`);
+    await waitForEvent(page, "annoudio:ready");
+    await expect.poll(() => partCount(page, "range")).toBe(1);
+    expect(await partStyle(page, "range", ["outline-style", "outline-color"])).toEqual({
+      "outline-style": "dashed",
+      "outline-color": "rgb(7, 8, 9)",
+    });
+    expect(await partCount(page, "region")).toBe(3);
+  });
+
+  test("a drag on the waveform chooses a new range and dispatches annoudio:range", async ({ page }) => {
+    await mount(page, player({ ...defaults, range: "1,2" }));
+    await waitForEvent(page, "annoudio:ready");
+    await expect.poll(() => partCount(page, "range")).toBe(1);
+    const box = await wave(page);
+    const y = box.y + box.height / 2;
+    await page.mouse.move(box.x + box.width * 0.6, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.7, y, { steps: 5 });
+    await page.mouse.move(box.x + box.width * 0.8, y, { steps: 5 });
+    await page.mouse.up();
+    const [range] = await waitForEvent(page, "annoudio:range");
+    const detail = range.detail as { start: number; end: number; project: string; recording: string };
+    expect(detail.project).toBe("river-voices");
+    expect(detail.recording).toBe("rec-0042");
+    expect(detail.start).toBeGreaterThan(4);
+    expect(detail.end).toBeGreaterThan(detail.start);
+    expect(await partCount(page, "range")).toBe(1);
+  });
+
+  test("a change of the attribute moves the range and dispatches nothing; no range attribute, no range", async ({ page }) => {
+    await mount(page, player({ ...defaults, range: "1,2" }));
+    await waitForEvent(page, "annoudio:ready");
+    await expect.poll(() => partCount(page, "range")).toBe(1);
+    const before = (await part(page, "range").boundingBox())!.x;
+    await page.locator("annoudio-player").evaluate((el) => el.setAttribute("range", "6,8"));
+    await expect.poll(async () => (await part(page, "range").boundingBox())!.x).toBeGreaterThan(before + 10);
+    expect(await events(page, "annoudio:range")).toEqual([]);
+    await page.locator("annoudio-player").evaluate((el) => el.removeAttribute("range"));
+    await expect.poll(() => partCount(page, "range")).toBe(0);
+  });
+
+  test("the intro shows above the stories", async ({ page }) => {
+    await mount(page, player(defaults));
+    await waitForEvent(page, "annoudio:ready");
+    await expect(part(page, "intro")).toHaveText(
+      "Each story is about one part of the recording. Select a story to hear that part.",
+    );
+    await expect(part(page, "intro")).toBeVisible();
+  });
+
+  test("the Annotate link comes under the controls, before the intro and the stories", async ({ page }) => {
+    await mount(page, player(defaults));
+    await waitForEvent(page, "annoudio:ready");
+    const order = await page.locator("annoudio-player").evaluate((host) => {
+      const parts = [...host.shadowRoot!.querySelectorAll("[part]")].map((el) => el.getAttribute("part")!);
+      return ["controls", "annotate-link", "intro", "stories"].map((name) => parts.indexOf(name));
+    });
+    expect(order.every((index) => index >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  test("axe finds no violations with a range", async ({ page }) => {
+    await mount(page, player({ ...defaults, range: "2,5" }));
+    await waitForEvent(page, "annoudio:ready");
+    await expect.poll(() => partCount(page, "range")).toBe(1);
+    const result = await new AxeBuilder({ page }).include("annoudio-player").analyze();
+    expect(result.violations).toEqual([]);
+  });
+});
+
 test.describe("16.8 keyboard and accessibility", () => {
   test("keyboard only: play, seek, open a story, follow the Annotate link", async ({ page, browserName }) => {
     await page.route(`${STACK}/annotate**`, (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<p>Annotate</p>" }));
@@ -719,6 +884,9 @@ test.describe("16.8 keyboard and accessibility", () => {
     await page.keyboard.press("End");
     await expect.poll(() => timeText(page)).toBe("0:10 / 0:10");
 
+    // The Annotate link sits under the controls, above the stories.
+    await page.keyboard.press(tab);
+    expect(await focused()).toBe("annotate-link");
     await page.keyboard.press(tab);
     expect(await focused()).toBe("Story by Leela, 0:02 to 0:04");
     await page.keyboard.press("Enter");
@@ -736,7 +904,9 @@ test.describe("16.8 keyboard and accessibility", () => {
     expect(await focused()).toBe("Story by Ravi, 0:05 to 0:06");
     await page.keyboard.press(tab);
     expect(await focused()).toBe("Story by Asha, 0:07 to 0:09, 2 replies");
-    await page.keyboard.press(tab);
+    // Back to the Annotate link: it comes before the stories in the tab order.
+    const back = browserName === "webkit" ? "Alt+Shift+Tab" : "Shift+Tab";
+    for (let i = 0; i < 20 && (await focused()) !== "annotate-link"; i++) await page.keyboard.press(back);
     expect(await focused()).toBe("annotate-link");
     await page.keyboard.press("Enter");
     await page.waitForURL(`${STACK}/annotate**`);

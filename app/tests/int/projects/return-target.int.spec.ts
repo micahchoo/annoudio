@@ -28,6 +28,16 @@ describe('returnTarget', () => {
     expect(returnTarget(project, value)).toBeNull()
   })
 
+  it('keeps the preview page of the stack itself, and nothing else of the stack', () => {
+    const self = { self: 'https://org.example' }
+    expect(returnTarget(project, 'https://org.example/admin/preview/river-voices/1#x', self)).toBe(
+      'https://org.example/admin/preview/river-voices/1',
+    )
+    expect(returnTarget(project, 'https://org.example/admin/collections/users', self)).toBeNull()
+    expect(returnTarget(project, 'https://org.example/admin/preview/river-voices/1')).toBeNull()
+    expect(returnTarget(project, 'https://www.example.org/x', self)).toBe('https://www.example.org/x')
+  })
+
   it('drops every URL when the project lists no origin', () => {
     expect(returnTarget({ siteOrigins: [] }, 'https://www.example.org/')).toBeNull()
   })

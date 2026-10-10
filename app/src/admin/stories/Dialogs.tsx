@@ -66,22 +66,24 @@ function Dialog({
       ref={ref}
       aria-labelledby={headingId}
       aria-describedby={error ? errorId : undefined}
-      className="annoudio-dialog"
+      className="ao ao-dialog annoudio-dialog"
     >
-      <h2 id={headingId}>{heading}</h2>
-      {children}
-      {error && (
-        <p id={errorId} role="alert" className="annoudio-dialog__error">
-          {error}
-        </p>
-      )}
-      <div className="annoudio-dialog__buttons">
-        <Button buttonStyle={confirmStyle} size="medium" disabled={pending} onClick={onConfirm}>
-          {confirm}
-        </Button>
-        <Button buttonStyle="secondary" size="medium" onClick={() => ref.current?.close()}>
-          {s.cancel}
-        </Button>
+      <div className="ao-dialog__body">
+        <h2 id={headingId}>{heading}</h2>
+        {children}
+        {error && (
+          <p id={errorId} role="alert" className="ao-field__error annoudio-dialog__error">
+            {error}
+          </p>
+        )}
+        <div className="ao-actions annoudio-dialog__buttons">
+          <Button buttonStyle={confirmStyle} size="medium" disabled={pending} onClick={onConfirm}>
+            {confirm}
+          </Button>
+          <Button buttonStyle="secondary" size="medium" onClick={() => ref.current?.close()}>
+            {s.cancel}
+          </Button>
+        </div>
       </div>
     </dialog>
   )
@@ -140,7 +142,7 @@ export function PublishDialog(props: {
         onConfirm={confirm}
       >
         <p>{s.publishIntro}</p>
-        <figure className="annoudio-preview">
+        <figure className="ao-preview annoudio-preview">
           <figcaption className="annoudio-preview__meta">
             {preview.nickname}
             {preview.range && ` · ${preview.range}`}
@@ -225,7 +227,11 @@ export function ReturnDialog(props: {
         <textarea
           id={reasonId}
           value={reason}
-          onChange={(event) => setReason(event.target.value)}
+          onChange={(event) => {
+            setReason(event.target.value)
+            // The "write the reason" error goes as soon as there is a reason (audit, 07).
+            if (error === s.noReason && event.target.value.trim()) setError(null)
+          }}
           rows={4}
           placeholder={s.reasonHint}
           aria-invalid={error === s.noReason ? true : undefined}

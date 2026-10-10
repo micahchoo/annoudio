@@ -47,7 +47,7 @@ export const BASE_CSS = css`
 
 button, input, a { font: inherit; color: inherit; }
 :focus-visible {
-  outline: 2px solid var(--annoudio-color-focus, #0b5cad);
+  outline: 2px solid var(--annoudio-color-focus, #0b6e99);
   outline-offset: 2px;
 }
 
@@ -75,7 +75,7 @@ button, input, a { font: inherit; color: inherit; }
   margin: 0;
   border: 0;
   border-radius: var(--annoudio-radius, 6px);
-  background: var(--annoudio-color-accent, #0b5cad);
+  background: var(--annoudio-color-accent, #0b6e99);
   color: var(--annoudio-color-on-accent, #ffffff);
   cursor: pointer;
 }
@@ -107,14 +107,27 @@ button, input, a { font: inherit; color: inherit; }
 .wave > div::part(region) { cursor: pointer; opacity: 0.6; }
 .wave > div::part(region active) {
   opacity: 0.9;
-  box-shadow: inset 2px 0 0 var(--annoudio-color-accent, #0b5cad), inset -2px 0 0 var(--annoudio-color-accent, #0b5cad);
+  box-shadow: inset 2px 0 0 var(--annoudio-color-accent, #0b6e99), inset -2px 0 0 var(--annoudio-color-accent, #0b6e99);
 }
+
+/* The range of a story being written (attribute \`range\`, CONTRACT 2.1): a drag chooses a
+   new range, a drag of an edge changes it. Over the story regions. */
+.wave > div::part(range) {
+  box-shadow: inset 2px 0 0 var(--annoudio-color-accent, #0b6e99), inset -2px 0 0 var(--annoudio-color-accent, #0b6e99);
+}
+
+.intro {
+  margin: 0;
+  padding: var(--annoudio-space, 0.5em) 0;
+  color: var(--annoudio-color-muted, #595959);
+}
+.intro[hidden] { display: none; }
 
 .seek {
   width: 100%;
   min-height: 24px;
   margin: 0;
-  accent-color: var(--annoudio-color-accent, #0b5cad);
+  accent-color: var(--annoudio-color-accent, #0b6e99);
   cursor: pointer;
   background: transparent;
 }
@@ -133,7 +146,7 @@ button, input, a { font: inherit; color: inherit; }
   border-top: 1px solid var(--annoudio-color-border, #767676);
   border-left: 3px solid transparent;
 }
-.story.active { border-left-color: var(--annoudio-color-accent, #0b5cad); }
+.story.active { border-left-color: var(--annoudio-color-accent, #0b6e99); }
 .open {
   display: inline-block;
   min-height: 24px;
@@ -149,6 +162,13 @@ button, input, a { font: inherit; color: inherit; }
 .text { margin: 0.25em 0 0; white-space: pre-line; }
 .media { display: block; max-width: 100%; margin: 0.25em 0 0; }
 img.media, video.media { max-height: 20em; border-radius: var(--annoudio-radius, 6px); }
+/* The answers of a story: "Label: value" lines. */
+.fields { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 0.125em 0.75em; margin: 0.25em 0 0; }
+.field { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; gap: 0.125em 0.75em; }
+.field-label { grid-column: 1; color: var(--annoudio-color-muted, #595959); font-size: 0.875em; line-height: 1.7; }
+.field-label::after { content: ":"; }
+.field-value { grid-column: 2; margin: 0; overflow-wrap: anywhere; }
+p.field-value { margin: 0.25em 0 0; }
 .tags { list-style: none; margin: 0.25em 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25em; }
 .tag {
   margin: 0;
@@ -178,7 +198,7 @@ img.media, video.media { max-height: 20em; border-radius: var(--annoudio-radius,
   display: inline-block;
   min-height: 24px;
   padding: 0.125em 0;
-  color: var(--annoudio-color-accent, #0b5cad);
+  color: var(--annoudio-color-accent, #0b6e99);
   text-decoration: underline;
 }
 
@@ -190,7 +210,7 @@ img.media, video.media { max-height: 20em; border-radius: var(--annoudio-radius,
 .rights a {
   display: inline-block;
   min-height: 24px;
-  color: var(--annoudio-color-accent, #0b5cad);
+  color: var(--annoudio-color-accent, #0b6e99);
   text-decoration: underline;
 }
 
@@ -208,6 +228,7 @@ img.media, video.media { max-height: 20em; border-radius: var(--annoudio-radius,
   .play { border: 1px solid ButtonText; }
   .wave > div::part(region) { border: 1px solid CanvasText; }
   .wave > div::part(region active) { border: 2px solid Highlight; }
+  .wave > div::part(range) { border: 2px solid Highlight; }
   .story.active { border-left-color: Highlight; }
 }
 `;

@@ -1,9 +1,9 @@
 // The whole story lifecycle (design/ia.md §6, F1–F7), as the people do it, on an empty
 // stack: the first operator, the checklist, a recording on a bare host page, a member's
 // story with a voice note (Chromium's fake microphone), Processing → Waiting, Publish with
-// the preview and the next story, the mails in the memory mailbox, the player, a reply,
+// the preview and the next story, the mails in the memory mailbox, the widget, a reply,
 // Return with a reason and a new send, Remove. Axe checks every screen: no serious or
-// critical violation. A screenshot of each state goes to design/phase5c-screens/.
+// critical violation. A screenshot of each state goes to design/rework-screens/ (L…).
 // Chromium, muted (playwright.config.ts).
 
 import { mkdirSync } from 'node:fs'
@@ -18,7 +18,13 @@ import { toneResponse } from './tone'
 
 const HOST = 'http://127.0.0.1:3196'
 const HOST_PAGE = `${HOST}/stories/ferry.html`
-const SCREENS = fileURLToPath(new URL('../../../design/phase5c-screens/', import.meta.url))
+const SCREENS = fileURLToPath(new URL('../../../design/rework-screens/', import.meta.url))
+const SHOTS = new Set([
+  'first-operator', 'today-empty-stack', 'add-widget-snippet', 'widget-empty', 'annotate-sign-in',
+  'annotate-story-form', 'widget-after-send', 'your-stories-processing', 'today-two-waiting',
+  'review-story', 'publish-dialog', 'widget-with-story', 'widget-thread', 'return-dialog',
+  'annotate-returned', 'history', 'remove-dialog', 'your-account',
+])
 const OPERATOR = { email: 'ravi.operator@example.org', password: 'a long password for Ravi' }
 const ASHA = 'asha@example.org'
 const NOOR = 'noor@example.org'
@@ -72,8 +78,10 @@ async function check(page: Page, name: string, options: { axe?: boolean } = {}) 
       .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)
     expect(bad, `axe on "${name}"`).toEqual([])
   }
+  // A screenshot of the key states only: design/rework-screens/ holds 40 at most.
+  if (!SHOTS.has(name)) return
   shot += 1
-  await page.screenshot({ path: `${SCREENS}${String(shot).padStart(2, '0')}-${name}.png` })
+  await page.screenshot({ path: `${SCREENS}L${String(shot).padStart(2, '0')}-${name}.png` })
 }
 
 /** The newest mail to this email, from the memory mailbox of the server. */
@@ -155,55 +163,58 @@ test('F1: the first operator on an empty stack sees the checklist', async () => 
   await operator.getByRole('button', { name: 'Create' }).click()
   await expect(operator.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible()
   await expect(
-    operator.getByRole('heading', { name: 'Put your first player on a site' }),
+    operator.getByRole('heading', { name: 'Put your first widget on a site' }),
   ).toBeVisible()
   await check(operator, 'today-empty-stack')
 })
 
 test('F2: a recording goes on a site in 3 steps; the snippet goes on the host page', async () => {
-  await operator.locator('.annoudio-work').getByRole('link', { name: 'Add a player' }).click()
+  await operator.locator('.annoudio-work').getByRole('link', { name: 'Add a widget' }).click()
+  // The steps are a client component: act after it hydrates (the first compile is slow).
+  await operator.waitForLoadState('networkidle')
   await operator.getByLabel('Title').fill('Ferry crossing, 1962')
   await operator.getByLabel('Audio address').fill(`${HOST}/ferry.m4a`)
   await expect(operator.getByText('The audio plays in this browser. Length: 0:10.')).toBeVisible()
-  await check(operator, 'add-player-recording')
+  await check(operator, 'add-widget-recording')
   await operator.getByRole('button', { name: 'Next', exact: true }).click()
   await operator.getByLabel('Name').fill('River Voices')
   await operator.getByLabel('Website address').fill(HOST)
-  await check(operator, 'add-player-site')
+  await check(operator, 'add-widget-site')
   await operator.getByRole('button', { name: 'Next', exact: true }).click()
-  await expect(operator.getByRole('heading', { name: '3 Snippet' })).toBeFocused()
+  await expect(operator.getByRole('heading', { name: 'Snippet', exact: true })).toBeFocused()
   await operator.getByRole('button', { name: 'Copy the snippet' }).click()
   await expect(operator.getByText('Copied.')).toBeVisible()
   snippet = await operator.evaluate(() => navigator.clipboard.readText())
   expect(snippet).toContain('<annoudio-player project="river-voices" recording="1"')
-  await check(operator, 'add-player-snippet')
+  await check(operator, 'add-widget-snippet')
 
-  // The project gets a rights statement, so the player and the Annotate page show it.
+  // The project gets a rights statement, so the widget and the Annotate page show it.
   const [project] = (await payload.find({ collection: 'projects' })).docs
   await payload.update({ collection: 'projects', id: project.id, data: { rights: 'cc-by-4.0' } })
 
   await operator.getByRole('link', { name: 'Done' }).click()
   await expect(operator.locator('[data-step="recording"]')).toHaveAttribute('data-done', 'true')
+  await operator.waitForLoadState('networkidle')
   await operator.getByRole('button', { name: 'I pasted it' }).click()
   await expect(operator.locator('[data-step="snippet"]')).toHaveAttribute('data-done', 'true')
   await check(operator, 'today-three-steps-done')
 })
 
-test('a visitor sees the empty player: no stories yet, Tell a story, the rights line', async ({
+test('a visitor sees the empty widget: no stories yet, Tell a story, the rights line', async ({
   browser,
 }) => {
   const visitor = await visit(browser)
   await expect(part(visitor, 'message')).toHaveText('No stories yet. Tell the first one.')
   await expect(part(visitor, 'annotate-link')).toHaveText('Tell a story')
-  await expect(part(visitor, 'rights')).toHaveText('Stories here: CC BY 4.0')
-  await check(visitor, 'player-empty')
+  await expect(part(visitor, 'rights')).toHaveText('Stories on this page are shared under CC BY 4.0.')
+  await check(visitor, 'widget-empty')
 })
 
 test('F3: Asha tells a story with a voice note, then a second story', async () => {
   await asha.goto(HOST_PAGE)
   await part(asha, 'annotate-link').click()
   await expect(asha).toHaveURL(/\/annotate\?/)
-  await expect(asha.getByText('You tell a story about 0:00 of the recording.')).toBeVisible()
+  await expect(asha.getByText('You tell a story about 0:00 of "Ferry crossing, 1962".')).toBeVisible()
   await check(asha, 'annotate-sign-in')
   await signIn(asha, ASHA, 'Asha')
   await asha.waitForLoadState('networkidle')
@@ -216,7 +227,7 @@ test('F3: Asha tells a story with a voice note, then a second story', async () =
     .fill('My father worked the ferry. The horn meant the last boat.')
   await asha.getByRole('button', { name: 'Record a voice note' }).click()
   await asha.waitForTimeout(1_000)
-  await asha.getByRole('button', { name: 'Stop the recording' }).click()
+  await asha.getByRole('button', { name: 'Stop the voice note' }).click()
   await asha.getByRole('button', { name: 'Attach this voice note' }).click()
   await expect(asha.locator('.attachments li')).toContainText(
     'Processing. You can send the story now.',
@@ -225,7 +236,7 @@ test('F3: Asha tells a story with a voice note, then a second story', async () =
   await asha.getByRole('button', { name: 'Send for review' }).click()
   await asha.waitForURL((url) => url.origin === HOST)
   await expect(part(asha, 'message')).toHaveText('Your story is sent. It shows here after review.')
-  await check(asha, 'player-after-send')
+  await check(asha, 'widget-after-send')
 
   // A second story, text only: it waits for review at once.
   await part(asha, 'annotate-link').click()
@@ -283,7 +294,7 @@ test('F3: the operator publishes from Today with the preview; the next story ope
   await operator.getByRole('link', { name: 'Start reviewing' }).click()
   await expect(operator.getByRole('heading', { name: /My father worked the ferry/ })).toBeVisible()
   await expect(operator.locator('.annoudio-status')).toContainText('Waiting for review')
-  await expect(operator.locator('.annoudio-panel__media')).toContainText('Voice note: Ready')
+  await expect(operator.locator('.annoudio-story__media')).toContainText('Voice note: Ready')
   await check(operator, 'review-story')
 
   await operator.getByRole('button', { name: 'Publish', exact: true }).click()
@@ -301,12 +312,12 @@ test('F3: the operator publishes from Today with the preview; the next story ope
   expect(mail?.text).toContain(`Listen on the site: ${HOST_PAGE}#annoudio-t=2&`)
 })
 
-test('F3, H8: the player shows the published story with its voice note', async ({ browser }) => {
+test('F3, H8: the widget shows the published story with its voice note', async ({ browser }) => {
   const visitor = await visit(browser)
   await expect(part(visitor, 'story')).toHaveCount(1)
   await expect(part(visitor, 'story-meta')).toContainText('Asha')
   await expect(part(visitor, 'story-media')).toHaveCount(1)
-  await check(visitor, 'player-with-story')
+  await check(visitor, 'widget-with-story')
 })
 
 test('F6: Noor replies; the operator publishes the reply; M4 to Asha; the thread shows', async ({
@@ -346,7 +357,7 @@ test('F6: Noor replies; the operator publishes the reply; M4 to Asha; the thread
 
   expect(await lastMail(operator, ASHA)).toMatchObject({
     kind: 'replied',
-    subject: 'Someone replied to your story',
+    subject: 'Noor replied to your story',
   })
   expect(await lastMail(operator, NOOR)).toMatchObject({
     kind: 'published',
@@ -357,7 +368,7 @@ test('F6: Noor replies; the operator publishes the reply; M4 to Asha; the thread
   await part(visitor, 'story').first().getByRole('button').first().click()
   await expect(part(visitor, 'reply')).toHaveCount(1)
   await expect(part(visitor, 'reply-text')).toHaveText('My uncle steered that ferry.')
-  await check(visitor, 'player-thread')
+  await check(visitor, 'widget-thread')
 })
 
 test('F4: Return with a reason; Asha sees Returned and M2; she sends it again', async () => {
@@ -377,6 +388,8 @@ test('F4: Return with a reason; Asha sees Returned and M2; she sends it again', 
   expect(link).toContain(`${E2E_ORIGIN}/annotate?`)
 
   await asha.goto(link)
+  // A returned story: the page says "Change your story", and the button "Send again".
+  await expect(asha.getByRole('heading', { level: 1 })).toHaveText('Change your story')
   await expect(asha.getByRole('heading', { name: /Your story/ })).toContainText('Returned to you')
   await expect(asha.locator('.status')).toContainText('Reason: Please say where the boat was.')
   await check(asha, 'annotate-returned')
@@ -384,18 +397,32 @@ test('F4: Return with a reason; Asha sees Returned and M2; she sends it again', 
   await asha
     .getByRole('textbox', { name: 'Story', exact: true })
     .fill('The boat had a red sail, near the old jetty, and the river smelled of rain.')
-  await asha.getByRole('button', { name: 'Send for review' }).click()
+  await expect(asha.getByRole('button', { name: 'Send for review' })).toHaveCount(0)
+  await asha.getByRole('button', { name: 'Send again' }).click()
   await asha.waitForURL((url) => url.origin === HOST)
 
   await asha.goto('/annotate/mine')
-  await expect(asha.locator('section[data-group="waiting"] li.card')).toContainText(
-    'near the old jetty',
-  )
+  const card = asha.locator('section[data-group="waiting"] li.card', { hasText: 'near the old jetty' })
+  await expect(card).toContainText('Sent again')
+  // Each card has the time of its last save.
+  await expect(card.locator('.saved time')).toHaveText(/\d{1,2} \w{3} \d{4}, \d{2}:\d{2}/)
   await check(asha, 'your-stories-sent-again')
+  const memberWaiting = await card
+    .locator('.state[data-state="waiting"]')
+    .first()
+    .evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color])
 
   await operator.goto('/admin/collections/stories')
+  const row = operator.locator('tbody tr', { hasText: 'The boat had a red sail' })
+  await expect(row).toContainText('Sent again')
+  // The member's badge has the colours of the operator's badge (design-system.md §3.4).
+  const operatorWaiting = await row
+    .locator('.ao-badge--waiting')
+    .first()
+    .evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color])
+  expect(memberWaiting).toEqual(operatorWaiting)
   await operator.getByRole('link', { name: /The boat had a red sail/ }).click()
-  await expect(operator.locator('.annoudio-status')).toContainText('Sent again after a return')
+  await expect(operator.locator('.annoudio-status')).toContainText('Sent again')
   await check(operator, 'review-sent-again')
   await operator.getByRole('link', { name: 'History' }).click()
   await expect(operator.locator('.annoudio-history__lines li').nth(1)).toContainText(
@@ -436,7 +463,7 @@ test('Your account; Today on a normal day', async () => {
 
   await operator.goto('/admin')
   await expect(
-    operator.getByRole('heading', { name: 'Put your first player on a site' }),
+    operator.getByRole('heading', { name: 'Put your first widget on a site' }),
   ).toHaveCount(0)
   await expect(operator.getByText('No stories wait for review.')).toBeVisible()
   await check(operator, 'today-normal-day')

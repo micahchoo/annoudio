@@ -13,8 +13,7 @@ import {
 
 import { recording as findRecording } from '@/modules/catalogue'
 import { body as mediaBody, mediaIdOf, removeBody, type MediaContext } from '@/modules/media'
-import { bySlug, returnTarget } from '@/modules/projects'
-import { concept } from '@/modules/vocabulary'
+import { bySlug, pageOf, returnTarget } from '@/modules/projects'
 
 import {
   MEDIA_NOT_READY,
@@ -28,7 +27,7 @@ import {
 } from './collection'
 import { etagOf } from './etag'
 import { handleRead } from './protocol'
-import { countsOf, historyOf, reachOf, recentOf, reviewOf, tagCountsOf } from './review'
+import { countsOf, historyOf, reachOf, recentOf, reviewOf } from './review'
 import {
   STORIES,
   forgetInstances,
@@ -40,11 +39,12 @@ import {
 import {
   buildAnnotation,
   parseStory,
+  itemIrisOf,
   relabel,
   storyIri,
-  tagsOf,
   textsOf,
   toInput,
+  valuesOf,
   type ParsedStory,
   type Place,
   type ResolvedBody,
@@ -67,7 +67,9 @@ import type {
   StoryEvent,
   StoryRef,
 } from './types'
+import { storyQuads } from './linked'
 import { checkDraft } from './validate'
+import { fieldUsageOf, valueCountsOf } from './values'
 
 /** The reason of a system return. The member reads it on the Annotate page and in M2. */
 const SYSTEM_RETURN = 'We could not use your file. Attach a different file.'
@@ -88,11 +90,11 @@ export function createStories(config: StoriesConfig): Stories {
   const maxAge = config.maxAge ?? 60
   const limits = {
     bodies: config.limits?.bodies ?? 5,
-    tags: config.limits?.tags ?? 10,
+    values: config.limits?.values ?? 30,
     text: config.limits?.text ?? 5000,
   }
   const now = config.now ?? (() => new Date())
-  const settings: Settings = { origin, pageSize }
+  const settings: Settings = { origin, pageSize, vocabulary: config.vocabulary }
   const context = register(settings)
 
   let pending: Promise<Payload> | undefined
@@ -224,12 +226,24 @@ export function createStories(config: StoriesConfig): Stories {
       if (!resolved) return fail({ code: 'unknown-media', index })
       bodies.push(resolved)
     }
-    const tagIris = input.tags ?? []
-    const tags = await Promise.all(tagIris.map((tag) => concept(site, input.project, tag)))
-    const missing = tags.findIndex((tag) => !tag)
-    if (missing !== -1) return fail({ code: 'unknown-concept', iri: tagIris[missing] })
+    // A reply has no values (checkDraft refused any). The values of hidden fields carry over.
+    let values: Awaited<ReturnType<typeof valuesOf>> = []
+    if (input.replyTo === undefined) {
+      const resolved = await config.vocabulary.resolve(input.project, input.values ?? [], {
+        keep: before ? valuesOf(before.annotation) : [],
+      })
+      if (!resolved.ok) return fail({ code: 'values-invalid', errors: resolved.errors })
+      values = resolved.values
+    }
 
     const toldOn = returnTarget(project, input.toldOn)
+    // A listed page clears an unlisted one; an unlisted page waits for the operator.
+    const unlisted = toldOn ? null : pageOf(input.toldOn)
+    const pages = toldOn
+      ? { toldOn, toldOnUnlisted: null }
+      : unlisted
+        ? { toldOnUnlisted: unlisted }
+        : {}
     const member = changeContext(context, { action: 'saved', by: 'member' })
     const time = now().toISOString()
     const next = buildAnnotation({
@@ -239,22 +253,28 @@ export function createStories(config: StoriesConfig): Stories {
       creator: { iri: `${origin}/members/${session.memberId}`, nickname: session.nickname },
       rights: project.rightsIri,
       bodies,
-      tags: tags.flatMap((tag) => tag ?? []),
+      values,
       place,
     })
 
     if (before) {
       const etag = draftEtag(before.annotation)
       // A repeated save with the same content makes no new version.
-      if (sameContent(before.annotation, next) && (!toldOn || toldOn === current?.toldOn)) {
+      if (
+        sameContent(before.annotation, next) &&
+        (!toldOn || toldOn === current?.toldOn) &&
+        (!unlisted || unlisted === current?.toldOnUnlisted)
+      ) {
         return ok(etag)
       }
       if (input.ifMatch !== etag) return fail({ code: 'stale', etag })
-      // A change by the member answers a rejection: the story goes back into the queue.
+      // A change by the member answers a rejection: the story goes back into the queue,
+      // marked "sent again" until an operator publishes or returns it.
+      const sentAgain = current?.sentAgain === true || rejectionOf(current?.rejection) !== undefined
       await db.update({
         collection: STORIES,
         id: input.id,
-        data: { wadm: next, rejection: NO_REJECTION, ...(toldOn ? { toldOn } : {}) },
+        data: { wadm: next, rejection: NO_REJECTION, sentAgain, ...pages },
         draft: true,
         depth: 0,
         context: member,
@@ -262,7 +282,7 @@ export function createStories(config: StoriesConfig): Stories {
     } else {
       await db.create({
         collection: STORIES,
-        data: { id: input.id, wadm: next, _status: 'draft', ...(toldOn ? { toldOn } : {}) },
+        data: { id: input.id, wadm: next, _status: 'draft', ...pages },
         draft: true,
         depth: 0,
         context: member,
@@ -358,6 +378,8 @@ export function createStories(config: StoriesConfig): Stories {
           etag: draftEtag(story.annotation),
           reviewState,
           pendingRevision: reviewState === 'draft' && published.has(story.id),
+          modified: story.annotation.modified,
+          ...(doc.sentAgain === true ? { sentAgain: true } : {}),
           project: story.project,
           recording: story.recording,
           ...(story.replyTo === null
@@ -430,7 +452,7 @@ export function createStories(config: StoriesConfig): Stories {
       await db.update({
         collection: STORIES,
         id,
-        data: { _status: 'draft', rejection },
+        data: { _status: 'draft', rejection, sentAgain: false },
         depth: 0,
         context: returned,
       })
@@ -439,7 +461,7 @@ export function createStories(config: StoriesConfig): Stories {
       await db.update({
         collection: STORIES,
         id,
-        data: { rejection },
+        data: { rejection, sentAgain: false },
         draft: true,
         depth: 0,
         context: returned,
@@ -460,7 +482,7 @@ export function createStories(config: StoriesConfig): Stories {
 
   async function review(operator: OperatorSession, id: string) {
     requireOperator(operator)
-    return reviewOf(await payload(), origin, id)
+    return reviewOf(await payload(), settings, id)
   }
 
   async function remove(operator: OperatorSession, id: string, reason?: string): Promise<void> {
@@ -532,25 +554,19 @@ export function createStories(config: StoriesConfig): Stories {
 
   async function nextWaiting(afterId?: string): Promise<string | null> {
     const db = (await payload()).db as unknown as PostgresAdapter
-    const after =
-      afterId === undefined
-        ? []
-        : (
-            await db.drizzle.execute<{ id: string }>(
-              sql`select id from stories where id = ${afterId}`,
-            )
-          ).rows
-    // The Waiting for review tab, oldest first (the list sorts by `createdAt`).
+    // The Waiting for review tab, oldest first (the list sorts by `createdAt`): the first
+    // story after `afterId`, else the oldest other one. So Publish and Return both open a
+    // waiting story while one is left (recordings audit, 07). An unknown id gives the oldest.
     const { rows } = await db.drizzle.execute<{ id: string }>(sql`
       select s.id from _stories_v v join stories s on s.id = v.parent_id
         where v.latest and v.version__status = 'draft' and v.version_rejection_at is null
           and not coalesce(v.version_processing, false)
-          ${
-            after.length === 0
-              ? sql``
-              : sql`and (s.created_at, s.id) > (select created_at, id from stories where id = ${afterId})`
-          }
-        order by s.created_at, s.id
+          ${afterId === undefined ? sql`` : sql`and s.id <> ${afterId}`}
+        order by ${
+          afterId === undefined
+            ? sql``
+            : sql`coalesce((s.created_at, s.id) > (select created_at, id from stories where id = ${afterId}), false) desc,`
+        } s.created_at, s.id
         limit 1`)
     return rows[0]?.id ?? null
   }
@@ -641,10 +657,26 @@ export function createStories(config: StoriesConfig): Stories {
       for (const doc of result.docs) {
         const story = parseStory(doc.wadm, origin)
         if (!story) continue
-        const labels = await labelsOf(undefined, db, story.project, tagsOf(story.annotation))
+        const labels = await labelsOf(
+          undefined,
+          config.vocabulary,
+          story.project,
+          itemIrisOf(story.annotation),
+        )
         yield relabel(story.annotation, labels)
       }
       if (!result.hasNextPage) return
+    }
+  }
+
+  /** Layers 1 and 2 of the linked data export: published stories only (design/vocab.md §3.4). */
+  async function* exportQuads(operator: OperatorSession, filter: ExportFilter = {}) {
+    let n = 0
+    for await (const annotation of exportStories(operator, {
+      ...filter,
+      reviewState: 'published',
+    })) {
+      yield* await storyQuads(annotation, n++)
     }
   }
 
@@ -654,7 +686,7 @@ export function createStories(config: StoriesConfig): Stories {
   ): Promise<void> {
     const db = await payload()
     const adapter = db.db as unknown as PostgresAdapter
-    const uses = JSON.stringify([{ source: iri }])
+    const uses = JSON.stringify([{ 'rdf:object': { id: iri } }])
     const { rows } = await adapter.drizzle.execute<{ project: string; recording: string }>(
       sql`select distinct project, recording from stories
           where _status = 'published' and wadm -> 'body' @> ${uses}::jsonb`,
@@ -687,13 +719,15 @@ export function createStories(config: StoriesConfig): Stories {
     ownStories,
     mediaSettled,
     exportStories,
+    exportQuads,
     reject,
     history,
     review,
     counts: async (filter = {}) => countsOf(await payload(), origin, filter),
-    projectReach: async (project) => reachOf(await payload(), project),
+    projectReach: async (project, options) => reachOf(await payload(), project, options?.leaveOut ?? []),
     recent: async (since) => recentOf(await payload(), since),
-    tagCounts: async (project) => tagCountsOf(await payload(), project),
+    valueCounts: async (project) => valueCountsOf(await payload(), project),
+    fieldUsage: async (project) => fieldUsageOf(await payload(), project),
     conceptChanged,
     forgetInstances: async (of, options = {}) =>
       forgetInstances(options.req?.payload ?? (await payload()), of, options.req),

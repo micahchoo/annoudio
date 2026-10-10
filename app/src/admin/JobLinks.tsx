@@ -6,9 +6,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { Icon, type IconName } from './ui/Icon'
+
 export interface JobLink {
   href: string
   label: string
+  /** The icon of the job (design/design-system.md §8). */
+  icon?: IconName
   /** A count after the label, with its words for a screen reader. */
   badge?: { count: number; label: string }
 }
@@ -31,6 +35,7 @@ export function JobLinks({ links }: { links: JobLink[] }) {
             aria-current={current ? 'page' : undefined}
           >
             {current && <div className="nav__link-indicator" />}
+            {link.icon && <Icon name={link.icon} className="annoudio-nav__icon" />}
             <span className="nav__link-label">{link.label}</span>
             {link.badge && link.badge.count > 0 && (
               <span className="annoudio-nav__badge">

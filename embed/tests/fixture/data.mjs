@@ -4,9 +4,12 @@
 const CONTEXT = "http://www.w3.org/ns/anno.jsonld";
 /** The extension context of a page whose items carry replies (CONTRACT 6, rule 12). */
 const REPLIES_CONTEXT = { "annoudio:replies": { "@reverse": "oa:hasTarget" } };
+const DC = "http://purl.org/dc/terms/";
+const SPK = "http://id.loc.gov/vocabulary/relators/spk";
+const SEE_ALSO = "http://www.w3.org/2000/01/rdf-schema#seeAlso";
 
 /** Projects that the fixture stack knows. A slug "river-voices-<anything>" acts as "river-voices". */
-export const PROJECTS = ["river-voices", "plain", "slow", "bad", "framed", "rightsonly", "unsafe"];
+export const PROJECTS = ["river-voices", "plain", "slow", "bad", "framed", "rightsonly", "unsafe", "fielded", "relabeled"];
 
 export function baseProject(slug) {
   for (const p of PROJECTS) if (slug === p || slug.startsWith(`${p}-`)) return p;
@@ -35,8 +38,27 @@ export const THEMES = {
   },
   rightsonly: { tokens: {}, name: "Hill Songs", rightsLine: "© 2026 Kochi Heritage Trust" },
   unsafe: { tokens: {}, name: "Unsafe", rightsLine: "Some rights", rightsIri: "javascript:alert(1)" },
+  // The field labels (CONTRACT 3.2, rule 8; added 2026-10-09). New entries.
+  fielded: { tokens: {}, name: "River Voices", fields: FIELDS("Place") },
+  relabeled: { tokens: {}, name: "River Voices", fields: FIELDS("Where") },
 };
 export const SLOW_THEME_MS = 2500;
+
+
+/** The fields of the "fielded" project, in field order. Hoisted: THEMES uses it above. */
+function FIELDS(placeLabel) {
+  return [
+    { property: `${DC}title`, label: "Short title", showAs: "line", valueType: "text" },
+    { property: `${DC}temporal`, label: "When it happened", showAs: "line", valueType: "date" },
+    { property: `${DC}spatial`, label: placeLabel, showAs: "line", valueType: "list" },
+    { property: SPK, label: "Who is speaking", showAs: "line", valueType: "entity" },
+    { property: SEE_ALSO, label: "Link to more", showAs: "line", valueType: "link" },
+    { property: `${DC}subject`, label: "Topics", showAs: "tags", valueType: "list" },
+    { property: `${DC}description`, label: "What you hear", showAs: "none", valueType: "text" },
+    // A field that no story answers: no line.
+    { property: `${DC}source`, label: "Where you know this from", showAs: "line", valueType: "text" },
+  ];
+}
 
 function story(origin, project, recording, n, { start, end, nickname, bodies, created }) {
   return {
@@ -180,6 +202,53 @@ function mediaStories(origin, project, recording) {
   ];
 }
 
+/** A value body (CONTRACT 6, rule 13) about the time range of `story`. */
+const value = (origin, recording, range, predicate, purpose, text, object, language) => ({
+  type: ["TextualBody", "rdf:Statement"],
+  purpose,
+  value: text,
+  ...(language ? { language } : {}),
+  "rdf:subject": { id: `${origin}/recordings/${recording}#t=${range}` },
+  "rdf:predicate": { id: predicate },
+  "rdf:object": object,
+});
+
+/** rec-values: two stories with answers (design/vocab.md §3.3). */
+function valueStories(origin, project, recording) {
+  const item = (key) => ({ id: `${origin}/vocab/${project}/c/${key}` });
+  const v = (range, ...rest) => value(origin, recording, range, ...rest);
+  return [
+    story(origin, project, recording, 41, {
+      start: 1,
+      end: 3,
+      nickname: "Asha",
+      bodies: [
+        { type: "TextualBody", value: "My father ran this ferry from Fort Kochi.", format: "text/plain", language: "en" },
+        v("1,3", `${DC}title`, "describing", "The last ferry", { "@value": "The last ferry", "@language": "en" }, "en"),
+        v("1,3", `${DC}temporal`, "describing", "1962", { "@value": "1962", type: "xsd:gYear" }),
+        v("1,3", `${DC}spatial`, "tagging", "Fort Kochi", item("fort-kochi"), "en"),
+        v("1,3", SPK, "describing", "K. Joseph", item("k-joseph")),
+        v("1,3", SPK, "describing", "Ravi", { type: "http://xmlns.com/foaf/0.1/Person", "rdfs:label": { "@value": "Ravi", "@language": "en" } }, "en"),
+        v("1,3", SEE_ALSO, "describing", "Archive", { id: "https://archive.example/ferry" }),
+        v("1,3", SEE_ALSO, "describing", "Bad link", { id: "javascript:alert(1)" }),
+        v("1,3", `${DC}subject`, "tagging", "Ferries", item("ferries"), "en"),
+        v("1,3", `${DC}subject`, "tagging", "Work", item("work"), "en"),
+        v("1,3", `${DC}description`, "describing", "Engine noise", { "@value": "Engine noise", "@language": "en" }, "en"),
+        v("1,3", "http://example.org/p/boat", "describing", "<b>Kerala Queen</b>", { "@value": "<b>Kerala Queen</b>" }),
+      ],
+    }),
+    story(origin, project, recording, 42, {
+      start: 4,
+      end: 5,
+      nickname: "Ravi",
+      bodies: [
+        { type: "TextualBody", value: "The horn in May.", format: "text/plain", language: "en" },
+        v("4,5", `${DC}temporal`, "describing", "1962-05", { "@value": "1962-05", type: "xsd:gYearMonth" }),
+      ],
+    }),
+  ];
+}
+
 /** Recordings: stories and page size. Others answer 404. */
 export const RECORDINGS = {
   "rec-0042": { make: threeStories, pageSize: 100 },
@@ -187,6 +256,7 @@ export const RECORDINGS = {
   "rec-long": { make: (o, p, r) => manyStories(o, p, r, 25), pageSize: 1 },
   "rec-empty": { make: () => [], pageSize: 100 },
   "rec-media": { make: mediaStories, pageSize: 100 },
+  "rec-values": { make: valueStories, pageSize: 100 },
 };
 
 /** Builds the container (page = null) or page n. Returns null for a page out of range. */

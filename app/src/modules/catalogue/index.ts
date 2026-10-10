@@ -7,7 +7,7 @@ import {
   type PayloadRequest,
 } from 'payload'
 
-import { bySlug } from '@/modules/projects'
+import { bySlug, projectsOfRecording } from '@/modules/projects'
 import { removeFirstLine } from '@/plural'
 import { publicJson } from '@/publicJson'
 
@@ -68,6 +68,13 @@ export function recordingsCollection(deps: CatalogueDeps): CollectionConfig {
       : String(published.stories)
   }
 
+  // "Projects" column: the projects with a widget for this recording, as chips.
+  const widgetProjects: FieldHook = async ({ data, req }) => {
+    if (req.user?.collection !== 'users' || data?.id === undefined) return null
+    const projects = await projectsOfRecording({ payload: req.payload, req }, String(data.id))
+    return projects.map(({ id, slug, label }) => ({ id, slug, label }))
+  }
+
   // A recording with stories or replies stays: the operator removes them first. A
   // recording with none also takes its served representations away.
   const guardDelete: CollectionBeforeDeleteHook = async ({ id, req }) => {
@@ -90,11 +97,11 @@ export function recordingsCollection(deps: CatalogueDeps): CollectionConfig {
     admin: {
       group: 'Settings',
       useAsTitle: 'title',
-      defaultColumns: ['title', 'duration', 'stories', 'updatedAt'],
+      defaultColumns: ['title', 'projects', 'duration', 'stories', 'updatedAt'],
       description:
-        'The audio that members tell stories about. Open a recording to copy its snippet for a web page.',
+        'A recording is the audio that stories are about: each story marks a time range on one recording. Open a recording to copy the snippet of its widget.',
       hideAPIURL: true,
-      // "Add a player" adds a recording (admin/addPlayer); the list has no create button.
+      // "Add a widget" adds a recording (admin/addWidget); the list has no create button.
       components: { beforeListTable: ['/admin/catalogue/RecordingsHeader#RecordingsHeader'] },
     },
     // `register` (the local API) makes recordings; the admin forms only change them.
@@ -104,15 +111,24 @@ export function recordingsCollection(deps: CatalogueDeps): CollectionConfig {
       {
         name: 'snippet',
         type: 'ui',
-        admin: { components: { Field: '/admin/catalogue/SnippetPanel#SnippetPanel' } },
+        admin: { components: { Field: '/admin/catalogue/RecordingPanel#RecordingPanel' } },
       },
-      { name: 'title', label: 'Title', type: 'text', required: true },
+      {
+        name: 'title',
+        label: 'Title',
+        type: 'text',
+        required: true,
+        admin: {
+          description: 'The name of the recording. Members see it at the top of the Annotate page.',
+          placeholder: 'Ferry crossing, 1962',
+        },
+      },
       {
         ...urlField,
         label: 'Audio address',
         admin: {
-          description:
-            'The web address of the audio file, for example https://media.example.org/fish-market.m4a.',
+          description: 'The web address of the audio file. The widget plays this file.',
+          placeholder: 'https://media.example.org/ferry.m4a',
         },
       },
       {
@@ -134,11 +150,25 @@ export function recordingsCollection(deps: CatalogueDeps): CollectionConfig {
         type: 'number',
         min: 0,
         admin: {
+          description: 'The browser reads it from the audio address. A story must end inside this length.',
           components: {
             Field: '/admin/catalogue/DurationField#DurationField',
             Cell: '/admin/ClockCell#ClockCell',
           },
         },
+      },
+      {
+        name: 'projects',
+        label: 'Projects',
+        type: 'json',
+        virtual: true,
+        admin: {
+          readOnly: true,
+          condition: () => false,
+          disableListFilter: true,
+          components: { Cell: '/admin/catalogue/ProjectsCell#ProjectsCell' },
+        },
+        hooks: { afterRead: [widgetProjects] },
       },
       {
         name: 'stories',
@@ -220,7 +250,7 @@ export async function list(context: CatalogueContext, limit = 200): Promise<Reco
 }
 
 /**
- * Add a recording (step 1 of "Put a recording on a site"). `length` comes from the
+ * Add a recording (step 1 of "Add a widget to a site"). `length` comes from the
  * operator's browser, which played the audio (design/phase5-notes.md, decision 1).
  * Gives the recording, or the field that is wrong with a text for the operator.
  */
@@ -273,7 +303,8 @@ export function snippet(
     value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
   return [
     `<script async src="${attr(`${origin}/embed/v1.js`)}"></script>`,
-    `<annoudio-player project="${attr(instance.project)}" recording="${attr(instance.recording)}" src="${attr(instance.src)}"></annoudio-player>`,
+    // The fallback child plays the recording when the loader cannot load (CONTRACT §1, rule 5).
+    `<annoudio-player project="${attr(instance.project)}" recording="${attr(instance.recording)}" src="${attr(instance.src)}"><audio controls preload="none" src="${attr(instance.src)}"></audio></annoudio-player>`,
   ].join('\n')
 }
 
@@ -292,7 +323,7 @@ const RECORDING_FILE = /^([1-9][0-9]*)\.json$/
 /**
  * `GET /embed/v1/recordings/{project}/{id}.json` (CONTRACT.md §5.2): public, CORS `*`, the
  * cache rules of the theme route. 404 for an unknown project or recording. Callers: the
- * WordPress block, the Omeka S module, and step 3 of "Put a recording on a site".
+ * WordPress block, the Omeka S module, and step 3 of "Add a widget to a site".
  */
 export async function handleRecording(
   context: CatalogueContext,

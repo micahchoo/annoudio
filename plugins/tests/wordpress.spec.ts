@@ -91,23 +91,24 @@ async function newPostWithBlock(page: Page, title: string) {
   const canvas = page.frameLocator('iframe[name="editor-canvas"]');
   await canvas.getByRole("textbox", { name: "Add title" }).fill(title);
   await page.getByRole("button", { name: /block inserter/i }).click();
-  await page.getByRole("searchbox", { name: /search/i }).fill("Annoudio");
-  await page.getByRole("option", { name: "Annoudio player" }).click();
+  // The admin's word finds the block: "widget" (recordings audit, 17).
+  await page.getByRole("searchbox", { name: /search/i }).fill("widget");
+  await page.getByRole("option", { name: "Annoudio widget" }).click();
   return canvas;
 }
 
-test("an author types only the recording ID; visitors see the player with the admin's audio and the stories", async ({ page, browser }) => {
+test("an author types only the recording number; visitors see the player with the admin's audio and the stories", async ({ page, browser }) => {
   const canvas = await newPostWithBlock(page, "Ferry crossing, from the block editor");
   await expect(canvas.getByLabel("Audio address")).toHaveCount(0);
 
   // An unknown id, then a word: the editor says so in plain words.
-  await canvas.getByLabel("Recording ID").fill("999999");
-  await expect(canvas.getByText('The project "river-voices" has no recording with the ID "999999".')).toBeVisible();
-  await canvas.getByLabel("Recording ID").fill("one");
-  await expect(canvas.getByText('"one" is not a recording ID. The ID is a number, for example 1.')).toBeVisible();
+  await canvas.getByLabel("Recording number").fill("999999");
+  await expect(canvas.getByText('The project "river-voices" has no recording with the number "999999".')).toBeVisible();
+  await canvas.getByLabel("Recording number").fill("one");
+  await expect(canvas.getByText('"one" is not a recording number. Type a number, for example 1.')).toBeVisible();
 
-  // The number from the admin's Snippet panel ("Recording ID: 1").
-  await canvas.getByLabel("Recording ID").fill(RECORDING);
+  // The number from the admin's Snippet panel ("Recording number: 1").
+  await canvas.getByLabel("Recording number").fill(RECORDING);
   await expect(canvas.getByText(`Recording found: ${recording.title}`)).toBeVisible();
   await expect(canvas.getByText(`Audio address (from the Annoudio admin): ${recording.url}`)).toBeVisible();
 
@@ -136,7 +137,7 @@ test("an author types only the recording ID; visitors see the player with the ad
 test("the pasted snippet still fills the block", async ({ page }) => {
   const canvas = await newPostWithBlock(page, "Ferry crossing, from a pasted snippet");
   await canvas.getByLabel("Or paste the snippet").fill(snippet);
-  await expect(canvas.getByLabel("Recording ID")).toHaveValue(RECORDING);
+  await expect(canvas.getByLabel("Recording number")).toHaveValue(RECORDING);
   await expect(canvas.getByText(`Recording found: ${recording.title}`)).toBeVisible();
   const src = await page.evaluate(
     () =>

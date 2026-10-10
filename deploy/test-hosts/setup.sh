@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Sets up the two test hosts and pastes snippet.html into one page on each.
 # It is safe to run again. It needs the stack from docker-compose.yml in this folder.
-# The snippet points at the embed fixture server (embed/tests/fixture/server.mjs, port 4510).
+# The snippet points at the embed fixture server (embed/tests/fixture/server.mjs, port 4510):
+# these "player" pages are the Phase 2 test pages (embed/tests/hosts.spec.ts). The demo pages,
+# which point at the demo stack, come from install-plugins.sh (run it after this script).
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 compose=(docker compose -f "$here/docker-compose.yml")

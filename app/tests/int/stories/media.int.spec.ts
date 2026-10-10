@@ -233,7 +233,14 @@ describe('ownDrafts with media bodies', () => {
       { kind: 'image', media: id },
     ])
     const again = await stories.saveDraft(leela, {
-      ...draft({ bodies: own.bodies, tags: own.tags, start: own.start, end: own.end }),
+      ...draft({
+        bodies: own.bodies,
+        values: own.values.flatMap((v) =>
+          'iri' in v.object ? [{ property: v.property, item: v.object.iri }] : [],
+        ),
+        start: own.start,
+        end: own.end,
+      }),
       ifMatch: own.etag,
     })
     expect(again).toMatchObject({ ok: true, etag: first.ok ? first.etag : '' })
