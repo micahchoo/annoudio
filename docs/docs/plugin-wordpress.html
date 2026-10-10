@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Annoudio for WordPress · Annoudio</title>
+<meta name="description" content="This plugin adds one block to WordPress: Annoudio widget. The block shows a recording and the community stories about it. The stories come from your organisation's Annoudio stack.">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins" aria-current="page">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html" aria-current="page">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/plugins/wordpress/README.md"><code>plugins/wordpress/README.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (7 sections)</summary><ol><li><a href="#what-to-copy-from-the-annoudio-admin">What to copy from the Annoudio admin</a></li><li><a href="#install-the-plugin">Install the plugin</a></li><li><a href="#connect-the-site-to-the-stack">Connect the site to the stack</a></li><li><a href="#add-a-widget-to-a-post-or-a-page">Add a widget to a post or a page</a></li><li><a href="#problems">Problems</a></li><li><a href="#what-the-block-prints">What the block prints</a></li><li><a href="#remove-the-plugin">Remove the plugin</a></li></ol></details>
+<h1 id="annoudio-for-wordpress">Annoudio for WordPress</h1>
+<p>This plugin adds one block to WordPress: <strong>Annoudio widget</strong>. The block shows a recording and the community stories about it. The stories come from your organisation&#39;s Annoudio stack.</p>
+<p>Use this plugin in place of a pasted snippet. WordPress removes a pasted <code>&lt;script&gt;</code> when the author does not have the <code>unfiltered_html</code> capability. Authors and editors do not have it. The block keeps no HTML, so WordPress does not remove it.</p>
+<p>You need:</p>
+<ul>
+<li>WordPress 6.5 or newer, with PHP 8.2 or newer.</li>
+<li>The file <code>annoudio.zip</code>.</li>
+<li>An operator account in the Annoudio admin, or a person who has one.</li>
+</ul>
+<h2 id="what-to-copy-from-the-annoudio-admin">What to copy from the Annoudio admin</h2>
+<p>You copy two values one time, for the settings page. Then you copy one number for each block.</p>
+<ol>
+<li><p>Sign in to the Annoudio admin.</p>
+</li>
+<li><p>Open <strong>Catalogue</strong>, <strong>Recordings</strong>. Open the recording.</p>
+</li>
+<li><p>Find the <strong>Snippet</strong> panel. If your organisation has more than one project, select the project in the dropdown.</p>
+</li>
+<li><p>The panel shows the line &quot;Recording number: 1&quot; and the snippet, two lines of code, for example:</p>
+<pre tabindex="0"><code class="language-html">&lt;script async src=&quot;https://stories.example.org/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;1&quot; src=&quot;https://stories.example.org/media/ferry.m4a&quot;&gt;&lt;/annoudio-player&gt;
+</code></pre>
+</li>
+</ol>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in What to copy from the Annoudio admin"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Where it is</th>
+<th>Where you use it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Stack address</td>
+<td>The start of the first snippet line, before <code>/embed/v1.js</code>. Example: <code>https://stories.example.org</code></td>
+<td>Settings page, one time</td>
+</tr>
+<tr>
+<td>Project</td>
+<td><code>project=&quot;…&quot;</code> in the snippet. Example: <code>river-voices</code></td>
+<td>Settings page, one time</td>
+</tr>
+<tr>
+<td>Recording number</td>
+<td>The number after &quot;Recording number:&quot;. Example: <code>1</code></td>
+<td>Each block</td>
+</tr>
+</tbody></table></div>
+<p>You do not copy the audio address. The block gets it from the Annoudio admin.</p>
+<h2 id="install-the-plugin">Install the plugin</h2>
+<ol>
+<li>In the WordPress admin, open <strong>Plugins</strong>, <strong>Add New Plugin</strong>.</li>
+<li>Click <strong>Upload Plugin</strong> at the top of the page.</li>
+<li>Click <strong>Choose File</strong>. Select <code>annoudio.zip</code>. Click <strong>Install Now</strong>.</li>
+<li>Click <strong>Activate Plugin</strong>.</li>
+</ol>
+<p>You must be an administrator to do these steps.</p>
+<h2 id="connect-the-site-to-the-stack">Connect the site to the stack</h2>
+<ol>
+<li>Open <strong>Settings</strong>, <strong>Annoudio</strong>.</li>
+<li>In <strong>Stack address</strong>, type the stack address. Example: <code>https://stories.example.org</code>.</li>
+<li>In <strong>Project</strong>, type the project. Example: <code>river-voices</code>.</li>
+<li>Leave <strong>Server address</strong> empty. (See &quot;Problems&quot; below for the one case that needs it.)</li>
+<li>Click <strong>Save and check</strong>.</li>
+</ol>
+<p>What you see: a box at the top of the page. A green box says &quot;Connected to River Voices (project river-voices) at <a href="https://stories.example.org">https://stories.example.org</a>.&quot; It shows the project name from the Annoudio admin. A red box says what is wrong, in one sentence.</p>
+<h2 id="add-a-widget-to-a-post-or-a-page">Add a widget to a post or a page</h2>
+<p>Authors, editors and administrators can do these steps.</p>
+<ol>
+<li>Open the post or the page in the block editor.</li>
+<li>Click the <strong>+</strong> button (Block Inserter). Type <code>Annoudio</code>. Click <strong>Annoudio widget</strong>.</li>
+<li>What you see: a grey box with an audio icon, the title &quot;Annoudio widget&quot;, the field <strong>Recording number</strong> and the field <strong>Or paste the snippet</strong>.</li>
+<li>In <strong>Recording number</strong>, type the number from the Snippet panel. Example: <code>1</code>.</li>
+<li>After a moment, a green box shows two lines: &quot;Recording found:&quot; and the title of the recording, then &quot;Audio address (from the Annoudio admin):&quot; and the address.</li>
+<li>Publish or update the post.</li>
+</ol>
+<p>The editor shows the grey box, not the widget. To see the widget, open the published post.</p>
+<p>You can also paste the full snippet into <strong>Or paste the snippet</strong>. The block reads the recording number from it. It does not keep the pasted text.</p>
+<h3 id="where-the-audio-address-comes-from">Where the audio address comes from</h3>
+<p>The Annoudio admin is the source of the audio address. When a visitor opens the post, the block uses the address that the admin has now. So when the operator changes the audio address of a recording in the admin, every post shows the new address within 5 minutes. You do not edit the posts.</p>
+<p>The post also keeps a copy of the address, from the last save. The block uses the copy only when this server cannot reach the stack. If the server cannot reach the stack and the post has no copy, the post shows no widget.</p>
+<h2 id="problems">Problems</h2>
+<p><strong>The settings page says &quot;This site cannot reach …&quot;.</strong> The WordPress server cannot connect to the stack. Visitors can still see widgets: their browsers connect to the stack, not your server. Only the checks fail. If the stack and WordPress run on one computer in Docker, type in <strong>Server address</strong> the address that the WordPress server uses to reach the stack (for example <code>http://app:3000</code>). The checks then use that address. Visitors&#39; browsers still use the stack address.</p>
+<p><strong>The settings page says &quot;The stack has no project …&quot;.</strong> The project is not correct. Copy the value of <code>project=&quot;…&quot;</code> from the snippet again.</p>
+<p><strong>The block says &quot;The project … has no recording with the number …&quot;.</strong> The recording number is not correct. Copy the number after &quot;Recording number:&quot; in the Snippet panel again.</p>
+<p><strong>The block says &quot;… is not a recording number&quot;.</strong> Type only the number, for example <code>1</code>, not the text &quot;Recording number:&quot;.</p>
+<p><strong>The block says &quot;This snippet is for the project …&quot;.</strong> You copied the snippet of a different project. The block always uses the project of the settings page.</p>
+<p><strong>The published post shows no widget.</strong> Make sure that the settings page shows the green box, and that the block shows &quot;Recording found:&quot;. Then update the post one time: the update saves the copy of the audio address.</p>
+<p><strong>The block says &quot;has no recording&quot; for every recording number, also for correct ones.</strong> The stack is older than the block. The block needs the recording route of the stack (<code>/embed/v1/recordings/…</code>, Annoudio releases from 2026-10-09). Ask the Annoudio operator to update the stack.</p>
+<h2 id="what-the-block-prints">What the block prints</h2>
+<p>For each block, the page gets the snippet of the Annoudio contract:</p>
+<pre tabindex="0"><code class="language-html">&lt;script async src=&quot;https://stories.example.org/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;div class=&quot;wp-block-annoudio-player&quot;&gt;&lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;1&quot; src=&quot;https://stories.example.org/media/ferry.m4a&quot;&gt;&lt;/annoudio-player&gt;&lt;/div&gt;
+</code></pre>
+<p>The <code>&lt;script&gt;</code> line comes one time per page, also when the page has many widgets. The widget gets its colours and fonts from the project&#39;s theme in the Annoudio admin. The plugin adds no styles.</p>
+<h2 id="remove-the-plugin">Remove the plugin</h2>
+<p>Open <strong>Plugins</strong>. Click <strong>Deactivate</strong> under Annoudio, then <strong>Delete</strong>. WordPress also deletes the settings. Posts keep the block. They show no widget until you install the plugin again.</p>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Annoudio for Omeka S · Annoudio</title>
+<meta name="description" content="This module adds one page block to Omeka S: Annoudio widget. The block shows a recording and the community stories about it. The stories come from your organisation's Annoudio stack.">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins" aria-current="page">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html" aria-current="page">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/plugins/omeka-s/README.md"><code>plugins/omeka-s/README.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (7 sections)</summary><ol><li><a href="#what-to-copy-from-the-annoudio-admin">What to copy from the Annoudio admin</a></li><li><a href="#install-the-module">Install the module</a></li><li><a href="#connect-omeka-s-to-the-stack">Connect Omeka S to the stack</a></li><li><a href="#add-a-widget-to-a-site-page">Add a widget to a site page</a></li><li><a href="#problems">Problems</a></li><li><a href="#what-the-block-prints">What the block prints</a></li><li><a href="#remove-the-module">Remove the module</a></li></ol></details>
+<h1 id="annoudio-for-omeka-s">Annoudio for Omeka S</h1>
+<p>This module adds one page block to Omeka S: <strong>Annoudio widget</strong>. The block shows a recording and the community stories about it. The stories come from your organisation&#39;s Annoudio stack.</p>
+<p>Use this module in place of a pasted snippet. When the HTML purifier is on (the default), Omeka S removes a pasted <code>&lt;script&gt;</code> and <code>&lt;annoudio-player&gt;</code> from an HTML block. This block keeps no HTML, so the purifier does not remove it. Keep the purifier on.</p>
+<p>The audio can be an Omeka media. Attach the media to the block, and the block uses the address of its original file.</p>
+<p>You need:</p>
+<ul>
+<li>Omeka S 4.0 or newer, with PHP 8.2 or newer.</li>
+<li>The file <code>Annoudio-omeka-s.zip</code>.</li>
+<li>Access to the server folder of Omeka S (to copy the module), and a global administrator account.</li>
+<li>An operator account in the Annoudio admin, or a person who has one.</li>
+</ul>
+<h2 id="what-to-copy-from-the-annoudio-admin">What to copy from the Annoudio admin</h2>
+<p>You copy two values one time, for the module configuration. Then you copy one number for each block.</p>
+<ol>
+<li><p>Sign in to the Annoudio admin.</p>
+</li>
+<li><p>Open <strong>Catalogue</strong>, <strong>Recordings</strong>. Open the recording.</p>
+</li>
+<li><p>Find the <strong>Snippet</strong> panel. If your organisation has more than one project, select the project in the dropdown.</p>
+</li>
+<li><p>The panel shows the line &quot;Recording number: 1&quot; and the snippet, two lines of code, for example:</p>
+<pre tabindex="0"><code class="language-html">&lt;script async src=&quot;https://stories.example.org/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;1&quot; src=&quot;https://stories.example.org/media/ferry.m4a&quot;&gt;&lt;/annoudio-player&gt;
+</code></pre>
+</li>
+</ol>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in What to copy from the Annoudio admin"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Where it is</th>
+<th>Where you use it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Stack address</td>
+<td>The start of the first snippet line, before <code>/embed/v1.js</code>. Example: <code>https://stories.example.org</code></td>
+<td>Module configuration, one time</td>
+</tr>
+<tr>
+<td>Project</td>
+<td><code>project=&quot;…&quot;</code> in the snippet. Example: <code>river-voices</code></td>
+<td>Module configuration, one time</td>
+</tr>
+<tr>
+<td>Recording number</td>
+<td>The number after &quot;Recording number:&quot;. Example: <code>1</code></td>
+<td>Each block</td>
+</tr>
+</tbody></table></div>
+<p>You do not copy the audio address. The block gets it from the Annoudio admin, or from an Omeka media that you attach.</p>
+<p><strong>Important:</strong> the recording in Annoudio and the file that the block plays must be the same audio. If the Omeka file is a different edit (for example, cut at the start), the stories show at the wrong times.</p>
+<h2 id="install-the-module">Install the module</h2>
+<ol>
+<li>Unzip <code>Annoudio-omeka-s.zip</code>. You get a folder named <code>Annoudio</code>. Do not rename it.</li>
+<li>Copy the folder <code>Annoudio</code> into the <code>modules</code> folder of your Omeka S installation. Use your file manager or SFTP program. The result is <code>modules/Annoudio/Module.php</code>.</li>
+<li>Sign in to the Omeka S admin as a global administrator.</li>
+<li>Open <strong>Modules</strong> in the left menu. Find <strong>Annoudio</strong>. Click <strong>Install</strong>.</li>
+</ol>
+<h2 id="connect-omeka-s-to-the-stack">Connect Omeka S to the stack</h2>
+<ol>
+<li>On the <strong>Modules</strong> page, click <strong>Configure</strong> next to Annoudio.</li>
+<li>In <strong>Stack address</strong>, type the stack address. Example: <code>https://stories.example.org</code>.</li>
+<li>In <strong>Project</strong>, type the project. Example: <code>river-voices</code>.</li>
+<li>Leave <strong>Server address</strong> empty. (See &quot;Problems&quot; below for the one case that needs it.)</li>
+<li>Click <strong>Submit</strong>.</li>
+<li>Click <strong>Configure</strong> again to see the result.</li>
+</ol>
+<p>What you see: a line at the top of the form. A green line says &quot;Connected to River Voices (project river-voices) at <a href="https://stories.example.org">https://stories.example.org</a>.&quot; It shows the project name from the Annoudio admin. A red line says what is wrong, in one sentence.</p>
+<h2 id="add-a-widget-to-a-site-page">Add a widget to a site page</h2>
+<ol>
+<li>Open <strong>Sites</strong>, select the site, open <strong>Pages</strong>, and open the page. Click <strong>Edit</strong> (the pencil).</li>
+<li>In the right sidebar, <strong>Add new block</strong>, click <strong>Annoudio widget</strong>.</li>
+<li>What you see: a block with the field <strong>Recording number</strong>, and a part <strong>Omeka media (optional)</strong> with the button <strong>Add attachment</strong>.</li>
+<li>In <strong>Recording number</strong>, type the number from the Snippet panel. Example: <code>1</code>.</li>
+<li>Optional: if the audio is also an Omeka media, and it is the same file, click <strong>Add attachment</strong>. Select the item. Select the media. Click <strong>Apply changes</strong>.</li>
+<li>Click <strong>Save</strong>.</li>
+</ol>
+<p>After the save, the block shows a green line: &quot;Recording found:&quot; and the title of the recording. If the recording number is not correct, Omeka S does not save the page and shows the problem at the top.</p>
+<p>To see the widget, open the public page. The page editor shows the fields, not the widget.</p>
+<h3 id="where-the-audio-address-comes-from">Where the audio address comes from</h3>
+<p>The block uses the first of these that it has:</p>
+<ol>
+<li>The original file of the attached Omeka media.</li>
+<li>The audio address that the Annoudio admin has now. When the operator changes the address in the admin, every page shows the new address within 5 minutes. You do not edit the pages.</li>
+<li>A copy of the admin&#39;s address, which the block keeps from the last save. The block uses it only when this server cannot reach the stack.</li>
+</ol>
+<p>If none is there, the page shows no widget for that block.</p>
+<h2 id="problems">Problems</h2>
+<p><strong>The configuration says &quot;This server cannot reach …&quot;.</strong> The Omeka S server cannot connect to the stack. Visitors can still see widgets: their browsers connect to the stack, not your server. Only the checks fail. If the stack and Omeka S run on one computer in Docker, type in <strong>Server address</strong> the address that the Omeka S server uses to reach the stack (for example <code>http://app:3000</code>). Visitors&#39; browsers still use the stack address.</p>
+<p><strong>The configuration says &quot;The stack has no project …&quot;.</strong> The project is not correct. Copy the value of <code>project=&quot;…&quot;</code> from the snippet again.</p>
+<p><strong>The page does not save: &quot;Annoudio widget: The project … has no recording with the number …&quot;.</strong> The recording number is not correct. Copy the number after &quot;Recording number:&quot; in the Snippet panel again. If this happens for every recording number, also for correct ones, the stack is older than the module: the module needs the recording route of the stack (<code>/embed/v1/recordings/…</code>, Annoudio releases from 2026-10-09). Ask the Annoudio operator to update the stack.</p>
+<p><strong>The page does not save: &quot;… is not a recording number&quot;.</strong> Type only the number, for example <code>1</code>, not the text &quot;Recording number:&quot;.</p>
+<p><strong>Omeka S refuses the audio file when you add the media.</strong> Open <strong>Settings</strong>, <strong>Security</strong>. Make sure that <strong>Allowed media types</strong> has <code>audio/mp4</code> (or <code>audio/mpeg</code> for MP3) and that <strong>Allowed file extensions</strong> has <code>m4a</code> (or <code>mp3</code>).</p>
+<p><strong>The public page shows no widget.</strong> Make sure that the configuration shows the green line, and that the block shows &quot;Recording found:&quot;. Then save the page one time: the save keeps the copy of the audio address.</p>
+<h2 id="what-the-block-prints">What the block prints</h2>
+<p>The page gets the snippet of the Annoudio contract. Omeka S puts the <code>&lt;script&gt;</code> line in the page head, one time per page, also when the page has many widgets:</p>
+<pre tabindex="0"><code class="language-html">&lt;script async=&quot;async&quot; src=&quot;https://stories.example.org/embed/v1.js&quot;&gt;&lt;/script&gt;
+…
+&lt;div class=&quot;block block-annoudioPlayer&quot;&gt;&lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;1&quot; src=&quot;https://omeka.example.org/files/original/3f2a….m4a&quot;&gt;&lt;/annoudio-player&gt;&lt;/div&gt;
+</code></pre>
+<p>The widget gets its colours and fonts from the project&#39;s theme in the Annoudio admin. The module adds no styles.</p>
+<h2 id="remove-the-module">Remove the module</h2>
+<p>Open <strong>Modules</strong>. Click <strong>Deactivate</strong>, then <strong>Uninstall</strong>. Omeka S deletes the module settings. Pages keep the blocks, but Omeka S does not show them while the module is not active. Then delete the folder <code>modules/Annoudio</code>.</p>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

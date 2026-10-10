@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Annoudio</title>
+<meta name="description" content="Annoudio: an audio annotation widget that a site embeds. Members tell stories about parts of a recording; operators publish them; visitors see them on the site.">
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="index.html" aria-current="page">Annoudio</a></li><li><a href="recordings/index.html">Recordings</a></li><li><a href="design-system/index.html">Design system</a></li><li><a href="docs/contract.html">Contract</a></li><li><a href="docs/index.html#deploy">Deploy</a></li><li><a href="docs/index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main">
+<div class="prose">
+<section class="hero" aria-labelledby="top">
+<h1 id="top">Annoudio</h1>
+<p class="hero__lead">An audio annotation widget that a site embeds. Members of a community tell stories about parts of a recording, and visitors see them on the organisation's own site.</p>
+<p class="hero__about">Annoudio is a tool for audio annotation. A member selects a part of a recording and tells a story about it. The story can have text, a voice note, a photo or a video. You read each story and publish it. Then visitors see it in the widget on your site, on the timeline of the recording. Annoudio keeps each story as a W3C Web Annotation, so other archive tools can read it.</p>
+<div class="ao-actions">
+<a class="ao-btn ao-btn--primary" href="#see-it-work">See it work</a>
+<a class="ao-btn" href="#how-to-run">Run it</a>
+<a class="ao-btn ao-btn--quiet" href="https://github.com/micahchoo/annoudio">Source on GitHub</a>
+</div>
+</section>
+
+<h2 id="who-it-is-for">Who it is for</h2>
+<ul class="roles">
+<li><b>Operator</b>A person of the organisation's team. Reviews the stories and publishes them in one admin, with no code.</li>
+<li><b>Member</b>A person of the community. Signs in with a code by email and tells a story about a time range: text, a voice note, a photo or a video.</li>
+<li><b>Visitor</b>Anyone on the organisation's site. Plays the recording and reads the published stories in the widget. No account.</li>
+<li><b>Site maintainer</b>Puts the widget on a page: pastes the two-line snippet, or uses the WordPress block or the Omeka S module.</li>
+</ul>
+
+<h2 id="the-words">The words</h2>
+<p>The W3C Web Annotation Data Model (WADM) says: &quot;this body says something about this target&quot;. Annoudio uses the model as it is, and gives each part a plain name. The left column is the W3C word; the middle column is the word that people read in Annoudio.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in the page"><table>
+<thead>
+<tr>
+<th>In audio annotation (W3C)</th>
+<th>In Annoudio</th>
+<th>One-line definition for a person</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Annotation (<code>type: Annotation</code>)</td>
+<td><strong>Story</strong></td>
+<td>A note that a member makes about one part of a recording.</td>
+</tr>
+<tr>
+<td>Target <code>source</code> (the audio resource)</td>
+<td><strong>Recording</strong></td>
+<td>One audio work that your organisation keeps, with a title and an audio address.</td>
+</tr>
+<tr>
+<td>Target <code>selector</code> (<code>FragmentSelector</code>, Media Fragments <code>t=62,95</code>)</td>
+<td><strong>Time range</strong></td>
+<td>The part of the recording that the story is about, for example 1:02–1:35.</td>
+</tr>
+<tr>
+<td>Body: <code>TextualBody</code></td>
+<td><strong>The story&#39;s text</strong></td>
+<td>What the member writes: what they remember or hear.</td>
+</tr>
+<tr>
+<td>Body: <code>Sound</code>, <code>Image</code>, <code>Video</code> (external resource)</td>
+<td><strong>Voice note, photo, video</strong></td>
+<td>A file that the member adds to the text of the story.</td>
+</tr>
+<tr>
+<td>Body: <code>TextualBody</code> with <code>rdf:predicate</code> (vocab-C)</td>
+<td><strong>Answers</strong></td>
+<td>The member&#39;s answers to your questions, for example &quot;Place: North landing&quot;.</td>
+</tr>
+<tr>
+<td>Motivation <code>commenting</code></td>
+<td><strong>Story</strong></td>
+<td>The member says something about a time range.</td>
+</tr>
+<tr>
+<td>Motivation <code>replying</code> (target = another annotation)</td>
+<td><strong>Reply</strong></td>
+<td>A note about a story, not about the recording. One level deep.</td>
+</tr>
+<tr>
+<td>Purpose <code>tagging</code> (body points at a SKOS concept)</td>
+<td><strong>An item from a list</strong>, for example from <strong>Topics</strong></td>
+<td>A word from your list that says what the moment is about.</td>
+</tr>
+<tr>
+<td><code>creator</code></td>
+<td><strong>Member</strong></td>
+<td>The person who told the story. Visitors see the member&#39;s name, never the email.</td>
+</tr>
+<tr>
+<td>Container (Web Annotation Protocol, LDP)</td>
+<td><strong>The stories of a recording in a project</strong> (code: instance)</td>
+<td>All the stories that one widget shows.</td>
+</tr>
+<tr>
+<td>A client that shows annotations</td>
+<td><strong>Widget</strong></td>
+<td>The element on your site that plays the recording and shows its stories.</td>
+</tr>
+<tr>
+<td>(none: Annoudio only)</td>
+<td><strong>Snippet</strong></td>
+<td>The two lines that you paste into a page to show a widget.</td>
+</tr>
+<tr>
+<td>Target <code>scope</code></td>
+<td><strong>Project</strong></td>
+<td>The settings for one site: the lists, the look, the review rule and the rights line.</td>
+</tr>
+<tr>
+<td><code>rights</code></td>
+<td><strong>Rights line</strong></td>
+<td>The licence of the stories, shown under them in one sentence.</td>
+</tr>
+<tr>
+<td>SKOS concept scheme</td>
+<td><strong>List</strong> (Topics, Places, Speakers)</td>
+<td>A set of items that members can choose from.</td>
+</tr>
+<tr>
+<td>SKOS concept</td>
+<td><strong>Item</strong></td>
+<td>One entry in a list, with a label and a fixed address.</td>
+</tr>
+<tr>
+<td>Property (SHACL <code>sh:path</code>, <code>dcterms:spatial</code>)</td>
+<td><strong>Question</strong></td>
+<td>One fact that you ask members about each story, for example &quot;Place&quot;.</td>
+</tr>
+<tr>
+<td>Vocabulary (ontology, schema)</td>
+<td><strong>Questions and lists</strong></td>
+<td>All the questions and lists of one project. A file is optional, under Advanced.</td>
+</tr>
+<tr>
+<td>(none: WADM has no state)</td>
+<td><strong>Review state</strong>: Processing, Waiting for review, Returned, Published</td>
+<td>Where a story is on its way from the member to the visitors.</td>
+</tr>
+</tbody></table></div>
+
+
+<h2 id="see-it-work">See it work</h2>
+<p class="section-lead">Three of the <a href="recordings/index.html">nineteen recordings</a>, made on the demo stack: a member tells a story on a phone, an operator publishes a story, a visitor reads it on the site.</p>
+<div class="videos videos--landing">
+<figure class="video video--phone" id="r10">
+<video controls preload="none" poster="recordings/10-member-tell-a-story.png" width="390" height="844" aria-label="Recording 10: From the WordPress page: Tell a story, invite code, name, drag a range, answer, Send for review (no sound)"><source src="recordings/10-member-tell-a-story.webm" type="video/webm"><a href="recordings/10-member-tell-a-story.webm">Download the recording (WebM)</a></video>
+<figcaption>
+<h3 class="video__title">10 · Tell a story</h3>
+<span class="video__workflow">From the WordPress page: Tell a story, invite code, name, drag a range, answer, Send for review</span>
+<span class="video__meta">Member (phone) · 36.1 s · 0.57 MB · 390×844 · no sound</span>
+<div class="video__text"><p>On the WordPress demo page (phone), the member selects <strong>Tell a story</strong> in the widget. The Annotate page asks to sign in: <strong>Have an invite code?</strong>, an email and a code from the operator (typed in lower case with a space: case, spaces and the hyphen do not matter). First sign-in: the name &quot;Asha&quot;. On the form, a drag on the waveform marks the range and the fields follow; the story text; the answers Place = North landing and Topics = Horn; <strong>Send for review</strong>. The Start and End fields sit right under the waveform, with <strong>Use current time (0:00)</strong>. The browser goes back to the WordPress page, and the widget says &quot;Your story is sent. It shows here after review.&quot;</p>
+</div>
+</figcaption>
+</figure>
+<figure class="video" id="r06">
+<video controls preload="none" poster="recordings/06-operator-review-publish.png" width="1280" height="800" aria-label="Recording 06: Review stories → a waiting story → chips → Publish dialog with preview → the next story opens (no sound)"><source src="recordings/06-operator-review-publish.webm" type="video/webm"><a href="recordings/06-operator-review-publish.webm">Download the recording (WebM)</a></video>
+<figcaption>
+<h3 class="video__title">06 · Review publish</h3>
+<span class="video__workflow">Review stories → a waiting story → chips → Publish dialog with preview → the next story opens</span>
+<span class="video__meta">Operator · 24.2 s · 0.52 MB · 1280×800 · no sound</span>
+<div class="video__text"><p><strong>Review stories</strong> lists the waiting stories, oldest first. Every row has its state badge. The operator opens the oldest waiting story (an earlier voice note by Asha): the chips (member, project, recording), the answers and &quot;Told on localhost:8091&quot;. <strong>Publish</strong> opens the dialog &quot;Publish this story?&quot; with the story as visitors will see it; <strong>Publish the story</strong> shows &quot;Published. Visitors see it within one minute.&quot; and the next waiting story opens.</p>
+</div>
+</figcaption>
+</figure>
+<figure class="video" id="r14">
+<video controls preload="none" poster="recordings/14-visitor-widget.png" width="1280" height="800" aria-label="Recording 14: The WordPress page: play, open a story, its answers, the thread, Tell a story (no sound)"><source src="recordings/14-visitor-widget.webm" type="video/webm"><a href="recordings/14-visitor-widget.webm">Download the recording (WebM)</a></video>
+<figcaption>
+<h3 class="video__title">14 · Widget</h3>
+<span class="video__workflow">The WordPress page: play, open a story, its answers, the thread, Tell a story</span>
+<span class="video__meta">Visitor · 26.6 s · 0.46 MB · 1280×800 · no sound</span>
+<div class="video__text"><p>A visitor on the WordPress demo page: <strong>Play</strong> plays the recording and the time ranges light up. Selecting Asha&#39;s story plays its range and shows its answers (&quot;Place: North landing&quot; and the tag Horn). Leela&#39;s story opens its thread with the reply of video 13 (published by the operator off camera). <strong>Tell a story</strong> sits under the controls; the rights line is at the end of the list.</p>
+</div>
+</figcaption>
+</figure>
+</div>
+
+<h2 id="how-to-run">How to run it</h2>
+<p>One organisation runs one copy: one <b>stack</b> of three parts (the app, Postgres and a worker), with Docker Compose.</p>
+<h3 id="run-dev">On your computer, to change the code</h3>
+<pre tabindex="0"><code>docker compose -f deploy/docker-compose.dev.yml up -d --wait   # Postgres
+cd app &amp;&amp; cp .env.example .env &amp;&amp; pnpm install &amp;&amp; pnpm dev   # then open http://localhost:3000/admin</code></pre>
+<p>Set the values in <code>app/.env</code> first; <a href="https://github.com/micahchoo/annoudio/blob/main/app/README.md"><code>app/README.md</code></a> tells each one. A ready demo with data and a mailbox: <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/DEMO.md"><code>deploy/DEMO.md</code></a>.</p>
+<h3 id="run-dokploy">On a server, with Dokploy (recommended)</h3>
+<p>For an organisation on its own server, with screens for backup and restore. You need a server with 4 GB of memory, a domain, an SMTP account and an S3 bucket. Read <a href="docs/deploy-dokploy.html">Run Annoudio with Dokploy</a>.</p>
+<h3 id="run-coolify">On a server, with Coolify</h3>
+<p>For an organisation that already uses Coolify. It has fewer backup screens for a compose stack. Read <a href="docs/deploy-coolify.html">Run Annoudio with Coolify</a>.</p>
+<p>For both, also read <a href="docs/backup.html">Backup and restore</a> and <a href="docs/upgrade.html">Upgrade</a>.</p>
+
+<h2 id="the-snippet">The snippet</h2>
+<p>A page needs two lines to show a widget. The operator copies them from the admin. <code>ORG</code> is the host name of the organisation's stack.</p>
+<pre tabindex="0"><code>&lt;script async src=&quot;https://ORG/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player project=&quot;…&quot; recording=&quot;…&quot; src=&quot;…&quot;&gt;&lt;audio controls preload=&quot;none&quot; src=&quot;…&quot;&gt;&lt;/audio&gt;&lt;/annoudio-player&gt;</code></pre>
+<p>With real values:</p>
+<pre tabindex="0"><code>&lt;script async src=&quot;https://stories.org.example/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;rec-0042&quot;
+  src=&quot;https://stories.org.example/media/rec-0042.m4a&quot;&gt;&lt;/annoudio-player&gt;</code></pre>
+<p>The rules for these lines, the attributes, the theme tokens and the events are the promise to every host site: <a href="docs/contract.html">the embed contract</a>. WordPress and Omeka S have a plugin that writes the snippet from a recording number: <a href="docs/plugin-wordpress.html">WordPress block</a>, <a href="docs/plugin-omeka-s.html">Omeka S module</a>.</p>
+
+<h2 id="source">Source and licence</h2>
+<p>The code is on GitHub: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. It is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. The <a href="design-system/index.html">design system</a> shows the parts of the admin and the Annotate page. Not built yet, because they need people: the team trial and the pilot on a real site. The items that no test has checked are in <a href="docs/unverified.html">Not verified yet</a>.</p>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

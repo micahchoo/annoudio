@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Annoudio information architecture · Annoudio</title>
+<meta name="description" content="Status: decision, 2026-10-09. ROADMAP Phase 5c step 1. Phase 5c step 2 builds this file. Read CONTEXT.md first; this file uses its words, including Reply and Topic.">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html" aria-current="page">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/design/ia.md"><code>design/ia.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (12 sections)</summary><ol><li><a href="#0-decision-summary">0 Decision summary</a></li><li><a href="#1-people-jobs-handoffs">1 People, jobs, handoffs</a></li><li><a href="#2-story-lifecycle">2 Story lifecycle</a></li><li><a href="#3-object-model-as-each-role-sees-it">3 Object model as each role sees it</a></li><li><a href="#4-navigation">4 Navigation</a></li><li><a href="#5-screen-inventory">5 Screen inventory</a></li><li><a href="#6-flows">6 Flows</a></li><li><a href="#7-naming">7 Naming</a></li><li><a href="#8-data-model-and-interface-changes">8 Data model and interface changes</a></li><li><a href="#9-feasibility-per-screen">9 Feasibility per screen</a></li><li><a href="#10-build-order-phase-5c-step-2">10 Build order (Phase 5c step 2)</a></li><li><a href="#11-open-questions">11 Open questions</a></li></ol></details>
+<h1 id="annoudio-information-architecture">Annoudio information architecture</h1>
+<p>Status: decision, 2026-10-09. ROADMAP Phase 5c step 1. Phase 5c step 2 builds this file. Read <a href="context.html"><code>CONTEXT.md</code></a> first; this file uses its words, including <strong>Reply</strong> and <strong>Topic</strong>.</p>
+<p>Sources: <a href="https://github.com/micahchoo/annoudio/blob/main/design/ia-C-journey-centred.md"><code>ia-C-journey-centred.md</code></a> (the spine: lifecycle, who sees what, mails, member home, system return, no Unpublish), <a href="https://github.com/micahchoo/annoudio/blob/main/design/ia-A-task-centred.md"><code>ia-A-task-centred.md</code></a> (operator navigation: Today, job sidebar, Publish → next story, the 3-step wizard), <a href="https://github.com/micahchoo/annoudio/blob/main/design/ia-B-object-centred.md"><code>ia-B-object-centred.md</code></a> (the project frame on public surfaces, one project overview page). Not taken from B: per-project list scoping, the project cookie, the replaced sidebar, the two-level navigation, the stored project ↔ recording link. Payload facts come from the feasibility sections of A, B and C (checked against 3.90.2 types).</p>
+<h2 id="0-decision-summary">0 Decision summary</h2>
+<ol>
+<li>One story lifecycle with six names (Processing, Waiting for review, Returned, Published, Published · change waiting, Removed) on every surface: admin, Annotate page, player note, mail.</li>
+<li><strong>Unpublish</strong> goes. A story leaves the player by <strong>Return to the member</strong> (with a reason) or <strong>Remove</strong>. A return of a change keeps the published version visible.</li>
+<li>The operator home is <strong>Today</strong>: a setup checklist on an empty stack, then the work that waits.</li>
+<li>The sidebar names jobs in ≤ 3 words: Today, Review stories, Add a widget, Vocabulary, Members; then Settings: Projects, Recordings, Operators, Your account. (Vocabulary replaced Concepts on 2026-10-09: <a href="vocab.html"><code>design/vocab.md</code></a> §1.)</li>
+<li><strong>Publish</strong> opens a dialog with the visitor preview; after it, the next waiting story opens. <strong>Next story</strong> replaces &quot;Keep as draft&quot;.</li>
+<li><strong>Add a widget to a site</strong> has 3 steps: Recording, Site (the project), Snippet. A new public route <code>GET /embed/v1/recordings/{project}/{id}.json</code> serves the CMS plugins.</li>
+<li>Members get a home, <strong>Your stories</strong>, and <strong>Your account</strong> (name, mail choice, sign out). Six mails close every handoff; each has one link.</li>
+<li>The project frame (name, theme, rights line) shows on the Annotate page; the player shows theme and rights line. The theme JSON gets three additive keys: <code>name</code>, <code>rightsLine</code>, <code>rightsIri</code>.</li>
+<li>Schema: five new fields (story <code>toldOn</code>, <code>changedBy</code>, <code>lastAction</code>, <code>rejection.automatic</code>; member <code>mailNotices</code>; operator <code>reviewMail</code>). One migration.</li>
+<li>Counts split stories and replies in words (&quot;2 stories and 1 reply wait for review&quot;); the catalogue column counts stories only, as the player&#39;s <code>total</code> does.</li>
+</ol>
+<h2 id="1-people-jobs-handoffs">1 People, jobs, handoffs</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 1 People, jobs, handoffs"><table>
+<thead>
+<tr>
+<th>Person</th>
+<th>Device</th>
+<th>Home</th>
+<th>Daily or common jobs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Operator</strong></td>
+<td>Laptop</td>
+<td><strong>Today</strong> (<code>/admin</code>)</td>
+<td>Review stories; put a recording on a site; keep the concepts tidy; look after members; set up projects</td>
+</tr>
+<tr>
+<td><strong>Member</strong></td>
+<td>Phone first</td>
+<td><strong>Your stories</strong> (<code>/annotate/mine</code>)</td>
+<td>Tell a story; fix a returned story; read the result; reply</td>
+</tr>
+<tr>
+<td><strong>Visitor</strong></td>
+<td>Any</td>
+<td>The host page with the player</td>
+<td>Listen; read stories and replies; select <strong>Tell a story</strong> or <strong>Reply</strong></td>
+</tr>
+</tbody></table></div>
+<p>A <strong>handoff</strong> is the moment when one person&#39;s action is the next person&#39;s trigger. Each handoff has a signal that reaches the next person when that person is away.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table 2 in 1 People, jobs, handoffs"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>From → to</th>
+<th>Action</th>
+<th>Signal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H1</td>
+<td>Operator → host site</td>
+<td><strong>Copy the snippet</strong> (step 3)</td>
+<td>Clipboard; the operator pastes it</td>
+</tr>
+<tr>
+<td>H2</td>
+<td>Host site → visitor</td>
+<td>Page loads</td>
+<td>The player</td>
+</tr>
+<tr>
+<td>H3</td>
+<td>Visitor → member</td>
+<td><strong>Tell a story</strong> / <strong>Reply</strong></td>
+<td>Annotate page at <code>t</code></td>
+</tr>
+<tr>
+<td>H4</td>
+<td>Member → operator</td>
+<td><strong>Send for review</strong></td>
+<td>Count on Today and the sidebar; M6</td>
+</tr>
+<tr>
+<td>H5</td>
+<td>Worker → story</td>
+<td>Media ready or failed</td>
+<td>State change; the page polls; a failure is a system return (M2)</td>
+</tr>
+<tr>
+<td>H6</td>
+<td>Operator → member</td>
+<td><strong>Return to the member</strong></td>
+<td>M2; banner on the story</td>
+</tr>
+<tr>
+<td>H7</td>
+<td>Operator → member</td>
+<td><strong>Publish</strong></td>
+<td>M3; badge in <strong>Your stories</strong></td>
+</tr>
+<tr>
+<td>H8</td>
+<td>Operator → visitor</td>
+<td><strong>Publish</strong></td>
+<td>The player shows it within <code>STORIES_MAX_AGE</code> (60 s)</td>
+</tr>
+<tr>
+<td>H9</td>
+<td>Replier → parent&#39;s member</td>
+<td>Reply is published</td>
+<td>M4</td>
+</tr>
+<tr>
+<td>H10</td>
+<td>Operator → member</td>
+<td><strong>Remove</strong></td>
+<td>M5</td>
+</tr>
+</tbody></table></div>
+<h2 id="2-story-lifecycle">2 Story lifecycle</h2>
+<h3 id="21-states">2.1 States</h3>
+<p>The UI state is derived from stored data. One function, <code>stories.lifecycle(row)</code>, derives it. The admin, the Annotate page, the mails and the counts call only this function.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 2.1 States"><table>
+<thead>
+<tr>
+<th>UI state</th>
+<th>Stored as</th>
+<th>Badge role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Writing</td>
+<td>Not stored. Annotate page only.</td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>Processing</strong></td>
+<td><code>draft</code>, no rejection, a media body not <code>ready</code></td>
+<td>neutral</td>
+</tr>
+<tr>
+<td><strong>Waiting for review</strong></td>
+<td><code>draft</code>, no rejection, all media <code>ready</code></td>
+<td>attention</td>
+</tr>
+<tr>
+<td><strong>Returned</strong></td>
+<td><code>draft</code> with <code>rejection</code> (<code>automatic</code> = operator or system)</td>
+<td>warning</td>
+</tr>
+<tr>
+<td><strong>Published</strong></td>
+<td><code>published</code>, no newer draft</td>
+<td>success</td>
+</tr>
+<tr>
+<td><strong>Published · change waiting</strong></td>
+<td><code>published</code> plus a newer draft. The change has its own state: Processing, Waiting for review or Returned.</td>
+<td>success + attention</td>
+</tr>
+<tr>
+<td>Removed</td>
+<td>No row. M5 is the record.</td>
+<td>none</td>
+</tr>
+</tbody></table></div>
+<p>Transitions:</p>
+<pre tabindex="0"><code> Writing ──Send for review──&gt; Processing ──media ready──&gt; Waiting for review ──Publish──&gt; Published
+                                   │ file failed (system)        │ Return                │  │
+                                   v                             v                       │  │ member changes
+                               Returned &lt;────────────────────────┘&lt;──── Return ──────────┘  v
+                                   │ member: Send for review           Published · change waiting
+                                   └────&gt; Processing or Waiting           (Return or Publish acts on the change)
+ Remove: from any state → Removed (the story and its replies)
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li><code>publish-at-once</code>: Waiting for review is skipped. Writing → Published, or Processing → Published when the media is ready (the <code>media.settled</code> consumer publishes it).</li>
+<li><strong>Return</strong> of a Published story (no newer draft) makes it a draft with the reason: visitors stop seeing it. This is the take-down path. <strong>Return</strong> of a change returns the newer draft only: the published version stays visible (Phase 5 decision 5).</li>
+<li><strong>System return</strong>: when a media body fails, the <code>media.settled</code> consumer sets <code>rejection</code> with <code>automatic: true</code> and the reason &quot;We could not use your file. Attach a different file.&quot; The operator sees &quot;Returned (automatic)&quot;.</li>
+<li>A member never sees &quot;draft&quot;. An operator sees &quot;Draft&quot; only in History.</li>
+<li>A reply has the same states. Its parent must be Published for the reply to show (Phase 5b decision 7).</li>
+</ol>
+<h3 id="22-who-sees-what">2.2 Who sees what</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 2.2 Who sees what"><table>
+<thead>
+<tr>
+<th>State</th>
+<th>Operator sees</th>
+<th>Member sees</th>
+<th>Visitor sees</th>
+<th>Mail</th>
+<th>Next move (who)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Writing</td>
+<td>nothing</td>
+<td>the form</td>
+<td>nothing</td>
+<td>none</td>
+<td><strong>Send for review</strong> (member)</td>
+</tr>
+<tr>
+<td>Processing</td>
+<td>Row in <strong>Processing</strong> tab: &quot;You can publish when the file is ready.&quot;</td>
+<td>&quot;Processing your voice note. You can leave this page.&quot;</td>
+<td>nothing</td>
+<td>none</td>
+<td>wait (system)</td>
+</tr>
+<tr>
+<td>Waiting for review</td>
+<td>Row in <strong>Waiting for review</strong>, oldest first, with age (&quot;2 days&quot;); Today count</td>
+<td>&quot;Waits for review. We send you a mail when it is published.&quot;</td>
+<td>nothing</td>
+<td>M6 to operators</td>
+<td><strong>Publish</strong> / <strong>Return to the member</strong> (operator)</td>
+</tr>
+<tr>
+<td>Returned</td>
+<td>Row in <strong>Returned</strong> with reason and age; &quot;(automatic)&quot; for a system return</td>
+<td>Banner &quot;Returned&quot; with the reason; <strong>Change the story</strong></td>
+<td>nothing (or the published version, rule 2)</td>
+<td>M2</td>
+<td><strong>Send for review</strong> (member)</td>
+</tr>
+<tr>
+<td>Published</td>
+<td>Row in <strong>Published</strong>; <strong>Open on the site</strong></td>
+<td>&quot;Published&quot;; <strong>Listen on the site</strong></td>
+<td>the story</td>
+<td>M3 (rule M3 below)</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Published · change waiting</td>
+<td>Row in <strong>Waiting for review</strong> marked &quot;Change to a published story&quot;</td>
+<td>&quot;Published. Your change waits for review.&quot;</td>
+<td>the published version</td>
+<td>M6</td>
+<td>as Waiting for review</td>
+</tr>
+<tr>
+<td>Removed</td>
+<td>gone from lists</td>
+<td>gone from <strong>Your stories</strong></td>
+<td>gone (≤ 60 s)</td>
+<td>M5</td>
+<td>none</td>
+</tr>
+</tbody></table></div>
+<h3 id="23-mails">2.3 Mails</h3>
+<p>Mail rules: plain text plus a simple HTML copy. One link per mail. No operator name in a member mail: the voice is &quot;the River Voices team&quot; (it protects operators; the admin keeps <code>rejection.operator</code>). Mails go after the commit, never inside a hook transaction. A failed send logs and does not undo the action. Sender address: <code>EMAIL_FROM</code> (exists). Sender name: the project name for member mails, &quot;Annoudio&quot; for operator mails.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 2.3 Mails"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>To</th>
+<th>Sent when</th>
+<th>Not sent when</th>
+<th>Subject</th>
+<th>Body (essentials)</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M1</td>
+<td>member</td>
+<td>a login code is asked (exists)</td>
+<td>never skipped</td>
+<td>Your login code for River Voices</td>
+<td>Code; &quot;It works for 10 minutes.&quot; &quot;Your account works on all sites of this organisation.&quot;</td>
+<td>none</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>member</td>
+<td>Returned (operator or system)</td>
+<td>never skipped (it asks for an action)</td>
+<td>Your story needs a change</td>
+<td>Recording title, time range <code>1:02–1:35</code>, the reason, &quot;Visitors do not see the story until it is published.&quot;</td>
+<td><strong>Change your story</strong> → <code>/annotate?project&amp;recording&amp;story=&lt;id&gt;&amp;return=&lt;toldOn&gt;</code></td>
+</tr>
+<tr>
+<td>M3</td>
+<td>member</td>
+<td>Published by an operator, or by the system after processing</td>
+<td>the save published it at once (<code>publish-at-once</code>, no media wait): the member saw it; <code>mailNotices</code> off</td>
+<td>Your story is published</td>
+<td>Title, range, &quot;Visitors see it in the player now.&quot;</td>
+<td><strong>Listen on the site</strong> → <code>toldOn</code> + <code>#annoudio-t=&lt;start&gt;&amp;annoudio-project&amp;annoudio-recording&amp;annoudio-story=&lt;id&gt;</code>; no <code>toldOn</code> → <strong>Your stories</strong></td>
+</tr>
+<tr>
+<td>M4</td>
+<td>parent&#39;s member</td>
+<td>a reply to their story is published</td>
+<td>the replier is the parent&#39;s member; <code>mailNotices</code> off</td>
+<td>Someone replied to your story</td>
+<td>Replier&#39;s name, first 200 characters of the reply</td>
+<td><strong>Read the reply</strong> → as M3, at the parent story</td>
+</tr>
+<tr>
+<td>M5</td>
+<td>member (and each reply&#39;s member)</td>
+<td>Remove</td>
+<td>never skipped</td>
+<td>Your story is removed</td>
+<td>Title, range, the reason if given; for a reply: &quot;The story that you replied to is removed.&quot;</td>
+<td><strong>Your stories</strong></td>
+</tr>
+<tr>
+<td>M6</td>
+<td>operators</td>
+<td>digest: once a day at 08:00 stack time, only when ≥ 1 story or reply waits; or at each H4</td>
+<td><code>publish-at-once</code> (nothing waits); operator <code>reviewMail</code> = never</td>
+<td>2 stories and 1 reply wait for review</td>
+<td>Count per project; the oldest age</td>
+<td><strong>Review the stories</strong> → <code>/admin/collections/stories</code> (Waiting tab)</td>
+</tr>
+<tr>
+<td>M7</td>
+<td>operator</td>
+<td>password reset (Payload <code>forgotPassword</code>)</td>
+<td>—</td>
+<td>Reset your Annoudio password</td>
+<td>Link, expiry</td>
+<td>the reset link</td>
+</tr>
+</tbody></table></div>
+<p>Opt-outs: the member&#39;s <strong>Your account</strong> has one checkbox, &quot;Mail me when my story is published or gets a reply&quot; (<code>mailNotices</code>, default on; M3, M4). The operator&#39;s <strong>Your account</strong> has &quot;Review mail: once a day (default) / for each story / never&quot; (<code>reviewMail</code>). The choice is per person, not per project: the person who gets the mail owns the choice.</p>
+<h2 id="3-object-model-as-each-role-sees-it">3 Object model as each role sees it</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 3 Object model as each role sees it"><table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Operator</th>
+<th>Member</th>
+<th>Visitor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Project</td>
+<td>&quot;One for each site&quot;. Settings → Projects; Overview tab with counts</td>
+<td>Project name above the recording title; theme; rights line in the footer</td>
+<td>Theme and rights line only; never the word</td>
+</tr>
+<tr>
+<td>Recording</td>
+<td>Title, audio address, length, snippet, story count</td>
+<td>Title and audio at the top of the form</td>
+<td>The audio in the player</td>
+</tr>
+<tr>
+<td>Instance</td>
+<td>Never a word. A filter: &quot;Ferry crossing, 1962 in River Voices&quot;</td>
+<td>Never</td>
+<td>One player</td>
+</tr>
+<tr>
+<td>Story</td>
+<td>Queue row and review screen with the lifecycle badge</td>
+<td>A card in <strong>Your stories</strong> with the same badge</td>
+<td>A story in the list and a region</td>
+</tr>
+<tr>
+<td>Reply</td>
+<td>A story marked &quot;Reply to: …&quot;; the parent shows above it</td>
+<td>A card &quot;Reply to the story by Asha&quot;</td>
+<td>The thread under the open story</td>
+</tr>
+<tr>
+<td>Concept / Vocabulary</td>
+<td><strong>Concept</strong> in a tree with story counts</td>
+<td><strong>Topic</strong> chips</td>
+<td><strong>Topic</strong> labels (<code>tag</code> part)</td>
+</tr>
+<tr>
+<td>Body</td>
+<td>Text, voice note, photo, video in the review panel</td>
+<td>Text field, record button, attach button</td>
+<td><code>story-text</code>, <code>story-media</code></td>
+</tr>
+<tr>
+<td>Snippet</td>
+<td>Step 3; the recording page</td>
+<td>never</td>
+<td>never</td>
+</tr>
+<tr>
+<td>Member</td>
+<td>Name, email, stories by state, <strong>Block</strong></td>
+<td>&quot;Signed in as Asha&quot;; <strong>Your account</strong></td>
+<td>The name in <code>story-meta</code></td>
+</tr>
+<tr>
+<td>Media body</td>
+<td>Reached from its story only (not in the sidebar)</td>
+<td>Part of the story</td>
+<td>Part of the story</td>
+</tr>
+</tbody></table></div>
+<p>Nobody outside the admin sees Instance, Catalogue, IRI, Container, Body or Media body as words.</p>
+<h2 id="4-navigation">4 Navigation</h2>
+<h3 id="41-admin">4.1 Admin</h3>
+<pre tabindex="0"><code>┌ Annoudio ─────────────┬──────────────────────────────────────────────┐
+│ ● Today               │                                              │
+│   Review stories   3  │  (content)                                   │
+│   Add a widget        │                                              │
+│   Concepts            │                                              │
+│   Members             │                                              │
+│ SETTINGS              │                                              │
+│   Projects            │                                              │
+│   Recordings          │                                              │
+│   Operators           │                                              │
+│   Your account        │                                              │
+└───────────────────────┴──────────────────────────────────────────────┘
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li>The badge on <strong>Review stories</strong> is the Waiting for review count (stories + replies). No other badge.</li>
+<li>Job links come from <code>beforeNavLinks</code>. Stories, Media bodies, Concepts and Members have <code>group: false</code>. Projects, Recordings and Operators are in the group &quot;Settings&quot;. The default Payload Nav stays.</li>
+<li>Object pages (story, recording, concept, member, project) stay reachable by URL and by links. Breadcrumbs name the job: &quot;Review stories / Story by Asha, 1:02–1:35&quot;.</li>
+<li>Every job ends on a screen that says what happens next.</li>
+</ol>
+<p>Today, empty stack and normal day:</p>
+<pre tabindex="0"><code>┌ Today ─────────────────────────────────┐  ┌ Today ─────────────────────────────────────┐
+│ Put your first player on a site        │  │ 2 stories and 1 reply wait for review.     │
+│ [x] 1 Make a project for your site     │  │ The oldest came in 2 days ago.             │
+│ [ ] 2 Add a recording                  │  │                       [ Start reviewing ]  │
+│ [ ] 3 Put the snippet on a site        │  │ 1 story is processing.                     │
+│       [ I pasted it ]                  │  │ 2 stories are returned. Members must       │
+│ [ ] 4 Publish the first story          │  │   change them. 1 is automatic (file).      │
+│ Optional: add concepts, so members     │  │ Other jobs: [ Add a widget ] [ Concepts ]  │
+│ can choose topics.                     │  │ Last 7 days: 12 in, 9 published,           │
+│              [ Add a recording ] ←next │  │   2 returned, 1 removed.                   │
+└────────────────────────────────────────┘  └────────────────────────────────────────────┘
+</code></pre>
+<p>Checklist rules: a step ticks from data. 1: a project exists. 2: a recording exists. 3: the operator selects <strong>I pasted it</strong>, or a story arrives with a <code>toldOn</code> on a site of the project. 4: a story is published. The checklist goes when all four tick, or with <strong>Hide the list</strong>. Empty queue text: &quot;No stories wait for review. The last story came in 3 days ago.&quot;</p>
+<p>Review screen (Waiting for review) and the Publish dialog:</p>
+<pre tabindex="0"><code>┌ Review stories / Story by Asha · Ferry crossing, 1962 ─── [Waiting for review · 2 days] ┐
+│ River Voices                                                                            │
+│ ▶ 1:02–1:35  ───■──────────                                                             │
+│ &quot;My father worked the ferry. The horn meant…&quot;                                           │
+│ Topics: Ferry, Horn        Voice note ▶ 0:41 (ready)                                    │
+│ Told on: rivervoices.example.org/ferry   [ Open on the site ]                           │
+│ No topic fits? [ Add a concept to River Voices ]                                        │
+│ [ Publish ]  [ Return to the member ]  [ Next story ]                    ⋮  Remove      │
+│ Tabs: Story · History                                                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+   ┌ Publish this story? ────────────────────────────────┐
+   │ Visitors see it like this, within one minute:       │
+   │ ┌ Asha · 1:02–1:35 ───────────────────────────────┐ │
+   │ │ My father worked the ferry…   [Ferry] [Horn]    │ │
+   │ └─────────────────────────────────────────────────┘ │
+   │ We mail Asha that it is published.                  │
+   │ [ Publish the story ]  [ Cancel ]                   │
+   └─────────────────────────────────────────────────────┘
+</code></pre>
+<p>After <strong>Publish the story</strong>: toast &quot;Published. Visitors see it within one minute.&quot; and the next waiting story opens; at the end, the empty Waiting tab. In Processing, <strong>Publish</strong> is off with &quot;The voice note is still processing.&quot; For a reply, the parent story shows above, read-only.</p>
+<p>Add a widget to a site (<code>/admin/add-widget</code>):</p>
+<pre tabindex="0"><code>┌ Add a widget to a site ── 1 Recording ─ 2 Site ─ 3 Snippet ─────────┐
+│ 1 Recording                                                           │
+│ ( ) Choose a recording  [ search the recordings… ]                    │
+│ (•) New recording   Title [Ferry crossing, 1962      ]                │
+│                     Audio address [https://archive.example/f.mp3]     │
+│                     ✓ The audio plays in this browser. Length: 30:34. │
+│                                                       [ Next ]        │
+├───────────────────────────────────────────────────────────────────────┤
+│ 2 Site                                                                │
+│ Which site shows the player?                                          │
+│ (•) River Voices  rivervoices.example.org                             │
+│ ( ) Kochi Voices  kochivoices.example.org                             │
+│ ( ) New project: Name [        ]  Website address [https://     ]     │
+│                                                       [ Next ]        │
+├───────────────────────────────────────────────────────────────────────┤
+│ 3 Snippet                                                             │
+│ &lt;script async src=&quot;https://stories.org.example/embed/v1.js&quot;&gt;&lt;/script&gt; │
+│ &lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;1&quot;                 │
+│   src=&quot;https://archive.example/f.mp3&quot;&gt;&lt;/annoudio-player&gt;              │
+│ [ Copy the snippet ]   ✓ Copied.                                      │
+│ Paste these two lines into the page. A page needs the first line      │
+│ one time only. Members come back only to rivervoices.example.org.     │
+│ WordPress or Omeka S: type the recording number 1 in the block.       │
+│ ┌ preview: the real player with the River Voices theme ──────────────┐│
+│ └────────────────────────────────────────────────────────────────────┘│
+│                                                       [ Done ]        │
+└───────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>How the project is chosen: step 2 lists the projects. With one project, it is selected and step 2 shows one line, &quot;Site: River Voices. [Change]&quot;. With no project, step 2 shows the inline form (name, website address); the other project settings get defaults. The snippet holds the three values: <code>project</code> (step 2 slug), <code>recording</code> (step 1 id), <code>src</code> (step 1 audio address). <strong>Done</strong> goes to Today. The wizard and the recording page call the same <code>catalogue</code> functions; the Recordings list has no create button of its own: its button is <strong>Add a widget</strong>.</p>
+<p>The recording JSON route <code>GET /embed/v1/recordings/{project}/{id}.json</code> → <code>{ id, title, url, duration }</code> (CORS <code>*</code>, anonymous, 404 for an unknown project or recording). Callers: the WordPress block and the Omeka S module (the editor check fills <code>src</code> from the number; Phase 7a request 1), and step 3&#39;s line &quot;type the recording number 1&quot;, which is true only because of this route. Step 3 itself reads <code>catalogue.recording(id)</code> in process, the same function that the route serves.</p>
+<h3 id="42-annotate-page-member-phone">4.2 Annotate page (member, phone)</h3>
+<p>No sidebar. Top bar: project name (small), recording title, &quot;Asha ▾&quot; (menu: <strong>Your stories</strong>, <strong>Your account</strong>, <strong>Sign out</strong>). One way back on every screen: <strong>Back to the site</strong> (the checked <code>return</code>), else <strong>Your stories</strong>. Footer: the rights line, for example &quot;Stories here are shared under CC BY 4.0.&quot; with the rights link. The page sets the project&#39;s theme tokens on its root.</p>
+<p>Your stories (phone, 360 px):</p>
+<pre tabindex="0"><code>┌ Your stories ─────────────── Asha ▾ ┐
+│ Returned to you (1)                 │
+│ ┌ Ferry crossing, 1962 · 1:02–1:35 ┐│
+│ │ River Voices         [Returned]  ││
+│ │ &quot;Please remove the full name…&quot;   ││
+│ │ [ Change the story ]             ││
+│ └──────────────────────────────────┘│
+│ Processing (0)                      │
+│ Waiting for review (1)          ▸   │
+│ Published (4)                   ▸   │
+│ Replies (2)                     ▸   │
+│ ─────────────────────────────────── │
+│ Empty: You have no stories yet. On  │
+│ a site, select &quot;Tell a story&quot;.      │
+└─────────────────────────────────────┘
+</code></pre>
+<p>Groups in this order: Returned to you, Processing, Waiting for review, Published (with &quot;change waiting&quot; on its card), Replies. Each card names its recording, project and range. Your stories has no single project, so it uses the default theme.</p>
+<p>Your account (minimum): Email (read-only), Name (<strong>Save</strong>), checkbox &quot;Mail me when my story is published or gets a reply&quot;, <strong>Sign out</strong>. Delete: open question 1.</p>
+<h3 id="43-player-visitor">4.3 Player (visitor)</h3>
+<p>No navigation. Exits: <strong>Tell a story</strong> (the Annotate link) and <strong>Reply</strong> (per open story). The project frame: theme tokens (exists) and the rights line once, below the story list, in a new part <code>rights</code>. The player does not show the project name: the host page already names the site.</p>
+<p>Empty state:</p>
+<pre tabindex="0"><code>┌ ▶ 0:00 / 30:34  ───────────────────────────── ┐
+│ No stories yet. Tell the first one.          │  ← message
+│ [ Tell a story ]                             │  ← annotate-link
+│ Stories here are shared under CC BY 4.0.     │  ← rights (new part)
+└──────────────────────────────────────────────┘
+</code></pre>
+<h3 id="44-links-between-surfaces">4.4 Links between surfaces</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 4.4 Links between surfaces"><table>
+<thead>
+<tr>
+<th>From</th>
+<th>Words</th>
+<th>To</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Step 3, recording page</td>
+<td><strong>Copy the snippet</strong></td>
+<td>host site (by paste)</td>
+</tr>
+<tr>
+<td>Review screen</td>
+<td><strong>Open on the site</strong></td>
+<td><code>toldOn</code> + <code>#annoudio-t=&lt;start&gt;&amp;annoudio-project&amp;annoudio-recording&amp;annoudio-story=&lt;id&gt;</code></td>
+</tr>
+<tr>
+<td>Player</td>
+<td><strong>Tell a story</strong> / <strong>Reply</strong></td>
+<td><code>/annotate?project&amp;recording&amp;t&amp;return</code> (+ <code>replyTo</code>)</td>
+</tr>
+<tr>
+<td>Annotate page</td>
+<td><strong>Back to the site</strong></td>
+<td><code>return</code> + fragment with <code>annoudio-saved=draft</code> or <code>published</code></td>
+</tr>
+<tr>
+<td>M2</td>
+<td><strong>Change your story</strong></td>
+<td><code>/annotate?project&amp;recording&amp;story=&lt;id&gt;&amp;return=&lt;toldOn&gt;</code></td>
+</tr>
+<tr>
+<td>M3, M4</td>
+<td><strong>Listen on the site</strong> / <strong>Read the reply</strong></td>
+<td>as <strong>Open on the site</strong>; no <code>toldOn</code> → <code>/annotate/mine</code></td>
+</tr>
+<tr>
+<td>M5</td>
+<td><strong>Your stories</strong></td>
+<td><code>/annotate/mine</code></td>
+</tr>
+<tr>
+<td>M6</td>
+<td><strong>Review the stories</strong></td>
+<td>the Waiting tab</td>
+</tr>
+</tbody></table></div>
+<h2 id="5-screen-inventory">5 Screen inventory</h2>
+<p>Marks: NEW, CHANGED, UNCHANGED against the Phase 5b code.</p>
+<h3 id="51-admin">5.1 Admin</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 5.1 Admin"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Screen</th>
+<th>States</th>
+<th>Primary action, button words</th>
+<th>Mark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>O0</td>
+<td>Create the first operator</td>
+<td>form; field errors</td>
+<td><strong>Create the first operator</strong></td>
+<td>CHANGED (words)</td>
+</tr>
+<tr>
+<td>O1</td>
+<td>Sign in</td>
+<td>form; wrong email or password; locked</td>
+<td><strong>Sign in</strong>, <strong>Forgot your password?</strong></td>
+<td>CHANGED (logo, words)</td>
+</tr>
+<tr>
+<td>O2</td>
+<td>Forgot / set password</td>
+<td>request; sent; new password; link expired</td>
+<td><strong>Send the link</strong>, <strong>Set the password</strong></td>
+<td>CHANGED (mail works)</td>
+</tr>
+<tr>
+<td>O3</td>
+<td>Today</td>
+<td>setup checklist; work waits; nothing waits; a count failed (&quot;We could not count the stories. Reload the page.&quot;)</td>
+<td><strong>Start reviewing</strong>, or the next checklist step</td>
+<td>CHANGED (replaces Dashboard)</td>
+</tr>
+<tr>
+<td>O4</td>
+<td>Review stories (list)</td>
+<td>tabs Waiting for review · Processing · Returned · Published · All, each with a count and its own empty text; search on excerpt and name</td>
+<td><strong>Start reviewing</strong> (opens the oldest)</td>
+<td>CHANGED (Processing tab, empty texts, search)</td>
+</tr>
+<tr>
+<td>O5</td>
+<td>Review one story</td>
+<td>one view per lifecycle state; reply variant (parent above); publish error; the answers in field order as &quot;Label: value&quot;, an own answer as &quot;Ravi (new)&quot; (<a href="vocab.html"><code>design/vocab.md</code></a> §8)</td>
+<td><strong>Publish</strong>, <strong>Return to the member</strong>, <strong>Next story</strong>, ⋮ <strong>Remove</strong>; <strong>Open on the site</strong>; <strong>Add &quot;Ravi&quot; to People</strong>; &quot;No item fits?&quot; <strong>Add an item to Places</strong></td>
+<td>CHANGED (no Unpublish, no Keep as draft; answers 2026-10-09)</td>
+</tr>
+<tr>
+<td>O5a</td>
+<td>Publish dialog</td>
+<td>preview; publishing; error</td>
+<td><strong>Publish the story</strong>, <strong>Cancel</strong></td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>O5b</td>
+<td>Return dialog</td>
+<td>reason empty (&quot;Write the reason. The member sees it.&quot;); filled; for a Published story: &quot;Visitors stop seeing this story.&quot;</td>
+<td><strong>Return the story</strong>, <strong>Cancel</strong></td>
+<td>CHANGED (text)</td>
+</tr>
+<tr>
+<td>O5c</td>
+<td>Remove dialog</td>
+<td>optional reason; with replies: &quot;Its 2 replies are removed too.&quot;</td>
+<td><strong>Remove the story</strong>, <strong>Cancel</strong></td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>O6</td>
+<td>History (story tab)</td>
+<td>lines &quot;Published by Ravi, 9 Oct 14:02&quot;, &quot;Changed by Asha (member)&quot;, &quot;Returned by Ravi: reason&quot;, &quot;Returned automatically: file failed&quot;; one line</td>
+<td>none</td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>O7</td>
+<td>Add a widget to a site, steps 1–3</td>
+<td>step 1: choose / new, checking, plays, cannot play (save allowed), not https; step 2: one project, many, none (inline form), website address missing; step 3: copied, copy refused (select-all fallback)</td>
+<td><strong>Next</strong>, <strong>Copy the snippet</strong>, <strong>Done</strong></td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>O8</td>
+<td>Recordings (Settings)</td>
+<td>empty &quot;No recordings yet.&quot;; list: Title, Length, Stories <code>3 (2)</code></td>
+<td><strong>Add a widget</strong></td>
+<td>CHANGED (button, no create view)</td>
+</tr>
+<tr>
+<td>O9</td>
+<td>Recording page</td>
+<td>edit; snippet panel per project; &quot;Stories on this recording&quot; link</td>
+<td><strong>Save</strong>, <strong>Copy the snippet</strong></td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>O10</td>
+<td>Lists and the page of one list (<code>/admin/concepts/{project}[?list=]</code>)</td>
+<td>Lists: &quot;Members pick from these lists when they answer a question.&quot;, rows with counts and <strong>Open</strong>; a list: its tree, or rows Label · Same as · stories for an entity list; empty &quot;Places is empty. Members can choose nothing from it yet.&quot;</td>
+<td><strong>Add a list</strong>, <strong>Add an item</strong>, <strong>Download the list (SKOS)</strong>, <strong>Load a SKOS file</strong></td>
+<td>CHANGED 2026-10-09 (<a href="vocab.html"><code>design/vocab.md</code></a> §8 O10l)</td>
+</tr>
+<tr>
+<td>O11</td>
+<td>Item form</td>
+<td>new; in use &quot;12 stories use this item&quot;; hidden; <strong>Same as</strong></td>
+<td><strong>Save</strong>, <strong>Hide from new stories</strong></td>
+<td>CHANGED 2026-10-09 (item words, list, Same as)</td>
+</tr>
+<tr>
+<td>O12</td>
+<td>SKOS import preview</td>
+<td>parsed; refused file</td>
+<td><strong>Import these changes</strong></td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>O13</td>
+<td>Members list</td>
+<td>empty &quot;No members yet. Members sign up on the Annotate page.&quot;; list</td>
+<td>row</td>
+<td>CHANGED (empty text)</td>
+</tr>
+<tr>
+<td>O14</td>
+<td>Member page</td>
+<td>active; blocked (&quot;This member cannot sign in. Their published stories stay.&quot;); stories by state</td>
+<td><strong>Block this member</strong>, <strong>Unblock</strong></td>
+<td>CHANGED (stories by state)</td>
+</tr>
+<tr>
+<td>O15</td>
+<td>Projects list</td>
+<td>empty &quot;No projects yet. A project is one site: its topics, look and review rule.&quot;; list</td>
+<td><strong>New project</strong></td>
+<td>CHANGED (empty text)</td>
+</tr>
+<tr>
+<td>O16</td>
+<td>Project page</td>
+<td>tabs <strong>Overview</strong> (new, first) · existing tabs; Overview: stories and replies by state, recordings with stories here, concept count, members with stories here, links &quot;Review this project&#39;s stories&quot; (a <code>where</code> link)</td>
+<td><strong>Save</strong></td>
+<td>CHANGED (Overview tab)</td>
+</tr>
+<tr>
+<td>O17</td>
+<td>Operators list and form</td>
+<td>list; one operator (&quot;You are the only operator. Add a colleague.&quot;); mail not set up line</td>
+<td><strong>Add an operator</strong></td>
+<td>CHANGED (words)</td>
+</tr>
+<tr>
+<td>O18</td>
+<td>Your account (operator)</td>
+<td>password; Review mail choice</td>
+<td><strong>Save</strong></td>
+<td>CHANGED (<code>reviewMail</code>)</td>
+</tr>
+</tbody></table></div>
+<h3 id="52-annotate-page">5.2 Annotate page</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 5.2 Annotate page"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Screen</th>
+<th>States</th>
+<th>Primary action</th>
+<th>Mark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P0</td>
+<td>Not found</td>
+<td>unknown recording; unknown parent story</td>
+<td><strong>Back to the site</strong> (when <code>return</code> is valid)</td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Sign in: email</td>
+<td>default; invalid; rate limited; send failed. The moment shows above: &quot;You tell a story about 1:02.&quot;</td>
+<td><strong>Send the code</strong></td>
+<td>CHANGED (frame)</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Sign in: code</td>
+<td>waiting; wrong (tries left); expired; too many</td>
+<td><strong>Sign in</strong>, <strong>Send a new code</strong>, <strong>Use a different email</strong></td>
+<td>CHANGED (frame)</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Choose your name</td>
+<td>first sign-in only; empty; too long; has @</td>
+<td><strong>Continue</strong></td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>Tell a story</td>
+<td>empty; filled; field errors; saving. Start and End shown <code>1:02</code>, typed m:ss or seconds; <strong>Use the player time</strong></td>
+<td><strong>Send for review</strong> (<code>review</code>) / <strong>Publish the story</strong> (<code>publish-at-once</code>)</td>
+<td>CHANGED (words, frame)</td>
+</tr>
+<tr>
+<td>P4r</td>
+<td>Reply</td>
+<td>parent shown; text; media</td>
+<td><strong>Send for review</strong> / <strong>Publish the reply</strong></td>
+<td>CHANGED (words)</td>
+</tr>
+<tr>
+<td>P4m</td>
+<td>Voice note, photo or video</td>
+<td>idle; recording; listen; uploading %; processing; ready; failed; no microphone</td>
+<td><strong>Record a voice note</strong>, <strong>Attach this voice note</strong></td>
+<td>CHANGED (words)</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Sent (no valid <code>return</code>)</td>
+<td>Processing; Waiting for review; Published</td>
+<td><strong>Your stories</strong></td>
+<td>CHANGED</td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Your story (<code>story=&lt;id&gt;</code>)</td>
+<td>Processing; Waiting; Returned (reason banner); Published; change waiting</td>
+<td><strong>Change the story</strong></td>
+<td>CHANGED</td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Your stories</td>
+<td>empty; groups (4.2)</td>
+<td><strong>Change the story</strong> on a returned card</td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>Your account</td>
+<td>saved; name error</td>
+<td><strong>Save</strong>, <strong>Sign out</strong></td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>Session ended</td>
+<td>after 30 days or sign-out elsewhere: &quot;Sign in again. Your text stays on this page.&quot;</td>
+<td><strong>Send the code</strong></td>
+<td>CHANGED (text kept in <code>sessionStorage</code>)</td>
+</tr>
+</tbody></table></div>
+<h3 id="53-player">5.3 Player</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 5.3 Player"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>State</th>
+<th>Shows</th>
+<th>Primary</th>
+<th>Mark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>V0</td>
+<td>Before the loader</td>
+<td>fallback child content</td>
+<td>—</td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>V1</td>
+<td>Loading</td>
+<td>controls, no stories</td>
+<td><strong>Play</strong></td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>V2</td>
+<td>Ready, no stories</td>
+<td><code>message</code> &quot;No stories yet. Tell the first one.&quot;; <code>rights</code></td>
+<td><strong>Tell a story</strong></td>
+<td>CHANGED (text, link word)</td>
+</tr>
+<tr>
+<td>V3</td>
+<td>Ready, stories</td>
+<td>regions, stories, tags, <code>rights</code></td>
+<td><strong>Play</strong></td>
+<td>CHANGED (<code>rights</code>)</td>
+</tr>
+<tr>
+<td>V4</td>
+<td>Story open</td>
+<td><code>story active</code>, thread</td>
+<td><strong>Reply</strong></td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>V5</td>
+<td>Back from the Annotate page</td>
+<td>&quot;Your story is sent. It shows here after review.&quot; / &quot;Your story is published. It can take one minute to show.&quot; (<code>annoudio-saved=published</code>)</td>
+<td><strong>Play</strong></td>
+<td>CHANGED</td>
+</tr>
+<tr>
+<td>V6</td>
+<td>Opened from a mail or the admin</td>
+<td><code>annoudio-story=&lt;id&gt;</code> opens that story (as <code>annoudio-reply</code>), no note</td>
+<td><strong>Play</strong></td>
+<td>NEW</td>
+</tr>
+<tr>
+<td>V7</td>
+<td>Errors</td>
+<td>the six codes of CONTRACT §9</td>
+<td>as §9</td>
+<td>UNCHANGED</td>
+</tr>
+<tr>
+<td>V8</td>
+<td><code>annotate=&quot;none&quot;</code></td>
+<td>V1–V6 without links</td>
+<td><strong>Play</strong></td>
+<td>UNCHANGED</td>
+</tr>
+</tbody></table></div>
+<p>Mail screens M1–M7: section 2.3 (M1 CHANGED: project name in the subject; M2–M7 NEW).</p>
+<h2 id="6-flows">6 Flows</h2>
+<p><strong>F1 First operator on an empty stack.</strong> 1. <code>/admin</code> → O0 → <strong>Create the first operator</strong>. 2. O3 shows the checklist. 3. <strong>Make a project</strong> → O15 → name, website address, rights line → <strong>Save</strong>; step 1 ticks. 4. <strong>Add a recording</strong> → O7 → F2.</p>
+<p><strong>F2 Recording to live player.</strong> 1. O7 step 1: <strong>New recording</strong>, title, audio address; the probe says &quot;The audio plays in this browser. Length: 30:34.&quot; <strong>Next</strong>. 2. Step 2: River Voices is selected (one project). <strong>Next</strong>. 3. Step 3: <strong>Copy the snippet</strong> → &quot;Copied.&quot; The operator pastes it on the host page (H1). On WordPress or Omeka S, the editor types the number 1; the block reads the recording route. 4. <strong>Done</strong> → O3; the operator selects <strong>I pasted it</strong>; step 3 ticks. 5. A visitor opens the page: V2.</p>
+<p><strong>F3 Story to visible.</strong> 1. Visitor plays to 1:02 → <strong>Tell a story</strong> (H3) → P1. 2. P1 → M1 → P2 → P3 (first time) → P4 with Start 1:02. 3. Member sets End, writes, picks topics, records a voice note (P4m). 4. <strong>Send for review</strong> → host page, V5 &quot;Your story is sent…&quot; (or P5). The story stores <code>toldOn</code>. 5. Worker ends (H5): Processing → Waiting for review. M6 goes the next morning. 6. Operator: O3 <strong>Start reviewing</strong> → O5 → <strong>Publish</strong> → O5a → <strong>Publish the story</strong>; the next story opens. 7. M3 to the member (H7); the visitor sees the story in ≤ 60 s (H8). With <code>publish-at-once</code>: step 4 shows &quot;published&quot;, steps 5–6 do not occur, M3 goes only if the media made the publish wait.</p>
+<p><strong>F4 Returned and sent again.</strong> 1. O5 <strong>Return to the member</strong> → O5b reason → <strong>Return the story</strong>. The next story opens; the row moves to Returned. 2. M2 (H6) → <strong>Change your story</strong> → P6 with the reason banner (P1–P2 first if signed out). 3. Member changes it → <strong>Send for review</strong>. The rejection clears. 4. O5 shows &quot;Sent again after a return&quot;; History keeps the reason. <strong>Publish</strong> → F3 step 7. Variant: a change to a Published story; the published version stays visible during the whole flow. Variant: a failed file gives the same flow with &quot;Returned (automatic)&quot; and no operator step 1.</p>
+<p><strong>F5 Item added and used.</strong> 1. O5: no item fits → <strong>Add an item to Places</strong> → the page of the list → <strong>Add an item</strong> → O11 with the project and the list set → label &quot;Strike&quot; → <strong>Save</strong>. Or O5: an own answer &quot;Ravi (new)&quot; → <strong>Add &quot;Ravi&quot; to People</strong> (the story keeps its own answer). 2. Members see &quot;Strike&quot; in P4 at the next page load. Operators do not change stories: the operator can return the story with &quot;Choose Strike as the place&quot;. 3. After the next publish, the widget shows &quot;Place: Strike&quot;. 4. A later rename runs <code>conceptChanged</code>; O11 says &quot;12 stories use this item&quot;.</p>
+<p><strong>F6 Reply.</strong> 1. Visitor opens a story (V4) → <strong>Reply</strong> → Annotate page with <code>replyTo</code>. 2. Sign in as F3 → P4r → <strong>Send for review</strong>. 3. O4 row &quot;Reply to: My father worked…&quot;; O5 shows the parent above. <strong>Publish</strong>. 4. M3 to the replier, M4 to the parent&#39;s member (H9). Visitors see the thread under the parent.</p>
+<p><strong>F7 Take down.</strong> 1. A complaint names a story. O4 <strong>All</strong> tab, search → O5 (Published). 2. Content can come back after a change → <strong>Return to the member</strong> (it leaves the player; M2). Content must go → ⋮ <strong>Remove</strong> → O5c → <strong>Remove the story</strong> (its replies go too; M5 to each member). 3. The player drops it within 60 s.</p>
+<h2 id="7-naming">7 Naming</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 7 Naming"><table>
+<thead>
+<tr>
+<th>UI word</th>
+<th>Where</th>
+<th>Forbidden</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Story</td>
+<td>all</td>
+<td>comment, note, annotation (UI), post, submission</td>
+<td>CONTEXT term</td>
+</tr>
+<tr>
+<td>Reply</td>
+<td>all</td>
+<td>comment, response</td>
+<td>CONTEXT term</td>
+</tr>
+<tr>
+<td>Question, answer</td>
+<td>Annotate page (&quot;About this part&quot;), review panel</td>
+<td>field, property, value (code words)</td>
+<td><a href="vocab.html"><code>design/vocab.md</code></a> §1; CONTEXT: Field, Value</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>all UI text, mails, ARIA labels (concept-map W1)</td>
+<td>player (UI), embed</td>
+<td>CONTEXT term; the tag stays <code>annoudio-player</code></td>
+</tr>
+<tr>
+<td>Item, list</td>
+<td>admin (Lists, O10, O11); &quot;Topics&quot; is the name of one list</td>
+<td>concept, tag, term (SKOS and code only)</td>
+<td>CONTEXT: Item, List; <a href="vocab.html"><code>design/vocab.md</code></a> §1</td>
+</tr>
+<tr>
+<td>Tell a story</td>
+<td>player link, P4 title</td>
+<td>Add a story (today), Annotate, Contribute</td>
+<td>the member&#39;s own words for the job; no time in the link (the page says the time)</td>
+</tr>
+<tr>
+<td>Send for review</td>
+<td>P4, P4r with <code>review</code></td>
+<td>Save the story (today), Submit</td>
+<td>names what happens next</td>
+</tr>
+<tr>
+<td>Publish / Publish the story</td>
+<td>O5, O5a; P4 with <code>publish-at-once</code></td>
+<td>Approve, Publish changes, Go live</td>
+<td>one verb on both sides</td>
+</tr>
+<tr>
+<td>Return to the member / Returned / Returned to you</td>
+<td>O5, badges, P6, P7, M2</td>
+<td>Reject, Rejected, Decline</td>
+<td>says what happens; matches the badge</td>
+</tr>
+<tr>
+<td>Remove / Removed</td>
+<td>O5c, M5</td>
+<td>Delete (UI), Take down, Unpublish</td>
+<td>one exit word; Unpublish is gone</td>
+</tr>
+<tr>
+<td>Next story</td>
+<td>O5</td>
+<td>Keep as draft</td>
+<td>the button saves nothing; it moves on</td>
+</tr>
+<tr>
+<td>Processing · Waiting for review · Published · change waiting</td>
+<td>all</td>
+<td>Pending, Draft (outside History), Waits for review (today), In moderation</td>
+<td>one lifecycle (2.1)</td>
+</tr>
+<tr>
+<td>Time range <code>1:02–1:35</code></td>
+<td>all; en dash, m:ss, h:mm:ss over one hour</td>
+<td><code>42 s to 51 s</code>, <code>t=62,95</code>, &quot;Start (seconds)&quot;</td>
+<td>one format, human time</td>
+</tr>
+<tr>
+<td>Today · Review stories · Add a widget · Vocabulary · Members</td>
+<td>sidebar (≤ 3 words)</td>
+<td>Add a player, Put a recording on a site (renamed 2026-10-09, concept-map W2), Tidy the vocabulary, Look after members (A&#39;s long verbs)</td>
+<td>short and translatable; the page title keeps the full job name</td>
+</tr>
+<tr>
+<td>Add a widget to a site</td>
+<td>O7 title only</td>
+<td>Embed wizard, Put a recording on a site</td>
+<td>names the whole job once</td>
+</tr>
+<tr>
+<td>Website address · Audio address · Length</td>
+<td>admin</td>
+<td>origin, URL, duration</td>
+<td>Phase 5 words</td>
+</tr>
+<tr>
+<td>Rights line</td>
+<td>admin field; the text itself on public surfaces</td>
+<td>licence field</td>
+<td>CONTEXT term</td>
+</tr>
+<tr>
+<td>Snippet</td>
+<td>admin</td>
+<td>embed code</td>
+<td>CONTEXT term</td>
+</tr>
+<tr>
+<td>Login code</td>
+<td>P1, P2, M1</td>
+<td>OTP, magic link</td>
+<td>CONTEXT term</td>
+</tr>
+<tr>
+<td>Your stories · Your account</td>
+<td>member, operator account</td>
+<td>My contributions, Dashboard, Profile</td>
+<td>one possessive pattern</td>
+</tr>
+<tr>
+<td>Member · Operator · Name</td>
+<td>all</td>
+<td>user, admin, staff, annotator, nickname (UI)</td>
+<td>CONTEXT terms</td>
+</tr>
+</tbody></table></div>
+<h2 id="8-data-model-and-interface-changes">8 Data model and interface changes</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 8 Data model and interface changes"><table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Module</th>
+<th>Kind</th>
+<th>Migration</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>stories.toldOn</code> (text, operator-only; the checked <code>return</code> of the last save that had one; never in WADM)</td>
+<td><code>stories</code></td>
+<td>field + <code>saveDraft</code> input</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>stories.changedBy</code> (text: operator email or &quot;member&quot;) and <code>stories.lastAction</code> (select: saved, published, returned, returned-automatically) on each version</td>
+<td><code>stories</code></td>
+<td>fields, set in <code>beforeChange</code></td>
+<td>yes (main and versions tables)</td>
+</tr>
+<tr>
+<td><code>stories.rejection.automatic</code> (checkbox)</td>
+<td><code>stories</code></td>
+<td>field</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>members.mailNotices</code> (checkbox, default true)</td>
+<td><code>membership</code></td>
+<td>field</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>users.reviewMail</code> (select: daily, each, never; default daily)</td>
+<td>operators (<code>Users.ts</code>)</td>
+<td>field</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>stories.lifecycle(row)</code>, <code>nextWaiting(afterId)</code>, <code>ownStories(member)</code>, <code>remove(operator, id, reason?)</code>; <code>counts</code> gains <code>processing</code> and a stories/replies split</td>
+<td><code>stories</code></td>
+<td>interface</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>stories.unpublish</code></td>
+<td><code>stories</code></td>
+<td>delete when no caller is left (<code>reject</code> covers it)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>media.settled</code> consumer: system return on failure; publish for <code>publish-at-once</code></td>
+<td><code>media</code> → <code>stories</code></td>
+<td>behaviour</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>Mailer.send(kind, to, data)</code> with M2–M5 templates; send after commit</td>
+<td><code>membership</code></td>
+<td>interface</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Payload email adapter (<code>@payloadcms/email-nodemailer</code> on <code>SMTP_URL</code>, <code>EMAIL_FROM</code>) for M6, M7</td>
+<td>config</td>
+<td>dependency</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Daily <code>digest.due</code> job: the worker schedules it, the app consumes it and sends M6</td>
+<td><code>worker</code>, app</td>
+<td>job</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Theme JSON adds <code>name</code>, <code>rightsLine</code>, <code>rightsIri</code> (CONTRACT §3.2 rule 6: the stack can add keys)</td>
+<td><code>projects</code></td>
+<td>route, additive</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>GET /embed/v1/recordings/{project}/{id}.json</code> → <code>{ id, title, url, duration }</code>, CORS <code>*</code>, cache as the theme route</td>
+<td><code>catalogue</code></td>
+<td>new public route</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>catalogue.register({ title, url, length })</code>, <code>projects.create({ name, origin })</code> for O7</td>
+<td><code>catalogue</code>, <code>projects</code></td>
+<td>interface</td>
+<td>no</td>
+</tr>
+<tr>
+<td>CONTRACT §7.2: <code>annoudio-saved=published</code>; key <code>annoudio-story=&lt;id&gt;</code> (opens the story, no note)</td>
+<td><code>player</code></td>
+<td>additive</td>
+<td>no</td>
+</tr>
+<tr>
+<td>CONTRACT §3.3: part <code>rights</code> (the project rights line, below <code>stories</code>)</td>
+<td><code>player</code></td>
+<td>additive</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Player texts: link &quot;Tell a story&quot;; empty &quot;No stories yet. Tell the first one.&quot;; V5 notes</td>
+<td><code>player</code></td>
+<td>text (CONTRACT §9 rule 2: not contract)</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Annotate routes <code>/annotate/mine</code>, <code>/annotate/account</code></td>
+<td><code>annotate-page</code></td>
+<td>new routes</td>
+<td>no</td>
+</tr>
+</tbody></table></div>
+<p>No <code>projects.recordings</code> link: the instance stays derived (CONTEXT). The Overview tab lists recordings with stories in the project only.</p>
+<h2 id="9-feasibility-per-screen">9 Feasibility per screen</h2>
+<p>Payload default = no code beyond labels. Customised = Payload slots and API. Custom page = an admin view (<code>admin.components.views[key]</code> with <code>DefaultTemplate</code>, own operator check). Outside = Next routes or <code>embed/</code>.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 9 Feasibility per screen"><table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Path</th>
+<th>How</th>
+<th>Flag</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>O0, O1</td>
+<td>customised</td>
+<td>i18n, <code>graphics.Logo</code>, <code>beforeLogin</code></td>
+<td>O0 has no component slot</td>
+</tr>
+<tr>
+<td>O2, M7</td>
+<td>customised</td>
+<td><code>auth.forgotPassword.generateEmail*</code> + email adapter</td>
+<td>needs <code>SMTP_URL</code></td>
+</tr>
+<tr>
+<td>O3 Today</td>
+<td>customised</td>
+<td><code>views.dashboard</code> replacement (not experimental widgets)</td>
+<td>reads module interfaces only</td>
+</tr>
+<tr>
+<td>Sidebar</td>
+<td>customised</td>
+<td><code>beforeNavLinks</code>, <code>group: false</code>, group &quot;Settings&quot;</td>
+<td>cache counts 30 s</td>
+</tr>
+<tr>
+<td>O4</td>
+<td>customised</td>
+<td><code>baseFilter</code>, tab links (exist), <code>beforeListTable</code> empty texts, <code>listSearchableFields</code></td>
+<td>Payload&#39;s global &quot;No Results&quot; text: hide it; test it</td>
+</tr>
+<tr>
+<td>O5, O5a–c</td>
+<td>customised</td>
+<td><code>ui</code> panel (exists), <code>Status</code>, <code>edit.PublishButton</code> (dialog + next story), <code>SaveDraftButton</code> → Next story, <code>editMenuItems</code> (Remove), <code>UnpublishButton</code> off</td>
+<td>verify that the custom PublishButton keeps Payload&#39;s error toast</td>
+</tr>
+<tr>
+<td>O6</td>
+<td>customised</td>
+<td><code>views.edit.versions</code> replacement, <code>tab: { label: 'History' }</code></td>
+<td>needs <code>changedBy</code>, <code>lastAction</code></td>
+</tr>
+<tr>
+<td>O7</td>
+<td>custom page</td>
+<td><code>/admin/add-widget</code>; Server Actions over <code>catalogue</code>, <code>projects</code>; reuses <code>DurationField</code>, <code>SnippetCopy</code>, <code>ThemePreview</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>O8, O9, O11–O15, O17, O18</td>
+<td>default / customised</td>
+<td>exist; labels and <code>beforeListTable</code></td>
+<td>O8 hides Create New</td>
+</tr>
+<tr>
+<td>O10</td>
+<td>custom page</td>
+<td><code>/admin/concepts/:project?</code> reusing <code>VocabularyPanel</code>, <code>SkosTools</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>O16 Overview</td>
+<td>customised</td>
+<td><code>views.edit.overview</code> document tab</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P0–P9</td>
+<td>outside</td>
+<td><code>(frontend)/annotate</code>; P7, P8 new routes</td>
+<td>P9 <code>sessionStorage</code> with try/catch</td>
+</tr>
+<tr>
+<td>V0–V8</td>
+<td>outside</td>
+<td><code>embed/</code></td>
+<td>contract additions in section 8</td>
+</tr>
+<tr>
+<td>M1–M6</td>
+<td>outside</td>
+<td><code>membership</code> Mailer (members), Payload adapter (operators)</td>
+<td>deliverability (SPF, DKIM) is the organisation&#39;s setup; the deploy guide says so</td>
+</tr>
+<tr>
+<td>Recording route</td>
+<td>outside</td>
+<td>Next route beside the theme route</td>
+<td>—</td>
+</tr>
+</tbody></table></div>
+<h2 id="10-build-order-phase-5c-step-2">10 Build order (Phase 5c step 2)</h2>
+<p>Each slice ≤ 5 files. Each slice keeps <code>test:int</code>, <code>test:e2e</code>, <code>tsc</code>, <code>lint</code> green.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 10 Build order (Phase 5c step 2)"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Slice</th>
+<th>Files (about)</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Lifecycle</td>
+<td><code>stories/lifecycle.ts</code>, <code>types.ts</code>, <code>review.ts</code> (counts), <code>index.ts</code>, int spec</td>
+<td>An int test derives all 7 states and the reply variant at the <code>stories</code> interface; <code>counts</code> splits stories and replies and has <code>processing</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Schema</td>
+<td><code>stories/collection.ts</code>, <code>membership/collections.ts</code>, <code>Users.ts</code>, migration, int spec</td>
+<td>Migration up and down pass on an empty database with rows; <code>toldOn</code> is saved from a valid <code>return</code> and never appears in WADM.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Story actions</td>
+<td><code>stories/review.ts</code> (<code>remove</code>, <code>nextWaiting</code>, <code>ownStories</code>), <code>media/settled.ts</code>, <code>types.ts</code>, int spec</td>
+<td>A failed file gives Returned (automatic); <code>publish-at-once</code> with media publishes when ready; <code>remove</code> deletes the replies; <code>unpublish</code> has no caller and is gone.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Mail backbone</td>
+<td><code>payload.config.ts</code> (adapter), <code>membership/mailer.ts</code>, <code>membership/mails.ts</code> (M1–M5 text), stories after-commit sender, int spec</td>
+<td>Memory mailer gets M2 after a return and M3 after a publish; a rolled-back transaction sends nothing; <code>mailNotices</code> off stops M3, M4.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Digest</td>
+<td>worker schedule, app consumer, <code>mails.ts</code> (M6), int spec</td>
+<td>A fake clock at 08:00 with 3 waiting sends one M6 per operator with <code>daily</code>; 0 waiting sends none; <code>each</code> sends at H4.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Sidebar and Today</td>
+<td><code>admin/Today.tsx</code>, <code>admin/NavLinks.tsx</code>, <code>payload.config.ts</code>, collection <code>group</code> changes, e2e</td>
+<td>Empty stack shows the 4-step checklist; each step ticks from data; the badge equals the Waiting count.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Review screen</td>
+<td><code>admin/stories/PublishButton.tsx</code>, <code>NextStory.tsx</code> (replaces <code>KeepAsDraft</code>), <code>RemoveItem.tsx</code>, <code>Status.tsx</code>, <code>review.e2e</code></td>
+<td>Publish shows the preview, then the next story opens; no Unpublish anywhere; Remove removes; Processing tab and empty texts show.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>History</td>
+<td><code>admin/stories/History.tsx</code>, collection view config, e2e</td>
+<td>History reads &quot;Published by …&quot;, &quot;Returned automatically …&quot; in browser time.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Add a widget to a site</td>
+<td><code>admin/addWidget/View.tsx</code>, <code>actions.ts</code>, <code>catalogue/index.ts</code>, <code>projects/index.ts</code>, e2e</td>
+<td>An e2e test goes Today → 3 steps → copied snippet with the right <code>project</code>, <code>recording</code>, <code>src</code>; the inline project form works with 0 projects.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Concepts page and project Overview</td>
+<td><code>admin/vocabulary/ConceptsView.tsx</code>, <code>admin/projects/Overview.tsx</code>, config, e2e</td>
+<td>Sidebar <strong>Concepts</strong> opens the tree (picker with 2 projects); Overview counts match <code>stories.counts</code>.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Public routes and contract</td>
+<td>theme route, <code>projects/theme.ts</code>, recording route, <a href="contract.html"><code>CONTRACT.md</code></a>, int spec</td>
+<td>Theme JSON has <code>name</code>, <code>rightsLine</code>, <code>rightsIri</code>; recording JSON gives 200/404 with CORS <code>*</code>; CONTRACT lists every addition with the date.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Player</td>
+<td><a href="https://github.com/micahchoo/annoudio/blob/main/embed/src/text.ts"><code>embed/src/text.ts</code></a>, <code>player.ts</code>, <code>stories.ts</code>, contract spec, fixture (new, not changed)</td>
+<td>Empty text, &quot;Tell a story&quot;, <code>rights</code> part, <code>annoudio-saved=published</code> note and <code>annoudio-story</code> pass in 3 browsers.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Annotate page frame and words</td>
+<td><code>annotate/page.tsx</code>, <code>strings.ts</code>, <code>annotate.css</code>, <code>StoryForm.tsx</code>, <code>ReplyForm.tsx</code></td>
+<td>Project name, theme and rights line show; buttons say Send for review / Publish the story; ranges show <code>1:02–1:35</code>; text survives a session end.</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Your stories and Your account</td>
+<td><code>annotate/mine/page.tsx</code>, <code>annotate/account/page.tsx</code>, <code>actions.ts</code>, <code>strings.ts</code>, e2e</td>
+<td>Groups show in order; the name change and the mail choice save; <strong>Sign out</strong> ends the session.</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Walkthrough</td>
+<td><code>tests/e2e/lifecycle.e2e.spec.ts</code>, screenshot script</td>
+<td>ROADMAP 5c done-when: F1–F7 pass with axe on every screen; screenshots of every state in <code>design/phase5c-screens/</code>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="11-open-questions">11 Open questions</h2>
+<ol>
+<li><strong>Can a member delete their own account?</strong> Default: not in 5c. <strong>Your account</strong> says &quot;To delete your account and your stories, write to {EMAIL_FROM}.&quot; An operator then removes the stories and blocks the member. A real delete (with what happens to published stories and replies) goes to Phase 7.</li>
+<li><strong>Does Remove also remove the replies under the story?</strong> Default: yes. A reply is served only under a published parent (5b decision 7), so a kept reply is invisible data. Each reply&#39;s member gets M5.</li>
+<li><strong>Should the stack tick &quot;Put the snippet on a site&quot; by itself?</strong> Default: no new write. The step ticks by <strong>I pasted it</strong> or by the first story with a <code>toldOn</code> on that site. A &quot;player seen&quot; record per site origin needs a write on the cached read path, which today writes nothing (proposal C §8.3).</li>
+</ol>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

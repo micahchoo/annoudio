@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Run Annoudio with Dokploy · Annoudio</title>
+<meta name="description" content="This guide is for a person who is not a developer. It tells you how to put one Annoudio stack on a server, keep backups, restore them and upgrade. You use the Dokploy web screens only, except where a ">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy" aria-current="page">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html" aria-current="page">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/GUIDE-dokploy.md"><code>deploy/GUIDE-dokploy.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (15 sections)</summary><ol><li><a href="#what-you-need">What you need</a></li><li><a href="#1-make-the-settings">1. Make the settings</a></li><li><a href="#2-make-the-compose-service">2. Make the Compose service</a></li><li><a href="#3-set-the-environment">3. Set the environment</a></li><li><a href="#4-set-the-domain-and-https">4. Set the domain and HTTPS</a></li><li><a href="#5-deploy">5. Deploy</a></li><li><a href="#6-make-the-first-operator">6. Make the first operator</a></li><li><a href="#7-connect-the-s3-bucket">7. Connect the S3 bucket</a></li><li><a href="#8-back-up-the-database-every-day">8. Back up the database every day</a></li><li><a href="#9-back-up-the-media-every-day">9. Back up the media every day</a></li><li><a href="#10-keep-the-settings">10. Keep the settings</a></li><li><a href="#11-restore">11. Restore</a></li><li><a href="#12-upgrade-annoudio">12. Upgrade Annoudio</a></li><li><a href="#13-upgrade-dokploy-itself">13. Upgrade Dokploy itself</a></li><li><a href="#known-gaps">Known gaps</a></li></ol></details>
+<h1 id="run-annoudio-with-dokploy">Run Annoudio with Dokploy</h1>
+<p>This guide is for a person who is not a developer. It tells you how to put one Annoudio stack on a server, keep backups, restore them and upgrade. You use the Dokploy web screens only, except where a step says <strong>Gap</strong>.</p>
+<p>Words: a <strong>stack</strong> is the three parts of Annoudio that run together: <code>app</code> (the admin and the public pages), <code>postgres</code> (the database) and <code>worker</code> (it converts uploaded sound, image and video). An <strong>operator</strong> is a person of your team who uses the admin.</p>
+<p>Checked against Dokploy v0.30.8 (2026-09-29): the documentation and the source code of its screens. A step marked <strong>Unverified</strong> was not checked on a real Dokploy server. Its words can be a little different on your screen.</p>
+<h2 id="what-you-need">What you need</h2>
+<ul>
+<li>A server (VPS) with <strong>4 GB of memory</strong> and 40 GB of disk, with Ubuntu or Debian. Dokploy needs 2 GB for itself; Annoudio needs up to 2 GB (limits: app 768 MB, worker 768 MB, Postgres 512 MB). The first build of the app also needs memory (see &quot;Known gaps&quot;).</li>
+<li>Dokploy on the server. Install: log in to the server once and run <code>curl -sSL https://dokploy.com/install.sh | sh</code>. Then open <code>http://&lt;server IP&gt;:3000</code> and make the Dokploy admin account. (This is the only terminal step, and it is Dokploy&#39;s own.)</li>
+<li>A domain name, for example <code>stories.example.org</code>, with an <strong>A record</strong> to the IP address of the server.</li>
+<li>A mail account that can send mail (SMTP). The app sends all its mail with it: the login codes and story mails for members, and the daily review mail (the digest) and the password-reset mail for operators.</li>
+<li>An S3 bucket for backups (Amazon S3, Backblaze B2, Cloudflare R2 or another), with an access key and a secret key.</li>
+<li>A password manager.</li>
+</ul>
+<h2 id="1-make-the-settings">1. Make the settings</h2>
+<p>Make these five values before you start. Keep them in the password manager. You need them again for every restore.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 1. Make the settings"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POSTGRES_PASSWORD</code></td>
+<td>A new random value, letters and digits only, 32 characters.</td>
+</tr>
+<tr>
+<td><code>PAYLOAD_SECRET</code></td>
+<td>A new random value, letters and digits only, 64 characters.</td>
+</tr>
+<tr>
+<td><code>ANNOUDIO_ORIGIN</code></td>
+<td><code>https://</code> and your domain, for example <code>https://stories.example.org</code>. No <code>/</code> at the end.</td>
+</tr>
+<tr>
+<td><code>SMTP_URL</code></td>
+<td>From your mail provider, in this form: <code>smtps://USER:PASSWORD@smtp.example.org:465</code></td>
+</tr>
+<tr>
+<td><code>EMAIL_FROM</code></td>
+<td>The sender, for example <code>River Voices &lt;stories@example.org&gt;</code></td>
+</tr>
+<tr>
+<td><code>TZ</code></td>
+<td>Optional. Your time zone, for example <code>Asia/Kolkata</code>. Operators get the daily review mail at 08:00 in this time zone. Without it: 08:00 UTC.</td>
+</tr>
+</tbody></table></div>
+<p>Do not change <code>ANNOUDIO_ORIGIN</code> or <code>PAYLOAD_SECRET</code> after the first story. Every story address starts with <code>ANNOUDIO_ORIGIN</code>.</p>
+<h2 id="2-make-the-compose-service">2. Make the Compose service</h2>
+<ol>
+<li>You see the Dokploy dashboard with <strong>Projects</strong>. Click <strong>Create Project</strong>. Type the name <code>Annoudio</code>. Click <strong>Create</strong>.</li>
+<li>You see the empty project. Click <strong>Create Service</strong>, then <strong>Compose</strong>. (Unverified: the exact button names.)</li>
+<li>You see a form. Type the name <code>annoudio</code>. For <strong>Compose Type</strong>, keep <strong>Docker Compose</strong> (not <strong>Stack</strong>: Stack cannot build images). Click <strong>Create</strong>.</li>
+<li>You see the page of the new service, with tabs: General, Environment, Domains, Deployments, Backups, Schedules, Volume Backups, Logs, Monitoring, Advanced.</li>
+<li>On <strong>General</strong>, in <strong>Provider</strong>, click <strong>Git</strong>. Fill in:<ul>
+<li><strong>Repository URL</strong>: the HTTPS address of the Annoudio repository.</li>
+<li><strong>Branch</strong>: the release to run, for example <code>release-1.0</code>.</li>
+<li><strong>Compose Path</strong>: <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/docker-compose.yml"><code>./deploy/docker-compose.yml</code></a></li>
+</ul>
+</li>
+<li>Click <strong>Save</strong>.</li>
+</ol>
+<p>If your repository is private, use <strong>GitHub</strong> (or GitLab, Gitea, Bitbucket) instead of <strong>Git</strong>, and connect the account first in <strong>Settings → Git</strong>. (Unverified for this guide.)</p>
+<h2 id="3-set-the-environment">3. Set the environment</h2>
+<ol>
+<li><p>Click the tab <strong>Environment</strong>. You see a text box.</p>
+</li>
+<li><p>Paste these lines, with your values from step 1:</p>
+<pre tabindex="0"><code>POSTGRES_PASSWORD=...
+PAYLOAD_SECRET=...
+ANNOUDIO_ORIGIN=https://stories.example.org
+SMTP_URL=smtps://USER:PASSWORD@smtp.example.org:465
+EMAIL_FROM=River Voices &lt;stories@example.org&gt;
+TRUST_PROXY=1
+TZ=Asia/Kolkata
+</code></pre>
+<p><code>TRUST_PROXY=1</code> tells the app that one proxy (the Traefik of Dokploy) is in front of it. If you also put Cloudflare in front, use <code>2</code>.</p>
+<p><code>TZ</code> is your time zone (the names are in the &quot;TZ identifier&quot; column of the IANA list, for example <code>Europe/London</code>). Leave the line out for UTC.</p>
+</li>
+<li><p>Click <strong>Save</strong>.</p>
+</li>
+</ol>
+<p>Dokploy writes these lines to the file <code>deploy/.env</code> next to the compose file. The compose file reads them from there. The full list, with the optional limits, is in <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/.env.example"><code>deploy/.env.example</code></a>. Do not add a line with an empty value (for example <code>STORIES_PAGE_SIZE=</code>): the app reads an empty value as 0.</p>
+<h2 id="4-set-the-domain-and-https">4. Set the domain and HTTPS</h2>
+<ol>
+<li>Click the tab <strong>Domains</strong>. Click <strong>Add Domain</strong>.</li>
+<li>You see the form <strong>Domain</strong>. Fill in:<ul>
+<li><strong>Service Name</strong>: <code>app</code></li>
+<li><strong>Host</strong>: your domain, for example <code>stories.example.org</code></li>
+<li><strong>Path</strong>: <code>/</code></li>
+<li><strong>Container Port</strong>: <code>3000</code></li>
+<li><strong>HTTPS</strong>: on</li>
+<li><strong>Certificate Provider</strong>: <strong>Let&#39;s Encrypt</strong></li>
+</ul>
+</li>
+<li>Click <strong>Create</strong>.</li>
+</ol>
+<p>Add a domain only for <code>app</code>. Never for <code>postgres</code> or <code>worker</code>.</p>
+<h2 id="5-deploy">5. Deploy</h2>
+<ol>
+<li>Click the tab <strong>General</strong>. Click <strong>Deploy</strong>. Click <strong>Confirm</strong> in the question &quot;Are you sure you want to deploy this compose?&quot;.</li>
+<li>Click the tab <strong>Deployments</strong>. You see a new line with a running status. Click it to see the log. The first build takes 5 to 15 minutes.</li>
+<li>When the line shows done, click the tab <strong>Logs</strong>. Choose the service <code>app</code>. You see, in this order: <code>[migrate] waiting for the migration lock</code>, <code>Migrating: …</code>, <code>Migrated: …</code>, <code>[migrate] done</code>, then <code>▲ Next.js</code>. The app made the database tables.</li>
+<li>Wait 10 seconds more, so Traefik can get the HTTPS certificate.</li>
+</ol>
+<p>Never click <strong>Deploy with Fresh Volumes</strong> (in the menu next to <strong>Deploy</strong>). It deletes the database and all media, with no question about backups.</p>
+<h2 id="6-make-the-first-operator">6. Make the first operator</h2>
+<p>Do this <strong>immediately</strong> after the first deploy. Until the first operator exists, any person who finds the address can make it.</p>
+<ol>
+<li>Open <code>https://stories.example.org/admin</code>.</li>
+<li>You see <strong>Welcome</strong> and the form <strong>Create first user</strong>.</li>
+<li>Type your email and a password with 12 or more characters, two times. Click <strong>Create</strong>.</li>
+<li>You see the admin. You are signed in.</li>
+</ol>
+<p>To add more operators: in the admin, click <strong>Users</strong>, then <strong>Create New</strong>.</p>
+<p>An operator who forgets the password clicks <strong>Forgot password?</strong> on the login screen. The app sends a reset link to that address through <code>SMTP_URL</code>.</p>
+<p>If somebody else made the first operator before you: delete the service with its volumes, and start again at step 2.</p>
+<h2 id="7-connect-the-s3-bucket">7. Connect the S3 bucket</h2>
+<ol>
+<li>In the left menu, click <strong>Settings</strong>, then <strong>S3 Destinations</strong>.</li>
+<li>Click <strong>Add Destination</strong>. Fill in <strong>Name</strong> (for example <code>backups</code>), <strong>Access Key</strong>, <strong>Secret Key</strong>, <strong>Bucket</strong>, <strong>Region</strong> and <strong>Endpoint</strong> (from your S3 provider).</li>
+<li>Click <strong>Test</strong>. You see a success message. If not, correct the values.</li>
+<li>Click <strong>Create</strong>.</li>
+</ol>
+<h2 id="8-back-up-the-database-every-day">8. Back up the database every day</h2>
+<ol>
+<li>Open the <code>annoudio</code> service. Click the tab <strong>Backups</strong>. The stack must run: the screen says &quot;Make sure the compose is running before creating a backup.&quot;</li>
+<li>Click <strong>Create Backup</strong>. Fill in:<ul>
+<li><strong>Database Type</strong>: <strong>PostgreSQL</strong></li>
+<li><strong>Destination</strong>: <code>backups</code></li>
+<li><strong>Service Name</strong>: <code>postgres</code></li>
+<li><strong>Database</strong>: <code>annoudio</code></li>
+<li><strong>Database User</strong>: <code>annoudio</code></li>
+<li><strong>Schedule</strong>: <code>0 2 * * *</code> (every day at 02:00, server time)</li>
+<li><strong>Prefix Destination</strong>: <code>db/</code></li>
+<li><strong>Keep the latest</strong>: <code>14</code></li>
+<li><strong>Enabled</strong>: on</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong>.</li>
+<li>You see the new backup in the list. Click <strong>Run Manual Backup</strong>. You see &quot;Manual Backup Successful&quot;. Look in the S3 bucket: you see a file that ends in <code>.sql.gz</code>.</li>
+</ol>
+<p>Dokploy makes the file with <code>pg_dump -Fc</code> and gzip. That is the same format as in <a href="backup.html"><code>BACKUP.md</code></a>.</p>
+<h2 id="9-back-up-the-media-every-day">9. Back up the media every day</h2>
+<ol>
+<li>Click the tab <strong>Volume Backups</strong>. Click <strong>Add Volume Backup</strong>.</li>
+<li>Fill in:<ul>
+<li><strong>Task Name</strong>: <code>media</code></li>
+<li><strong>Destination</strong>: <code>backups</code></li>
+<li><strong>Service Name</strong>: <code>worker</code></li>
+<li><strong>Volumes</strong>: choose the name that ends in <code>_media</code>. It is <code>&lt;app name&gt;_media</code>; the app name is the name that Dokploy gave the service, for example <code>annoudio-annoudio-a1b2c3_media</code>.</li>
+<li><strong>Schedule</strong>: <code>30 2 * * *</code> (30 minutes after the database backup)</li>
+<li><strong>Backup Prefix</strong>: <code>media/</code></li>
+<li><strong>Keep Latest Backups</strong>: <code>14</code></li>
+<li><strong>Turn Off Container During Backup</strong>: off</li>
+<li><strong>Enabled</strong>: on</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong>. (Unverified: the exact names of the schedule field and the button.)</li>
+<li>Run it one time by hand and look for a file <code>…_media-&lt;date&gt;.tar</code> in the bucket.</li>
+</ol>
+<p>Why 30 minutes after the database, and why the container can stay on: read <a href="backup.html"><code>BACKUP.md</code></a>, &quot;How often, and in which order&quot;.</p>
+<p>Never choose a volume that ends in <code>_pgdata</code> here. A file copy of a running database can be broken. Step 8 backs up the database correctly.</p>
+<h2 id="10-keep-the-settings">10. Keep the settings</h2>
+<p>Copy the text of the <strong>Environment</strong> tab into the password manager. Do it again after each change. A backup without these values cannot be restored correctly.</p>
+<p>Also turn on Dokploy&#39;s own backup: <strong>Settings → Web Server → Backups</strong> (it saves the Dokploy settings, not Annoudio&#39;s data).</p>
+<h2 id="11-restore">11. Restore</h2>
+<p>Choose the case.</p>
+<h3 id="case-a-only-the-database-is-wrong-for-example-a-person-deleted-many-stories">Case A: only the database is wrong (for example, a person deleted many stories)</h3>
+<ol>
+<li>Choose a quiet time. Stories written after the backup are lost.</li>
+<li>Open the <code>annoudio</code> service, tab <strong>Backups</strong>. Click <strong>Restore Backup</strong>.</li>
+<li>Fill in: <strong>Destination</strong> <code>backups</code>; <strong>Search Backup Files</strong>: choose the newest correct file in <code>db/</code>; <strong>Database Name</strong> <code>annoudio</code>; <strong>Database Type</strong> PostgreSQL; <strong>Service Name</strong> <code>postgres</code>; <strong>Database User</strong> <code>annoudio</code>.</li>
+<li>Click <strong>Restore</strong>. Read the log.</li>
+<li>The log can show three errors with <code>pgboss.queue_stats_…</code> or <code>pgboss.job_common</code> in them, and &quot;errors ignored on restore: 3&quot;. This is expected: the job queue uses a table type that the Dokploy restore command cannot empty first. The data comes back. (Tested with the same command on 2026-10-09. Unverified: whether Dokploy then shows the restore as failed.) Any other error is a real error.</li>
+<li>Click the tab <strong>General</strong>, then <strong>Deploy</strong>, so the app and the worker start again on the restored data.</li>
+<li>Open <code>/admin</code> and look at <strong>Stories</strong>.</li>
+</ol>
+<h3 id="case-b-the-server-is-lost-or-the-media-volume-is-damaged">Case B: the server is lost, or the media volume is damaged</h3>
+<p>You make a new service and restore into it. The old service (if it still exists) stays as it is until the new one works.</p>
+<ol>
+<li><p>On the new server (or the same one), install Dokploy and connect the S3 bucket (step 7).</p>
+</li>
+<li><p>Make a new Compose service (step 2) and set the <strong>same</strong> environment (step 3, the values from the password manager). <strong>Do not deploy yet.</strong></p>
+</li>
+<li><p>Find the app name of the new service (on its General tab). The media volume will be <code>&lt;new app name&gt;_media</code>.</p>
+</li>
+<li><p>Tab <strong>Volume Backups</strong>, click <strong>Restore Volume Backup</strong>. Fill in: <strong>Destination</strong> <code>backups</code>; the newest file in <code>media/</code>; <strong>Volume Name</strong> <code>&lt;new app name&gt;_media</code>. Click <strong>Restore</strong>.</p>
+<p>This works only before the first deploy. Dokploy refuses to restore into a volume that a container uses, also a stopped container (&quot;Volume restore aborted - volume is in use&quot;).</p>
+</li>
+<li><p>Deploy (step 5). Wait until <code>app</code> is healthy.</p>
+</li>
+<li><p>Restore the database as in Case A, steps 2 to 6, on the new service.</p>
+</li>
+<li><p>Move the domain: remove it from the old service (if it exists), add it to the new service (step 4), and deploy the new service again.</p>
+</li>
+<li><p>Check: sign in to <code>/admin</code>; a player on your site shows its stories.</p>
+</li>
+</ol>
+<p><strong>Gap:</strong> Dokploy cannot restore the media volume into the running stack in place. Case B is the screen-only way. With a terminal, <a href="backup.html"><code>BACKUP.md</code></a> has the commands.</p>
+<h3 id="test-the-restore">Test the restore</h3>
+<p>Do Case B on a second service every three months, with a test domain. Read &quot;The restore test&quot; in <a href="backup.html"><code>BACKUP.md</code></a>.</p>
+<h2 id="12-upgrade-annoudio">12. Upgrade Annoudio</h2>
+<p>Read <a href="upgrade.html"><code>UPGRADE.md</code></a> first. In Dokploy:</p>
+<ol>
+<li>Make a backup now: tab <strong>Backups</strong>, <strong>Run Manual Backup</strong>; tab <strong>Volume Backups</strong>, run the <code>media</code> backup by hand.</li>
+<li>Write down the branch that runs now (tab <strong>General</strong>, <strong>Branch</strong>).</li>
+<li>Tab <strong>General</strong>: change <strong>Branch</strong> to the new release, for example <code>release-1.1</code>. Click <strong>Save</strong>.</li>
+<li>Click <strong>Deploy</strong>, then <strong>Confirm</strong>.</li>
+<li>Tab <strong>Deployments</strong>: wait until the new line is done.</li>
+<li>Tab <strong>Logs</strong>, service <code>app</code>: look for <code>[migrate] done</code> and then <code>▲ Next.js</code>. The migrations run by themselves at each start.</li>
+<li>Do the five checks in <a href="upgrade.html"><code>UPGRADE.md</code></a>, &quot;After the upgrade&quot;.</li>
+</ol>
+<h3 id="roll-back">Roll back</h3>
+<ol>
+<li>Tab <strong>General</strong>: set <strong>Branch</strong> back to the release that you wrote down. Click <strong>Save</strong>, then <strong>Deploy</strong>.</li>
+<li>If the upgrade log showed a <code>Migrated:</code> line: restore the backup of step 1 (section 11, Case A).</li>
+</ol>
+<h2 id="13-upgrade-dokploy-itself">13. Upgrade Dokploy itself</h2>
+<p>Dokploy shows <strong>Update Available</strong> when there is a new version. Click it, or go to <strong>Settings → Web Server</strong>, and click <strong>Check for updates</strong>. Read the release notes first. (Unverified: the menu path. The source has the dialog &quot;Web Server Update&quot; with &quot;Check for updates&quot;.) The Dokploy documentation also gives the terminal way: <code>curl -sSL https://dokploy.com/install.sh | sh -s update</code>.</p>
+<p>Dokploy is not yet at version 1.0. Upgrade it on a test server first, then on the server of your stack.</p>
+<h2 id="known-gaps">Known gaps</h2>
+<ul>
+<li><strong>First build memory (Unverified).</strong> Dokploy builds the app image on the server. A Next.js build can need more than 2 GB. On a 4 GB server it is close. If the build stops with &quot;killed&quot; or exit code 137, add 2 GB of swap to the server, or build the images elsewhere (see <a href="https://github.com/micahchoo/annoudio/blob/main/design/phase6-notes.md"><code>design/phase6-notes.md</code></a>).</li>
+<li><strong>Media restore in place</strong> is not possible from the screens (section 11, Case B).</li>
+<li><strong>Database restore log</strong> shows three expected errors (section 11, Case A).</li>
+<li><strong>Mail delivery</strong> (SPF, DKIM) is the setup of your mail provider. If the login codes do not arrive, the reset links and the daily review mail do not arrive either. The log of <code>app</code> shows each failed send.</li>
+</ul>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Annoudio embed contract, v1 · Annoudio</title>
+<meta name="description" content="Status: draft for Phase 1, 2026-10-09. Owner: the player module (see CONTEXT.md, module map).">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html" aria-current="page">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html" aria-current="page">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/CONTRACT.md"><code>CONTRACT.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (16 sections)</summary><ol><li><a href="#1-the-snippet">1 The snippet</a></li><li><a href="#2-attributes">2 Attributes</a></li><li><a href="#3-theme-tokens-and-parts">3 Theme tokens and parts</a></li><li><a href="#4-events-the-method-and-the-property">4 Events, the method and the property</a></li><li><a href="#5-the-loader">5 The loader</a></li><li><a href="#6-network-contract">6 Network contract</a></li><li><a href="#7-the-annotate-link">7 The Annotate link</a></li><li><a href="#8-invariants">8 Invariants</a></li><li><a href="#9-error-modes">9 Error modes</a></li><li><a href="#10-performance">10 Performance</a></li><li><a href="#11-accessibility">11 Accessibility</a></li><li><a href="#12-versioning">12 Versioning</a></li><li><a href="#13-host-notes">13 Host notes</a></li><li><a href="#14-alternatives-considered">14 Alternatives considered</a></li><li><a href="#15-dependencies-outside-the-player-module">15 Dependencies outside the <code>player</code> module</a></li><li><a href="#16-contract-tests">16 Contract tests</a></li></ol></details>
+<h1 id="annoudio-embed-contract-v1">Annoudio embed contract, v1</h1>
+<p>Status: draft for Phase 1, 2026-10-09. Owner: the <code>player</code> module (see <a href="context.html"><code>CONTEXT.md</code></a>, module map).</p>
+<p>This file is the <strong>interface</strong> of the <code>player</code> module. Hand-built sites, WordPress and Omeka S paste the <strong>snippet</strong> and keep it for years. Every rule here is a promise to those sites. Anything this file does not name is <strong>implementation</strong>: it can change in any release without notice.</p>
+<p>The contract has eight parts: the snippet, the attributes, the theme tokens, the <code>part</code> names, the events with the method and the property, the requests, and the Annotate link. Sections 8 to 11 give the invariants, error modes, performance and accessibility rules that apply to all of them.</p>
+<p>Words: &quot;the player&quot; is one <code>&lt;annoudio-player&gt;</code> element. &quot;The host page&quot; is the page that contains it. &quot;The origin&quot; is the scheme, host and port of the organisation&#39;s stack, for example <code>https://stories.org.example</code>. &quot;The loader&quot; is the file <code>/embed/v1.js</code>. &quot;The bundle&quot; is the hashed file that the loader imports.</p>
+<hr>
+<h2 id="1-the-snippet">1 The snippet</h2>
+<p>The operator copies these two lines from the catalogue. <code>ORG</code> is the stable host name of the organisation&#39;s stack.</p>
+<pre tabindex="0"><code class="language-html">&lt;script async src=&quot;https://ORG/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player project=&quot;…&quot; recording=&quot;…&quot; src=&quot;…&quot;&gt;&lt;audio controls preload=&quot;none&quot; src=&quot;…&quot;&gt;&lt;/audio&gt;&lt;/annoudio-player&gt;
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li>The <code>&lt;script&gt;</code> line is the same for every player of one organisation. A page needs it once. A second copy on the same page is safe (section 5).</li>
+<li>The <code>&lt;script&gt;</code> line can be before or after the elements, in <code>&lt;head&gt;</code> or in <code>&lt;body&gt;</code>. The player starts when the loader runs. Elements that the page adds later also start.</li>
+<li>The <code>&lt;script&gt;</code> must be a classic script. Do not add <code>type=&quot;module&quot;</code>. Do not add <code>integrity</code>: the loader changes when the organisation upgrades.</li>
+<li>One page can hold many players. Each player is one <strong>instance</strong> (project, recording).</li>
+<li>Child content of <code>&lt;annoudio-player&gt;</code> is fallback content. The browser shows it until the loader runs. The player hides it when it starts. Example: <code>&lt;annoudio-player …&gt;&lt;a href=&quot;ferry.m4a&quot;&gt;Listen to the recording&lt;/a&gt;&lt;/annoudio-player&gt;</code>. The snippet that the catalogue makes has one fallback child: <code>&lt;audio controls preload=&quot;none&quot;&gt;</code> with the same <code>src</code>, so a page whose loader cannot load still plays the recording (added 2026-10-09, additive; <code>preload=&quot;none&quot;</code> makes no request before the visitor plays it). A snippet with no child content stays valid.</li>
+</ol>
+<p>Example with real values:</p>
+<pre tabindex="0"><code class="language-html">&lt;script async src=&quot;https://stories.org.example/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player project=&quot;river-voices&quot; recording=&quot;rec-0042&quot;
+  src=&quot;https://stories.org.example/media/rec-0042.m4a&quot;&gt;&lt;/annoudio-player&gt;
+</code></pre>
+<hr>
+<h2 id="2-attributes">2 Attributes</h2>
+<h3 id="21-the-v1-attribute-set">2.1 The v1 attribute set</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 2.1 The v1 attribute set"><table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Required</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>project</code></td>
+<td>yes</td>
+<td>The <strong>project</strong> slug.</td>
+<td>The project whose stories, vocabulary and theme the player uses.</td>
+</tr>
+<tr>
+<td><code>recording</code></td>
+<td>yes</td>
+<td>The <strong>recording</strong> <code>id</code> from the <strong>catalogue</strong>.</td>
+<td>The recording that the stories are about. With <code>project</code>, it names the instance.</td>
+</tr>
+<tr>
+<td><code>src</code></td>
+<td>yes</td>
+<td>The URL of the audio file. Absolute, or relative to the host page (as for <code>&lt;audio src&gt;</code>). Scheme <code>https:</code> or <code>http:</code>.</td>
+<td>The file that the player plays.</td>
+</tr>
+<tr>
+<td><code>origin</code></td>
+<td>no</td>
+<td>An origin: scheme, host and optional port. No path, query or fragment.</td>
+<td>Where the player reads stories and theme, and where the Annotate link goes. Default: the origin of the loader that defined the element (2.3).</td>
+</tr>
+<tr>
+<td><code>annotate</code></td>
+<td>no</td>
+<td><code>link</code> or <code>none</code>. Default <code>link</code>.</td>
+<td><code>link</code> shows the Annotate link. <code>none</code> hides it, for read-only pages.</td>
+</tr>
+<tr>
+<td><code>lang</code></td>
+<td>no</td>
+<td>A BCP 47 language tag. This is the global HTML attribute.</td>
+<td>The language of the player&#39;s own text (labels, messages). Default: the language of the nearest ancestor with <code>lang</code>, as for any HTML element.</td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>no</td>
+<td>Two seconds values, <code>start,end</code>, for example <code>62,95</code>; <code>end</code> after <code>start</code>. Added 2026-10-09, additive.</td>
+<td>The time range of a story that someone writes now: the player draws it on the timeline as the part <code>range</code>. A drag on the waveform (also inside the range) chooses a new range, and a drag of one of its two edges changes it; each change by the visitor dispatches <code>annoudio:range</code> (4.1). The Annotate page uses it. A host page leaves it out.</td>
+</tr>
+</tbody></table></div>
+<p>Rules for all attributes:</p>
+<ol>
+<li>The player reads attribute values when it starts and each time a value changes. A change to <code>project</code>, <code>recording</code>, <code>src</code> or <code>origin</code> makes the player stop, discard its state and start again. A change to <code>annotate</code> or <code>lang</code> updates the display only.</li>
+<li>The player trims spaces at the start and end of each value. An empty value is the same as a missing attribute.</li>
+<li>The player puts <code>project</code> and <code>recording</code> into URLs with <code>encodeURIComponent</code>. It does not check their characters. The stack answers 404 for an unknown project or recording (section 9).</li>
+<li>The player does not compare <code>src</code> with the URLs in the catalogue. Stories point at the recording, not at a file. If <code>src</code> is a different edit of the audio (for example, cut at the start), the stories are at the wrong times. The host is responsible for this.</li>
+<li>For <code>annotate</code>, an unknown value counts as the default (<code>link</code>). The player writes one <code>console.warn</code>. This follows HTML&#39;s rule for enumerated attributes, and lets a later v1 add values.</li>
+<li>If the UI language in <code>lang</code> is not available, the player uses English. This is not an error.</li>
+<li>A change to <code>range</code> updates the display only (added 2026-10-09). A value that is not <code>start,end</code> with <code>end</code> after <code>start</code> draws no range, with one <code>console.warn</code>. The player keeps the range inside the duration. A change of the attribute dispatches no event: only the visitor&#39;s drag does. While <code>range</code> is set, a drag over a story&#39;s range chooses a range; a click on it still opens the story. A drag needs a pointer: a page that sets <code>range</code> must also offer fields for the times (the Annotate page has Start and End).</li>
+</ol>
+<h3 id="22-why-src-is-required">2.2 Why <code>src</code> is required</h3>
+<p><code>src</code> is required in v1, also when the catalogue has a URL for the recording.</p>
+<ul>
+<li>The player can start the audio with no other request first. The stories request and the audio request start at the same time.</li>
+<li>A recording can have many URLs in the catalogue. The host knows which file it serves. A WordPress or Omeka S media ID gives one exact file URL.</li>
+<li>The stories routes stay pure Web Annotation Protocol. The player needs no catalogue route.</li>
+</ul>
+<p>A later v1 can make <code>src</code> optional (section 12.2: a required attribute can become optional). The reverse is a breaking change. So v1 starts strict.</p>
+<h3 id="23-how-the-player-finds-its-default-origin">2.3 How the player finds its default origin</h3>
+<p>The loader is a classic script. When it runs for the first time, it reads <code>document.currentScript.src</code> and keeps that URL&#39;s origin. This works for <code>async</code> classic scripts. <code>document.currentScript</code> is <code>null</code> in module scripts and in callbacks (MDN, <code>Document.currentScript</code>). So the loader reads it synchronously, at the top level, before any <code>await</code>. If the value is <code>null</code> (someone loaded the loader as a module), the loader uses the last <code>&lt;script&gt;</code> in the document whose <code>src</code> ends with <code>/embed/v1.js</code>.</p>
+<p>The loader passes this origin to the bundle. The bundle resolves its own files from <code>import.meta.url</code> (MDN, <code>import.meta</code>).</p>
+<p>When to set <code>origin</code>:</p>
+<ul>
+<li>The page holds players of two organisations. The first loader to run defines the element. Players of the second organisation must set <code>origin</code>, or they read from the first.</li>
+<li>The host serves a copy of the loader from its own domain.</li>
+<li>Tests that use a fixture server.</li>
+</ul>
+<h3 id="24-attributes-that-are-not-in-v1">2.4 Attributes that are not in v1</h3>
+<p>The player reads no other attribute. Global HTML attributes (<code>id</code>, <code>class</code>, <code>style</code>, <code>hidden</code>, <code>title</code>, <code>lang</code>, <code>data-*</code>) work as on any element. The player never reads <code>data-*</code> attributes, so hosts can use them freely. All other names are reserved for later v1 releases.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 2.4 Attributes that are not in v1"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Status</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>theme</code></td>
+<td>Rejected for v1. Name reserved.</td>
+<td>A theme in pasted HTML cannot be changed later. The operator sets the theme in the admin (section 3.2). The host overrides it in its own CSS.</td>
+</tr>
+<tr>
+<td><code>instance</code></td>
+<td>Rejected for v1. Name reserved.</td>
+<td>The instance is (project, recording), derived and never stored by hand (<a href="context.html"><code>CONTEXT.md</code></a>). An override is for two conversations on one recording in one project. Nobody needs it yet. Adding it later is not breaking.</td>
+</tr>
+<tr>
+<td><code>autoplay</code></td>
+<td>Rejected.</td>
+<td>Browsers block autoplay with sound. Autoplay also fails WCAG 1.4.2 for many users.</td>
+</tr>
+<tr>
+<td><code>start</code> / <code>t</code></td>
+<td>Deferred. Name reserved.</td>
+<td>A start time for the player. The return fragment (section 7.2) covers the only v1 need.</td>
+</tr>
+<tr>
+<td><code>preload</code>, <code>controls</code>, <code>height</code></td>
+<td>Rejected.</td>
+<td>The player sets <code>preload=&quot;metadata&quot;</code>. It always shows controls. Height comes from tokens.</td>
+</tr>
+<tr>
+<td>Child <code>&lt;source&gt;</code> elements</td>
+<td>Rejected for v1.</td>
+<td>The <code>media</code> module makes <code>.m4a</code>, which plays in every target browser. One <code>src</code> is enough.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="3-theme-tokens-and-parts">3 Theme tokens and parts</h2>
+<h3 id="31-theme-tokens">3.1 Theme tokens</h3>
+<p>The player&#39;s look comes from <strong>theme tokens</strong>: CSS custom properties named <code>--annoudio-*</code>. A custom property inherits into a shadow tree (MDN, &quot;Using CSS custom properties&quot;; CSS Scoping §4.2). So a host sets a token on the element or on any ancestor:</p>
+<pre tabindex="0"><code class="language-css">annoudio-player { --annoudio-color-accent: #8a1c2b; --annoudio-radius: 0; }
+</code></pre>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 3.1 Theme tokens"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>What it colours or sets</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--annoudio-color-surface</code></td>
+<td>Background of the player.</td>
+<td><code>#ffffff</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-text</code></td>
+<td>Main text and icons.</td>
+<td><code>#1f1f1f</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-muted</code></td>
+<td>Secondary text: times, nicknames, dates.</td>
+<td><code>#595959</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-accent</code></td>
+<td>Play button, played part of the timeline, edge of the open story&#39;s range, links.</td>
+<td><code>#0b6e99</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-on-accent</code></td>
+<td>Text and icons on the accent colour.</td>
+<td><code>#ffffff</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-border</code></td>
+<td>Borders and the timeline track.</td>
+<td><code>#767676</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-wave</code></td>
+<td>Waveform bars not yet played.</td>
+<td><code>#848484</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-region</code></td>
+<td>Fill of a story&#39;s time range on the timeline.</td>
+<td><code>#d6eaf5</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-color-focus</code></td>
+<td>Focus ring.</td>
+<td><code>#0b6e99</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-font-family</code></td>
+<td>All text.</td>
+<td>The font that the host page gives the element (inherited).</td>
+</tr>
+<tr>
+<td><code>--annoudio-font-size</code></td>
+<td>Base text size. All other sizes scale from it.</td>
+<td>The size that the host page gives the element (inherited).</td>
+</tr>
+<tr>
+<td><code>--annoudio-radius</code></td>
+<td>Corner radius of the frame and buttons.</td>
+<td><code>6px</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-space</code></td>
+<td>Base unit of space between items.</td>
+<td><code>0.5em</code></td>
+</tr>
+<tr>
+<td><code>--annoudio-timeline-height</code></td>
+<td>Height of the timeline and waveform.</td>
+<td><code>64px</code></td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ol>
+<li>Colour tokens take any CSS <code>&lt;color&gt;</code>. <code>--annoudio-radius</code>, <code>--annoudio-space</code>, <code>--annoudio-timeline-height</code> and <code>--annoudio-font-size</code> take a <code>&lt;length&gt;</code>. <code>--annoudio-font-family</code> takes a font family list. An invalid value makes that property use its default (normal CSS behaviour for an invalid custom property at use time).</li>
+<li>The player&#39;s own styles read tokens only as <code>var(--annoudio-…, &lt;default&gt;)</code>. The player declares a <code>--annoudio-*</code> property in one place only: on <code>:host</code>, from the project theme stylesheet (section 3.2). So a value set on the element itself always wins, and a value set on an ancestor reaches the player by inheritance when the project theme does not set that token.</li>
+<li>Order of strength, strongest first: host CSS on the element itself (<code>annoudio-player { --annoudio-color-accent: … }</code>), then the project theme from the admin (<code>:host</code> in the shadow root), then host CSS on an ancestor (<code>:root</code>, <code>body</code>, a wrapper), then the defaults in this table. Reason: a document rule on the host element beats a <code>:host</code> rule from the shadow tree; a <code>:host</code> rule beats an inherited value (CSS Scoping §3.3). A host that wants to override a project theme sets the token on the element, not on <code>:root</code>.</li>
+<li>The defaults are light colours. The player does not follow <code>prefers-color-scheme</code> by itself. A host or a project that wants a dark player sets the tokens. Reason: the player must match the host page, not the operating system.</li>
+<li>In forced-colours mode, the player uses system colours and ignores colour tokens.</li>
+<li>Default contrast on <code>--annoudio-color-surface</code> (WCAG 2.2): text 16.5:1, muted 7.0:1, accent 5.7:1, on-accent on accent 5.7:1, border 4.5:1, wave 3.7:1, wave on region 3.0:1, focus 5.7:1. The player does not check the contrast of values that a host or a project sets. Changed 2026-10-09 (design/design-system.md §7): the accent and the focus ring were <code>#0b5cad</code> (6.7:1), the wave <code>#8c8c8c</code> and the region <code>#d5e3f3</code>; the old wave on the old region was 2.58:1, under the 3:1 for non-text. Defaults are not part of the interface (12.2); a host that wants the old blue sets <code>--annoudio-color-accent: #0b5cad</code>. The admin Theme tab shows the ratio of each colour that an operator sets.</li>
+</ol>
+<h3 id="32-how-the-project-theme-reaches-the-player">3.2 How the project theme reaches the player</h3>
+<p>The operator sets theme tokens per project in the admin. The player reads them from the stack:</p>
+<pre tabindex="0"><code>GET {origin}/embed/v1/themes/{project}.json
+</code></pre>
+<pre tabindex="0"><code class="language-json">{
+  &quot;tokens&quot;: { &quot;color-accent&quot;: &quot;#8a1c2b&quot;, &quot;radius&quot;: &quot;0px&quot; },
+  &quot;name&quot;: &quot;River Voices&quot;,
+  &quot;rightsLine&quot;: &quot;CC BY 4.0&quot;,
+  &quot;rightsIri&quot;: &quot;https://creativecommons.org/licenses/by/4.0/&quot;,
+  &quot;fields&quot;: [
+    { &quot;property&quot;: &quot;http://purl.org/dc/terms/spatial&quot;, &quot;label&quot;: &quot;Place&quot;, &quot;showAs&quot;: &quot;line&quot;, &quot;valueType&quot;: &quot;list&quot; },
+    { &quot;property&quot;: &quot;http://purl.org/dc/terms/subject&quot;, &quot;label&quot;: &quot;Topics&quot;, &quot;showAs&quot;: &quot;tags&quot;, &quot;valueType&quot;: &quot;list&quot; }
+  ]
+}
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li>Keys are token names without the <code>--annoudio-</code> prefix. The player uses only keys from table 3.1. It ignores other keys.</li>
+<li>The player checks each value with <code>CSS.supports()</code> for the token&#39;s kind. It ignores a value that fails, with one <code>console.warn</code>.</li>
+<li>The player applies the values in its own shadow root, through one constructed stylesheet in <code>adoptedStyleSheets</code> per project per page (MDN, <code>ShadowRoot.adoptedStyleSheets</code>). Nothing goes into the host document.</li>
+<li>A 404, a network error or bad JSON means &quot;no project theme&quot;. The player uses the defaults. This is not an error mode and shows no message.</li>
+<li>The player starts this request at the same time as the stories request. It shows its controls when the theme request settles or after 500 ms, whichever comes first. A theme that arrives later replaces the defaults in place.</li>
+<li>This JSON shape is part of v1, because a v1 bundle from one stack can read the theme of another v1 stack (<code>origin</code>). The stack can add keys. It cannot remove or rename keys within v1.</li>
+<li>The project frame (added 2026-10-09, additive). <code>name</code> is the project name; it is always there. <code>rightsLine</code> is the rights statement of the project as text, for example &quot;CC BY 4.0&quot;; <code>rightsIri</code> is the web address of the licence. Each of the two is there only when the operator set it. The player shows <code>rightsLine</code> once, in the <code>rights</code> part, below the stories; with an <code>http:</code> or <code>https:</code> <code>rightsIri</code>, the line is a link to it. The player does not show <code>name</code>: the host page names its site. A player that gets no <code>rightsLine</code> (no theme, a 404, an older stack) shows no <code>rights</code> part.</li>
+<li>The field labels (added 2026-10-09, additive). <code>fields</code> is the list of the fields of the project, in field order, hidden fields too, so old stories keep their labels. Each entry has <code>property</code> (the full IRI that a value body names in <code>rdf:predicate</code>, 6 rule 13), <code>label</code> (the question that members answer, for example &quot;Place&quot;), <code>showAs</code> (<code>line</code>: &quot;Label: value&quot;; <code>tags</code>: <code>tag</code> parts with no label; <code>none</code>: not shown, the value stays in the public WADM) and <code>valueType</code> (<code>text</code>, <code>date</code>, <code>number</code>, <code>link</code>, <code>list</code> or <code>entity</code>). The key is there only when the project has at least one field. A relabel changes this JSON only: it reaches hosts at their next page load (5.1, changed 2026-10-09) and rebuilds no stories. A player that gets no <code>fields</code> shows list values as <code>tag</code> parts and other values as lines with no label.</li>
+</ol>
+<p>Why this way (the requirement is &quot;the operator configures the theme in the admin&quot;):</p>
+<ul>
+<li>A change in the admin reaches every host page at its next page load, with no edit on any host. (Changed 2026-10-09: it was &quot;within the cache time (300 s)&quot;. The theme JSON is <code>no-cache</code> now, 5.1.)</li>
+<li>The host keeps the final word in its own CSS, with normal CSS rules.</li>
+<li>The player never touches host CSS. A <code>&lt;link&gt;</code> or <code>&lt;style&gt;</code> in the host <code>&lt;head&gt;</code> would leak rules into the host page.</li>
+<li>JSON is data. A stylesheet from the admin could hold any selector and break the player&#39;s layout. Also, the private CSS names inside the bundle stay private.</li>
+</ul>
+<h3 id="33-parts">3.3 Parts</h3>
+<p>The player exposes named elements in its shadow tree with the <code>part</code> attribute. A host styles them with <code>::part()</code> (MDN, <code>::part</code>; Baseline since July 2020):</p>
+<pre tabindex="0"><code class="language-css">annoudio-player::part(annotate-link) { font-weight: 700; }
+annoudio-player::part(story active) { outline: 2px solid currentColor; }
+</code></pre>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 3.3 Parts"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>player</code></td>
+<td>The outer frame. Holds all other parts.</td>
+</tr>
+<tr>
+<td><code>controls</code></td>
+<td>The row with the play button, the time and the timeline.</td>
+</tr>
+<tr>
+<td><code>play-button</code></td>
+<td>The play and pause button.</td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td>Current time and duration, as text.</td>
+</tr>
+<tr>
+<td><code>timeline</code></td>
+<td>The seek track. Holds <code>waveform</code> and the <code>region</code> parts.</td>
+</tr>
+<tr>
+<td><code>waveform</code></td>
+<td>The waveform drawing. Present only when the player has waveform data (section 6, request 5).</td>
+</tr>
+<tr>
+<td><code>region</code></td>
+<td>One story&#39;s time range on the timeline. One per story.</td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>The time range of the <code>range</code> attribute (2.1) on the timeline. Absent without the attribute. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>stories</code></td>
+<td>The list of stories.</td>
+</tr>
+<tr>
+<td><code>intro</code></td>
+<td>One line above <code>stories</code> that says what a story is: &quot;Each story is about one part of the recording. Select a story to hear that part.&quot; Present when the container has stories. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>story</code></td>
+<td>One story in the list.</td>
+</tr>
+<tr>
+<td><code>story-text</code></td>
+<td>The text body of a story.</td>
+</tr>
+<tr>
+<td><code>story-media</code></td>
+<td>A sound, image or video body of a story: a media element with controls for a sound or a video, an image for an image. One per media body. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>story-meta</code></td>
+<td>The nickname, date and time range of a story.</td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td>One tag label of a story. A list value of a field shown as &quot;Label: value&quot; has the part <code>tag</code> too, on its <code>field-value</code>.</td>
+</tr>
+<tr>
+<td><code>fields</code></td>
+<td>The answers of a story as &quot;Label: value&quot; lines (3.2, rule 8; 6, rule 13). Absent for a story with no such answers. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td>One field in <code>fields</code>: its label and its values. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>field-label</code></td>
+<td>The label of a field, for example &quot;Place&quot;. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>field-value</code></td>
+<td>One value of a field, for example &quot;Fort Kochi&quot;. One per value. A value whose field the theme does not name shows after <code>fields</code>, with no label, with this part only. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>annotate-link</code></td>
+<td>The Annotate link. Absent when <code>annotate=&quot;none&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>replies</code></td>
+<td>The list of replies under a story (6, rule 12). Present only for a story with replies. It shows when its story is open. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>reply</code></td>
+<td>One reply in <code>replies</code>. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>reply-text</code></td>
+<td>The text body of a reply. A sound, image or video body of a reply is a <code>story-media</code> part. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>reply-meta</code></td>
+<td>The nickname and date of a reply. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>reply-link</code></td>
+<td>The Reply link of a story (7.3). It shows when its story is open. Absent when <code>annotate=&quot;none&quot;</code>. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>rights</code></td>
+<td>The rights statement of the project (3.2, rule 7), once, below <code>stories</code>. A link when the project has a licence address. Absent when the project has no rights statement. Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>A plain-language message: an error (section 9), a note (section 7.2), or the note of an empty container (&quot;No stories yet. Tell the first one.&quot;). The empty note added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>active</code></td>
+<td>A second part name on the <code>region</code> and <code>story</code> of the story that is open. Use it as <code>::part(story active)</code>.</td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ol>
+<li>A host needs no <code>exportparts</code> for any part. The parts can be in nested shadow trees inside the player; that is implementation.</li>
+<li>Each name in this table stays, with the same meaning, for all of v1.</li>
+<li>These are not stable: the element type behind a part, the order of parts, elements without a part name, and the private CSS inside the shadow tree. A host that styles <code>display</code> or <code>position</code> of a part does so at its own risk.</li>
+<li>The host page&#39;s CSS does not reach into the shadow tree, except through tokens and parts (MDN, &quot;Using shadow DOM&quot;). The player&#39;s CSS does not reach out.</li>
+<li>The host can style the element itself: <code>display</code>, <code>width</code>, <code>margin</code>, <code>max-width</code>. The default is <code>display: block</code> at the full width of its container. <code>hidden</code> hides it.</li>
+<li>Media bodies add the part <code>story-media</code> (added 2026-10-09, additive). New parts are not a breaking change.</li>
+<li>Reply threads add the parts <code>replies</code>, <code>reply</code>, <code>reply-text</code>, <code>reply-meta</code> and <code>reply-link</code> (added 2026-10-09, additive).</li>
+<li>The project frame adds the part <code>rights</code> (added 2026-10-09, additive).</li>
+<li>The answers of a story add the parts <code>fields</code>, <code>field</code>, <code>field-label</code> and <code>field-value</code> (added 2026-10-09, additive). The part <code>tag</code> stays for list values, so host CSS for <code>::part(tag)</code> still works.</li>
+<li>The <code>range</code> attribute adds the part <code>range</code>; the intro line adds the part <code>intro</code> (added 2026-10-09, additive).</li>
+</ol>
+<hr>
+<h2 id="4-events-the-method-and-the-property">4 Events, the method and the property</h2>
+<h3 id="41-events">4.1 Events</h3>
+<p>The player dispatches <code>CustomEvent</code>s on the element itself. Each event has <code>bubbles: true</code>, <code>composed: true</code> and <code>cancelable: false</code>. So a host can listen on the element, on <code>document</code>, or across its own shadow roots.</p>
+<p>Each <code>detail</code> is a plain object. Every <code>detail</code> has <code>project</code> and <code>recording</code> (strings, or <code>null</code> when the attribute is missing). Times are seconds as numbers.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 4.1 Events"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When</th>
+<th><code>detail</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>annoudio:ready</code></td>
+<td>Once per start (section 2.1, rule 1), when the controls show and the stories request has settled. It does not wait for audio data: iOS can load no audio data before a tap.</td>
+<td><code>{ project, recording, stories, duration }</code>. <code>stories</code>: number of published stories, or <code>null</code> if they did not load. <code>duration</code>: seconds, or <code>null</code> if not yet known.</td>
+</tr>
+<tr>
+<td><code>annoudio:error</code></td>
+<td>Each time an error mode in section 9 occurs.</td>
+<td><code>{ project, recording, code, message }</code>. <code>code</code>: one value from table 9. <code>message</code>: the English text, for logs.</td>
+</tr>
+<tr>
+<td><code>annoudio:play</code></td>
+<td>Playback starts.</td>
+<td><code>{ project, recording, time }</code></td>
+</tr>
+<tr>
+<td><code>annoudio:pause</code></td>
+<td>Playback stops: the visitor pauses, the audio ends, or another player starts.</td>
+<td><code>{ project, recording, time, ended }</code>. <code>ended</code>: <code>true</code> when the audio reached its end.</td>
+</tr>
+<tr>
+<td><code>annoudio:story-open</code></td>
+<td>The visitor opens a story (on the timeline or in the list), or the return fragment opens it (7.2, <code>annoudio-reply</code>). Not when playback only passes through a story&#39;s range.</td>
+<td><code>{ project, recording, story, start, end }</code>. <code>story</code>: the story IRI (<code>id</code> in WADM).</td>
+</tr>
+<tr>
+<td><code>annoudio:annotate</code></td>
+<td>The visitor follows the Annotate link or a Reply link (7.3), before the browser leaves the page.</td>
+<td><code>{ project, recording, time, href, story }</code>. <code>href</code>: the full Annotate URL. <code>story</code>: the IRI of the story that the Reply link answers, or <code>null</code> for the Annotate link. <code>story</code> and the Reply link added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>annoudio:timeupdate</code></td>
+<td>The value of <code>currentTime</code> (4.3) changes: during playback, and after a seek. At most 4 times per second. Not before <code>annoudio:ready</code>. Added 2026-10-09, additive.</td>
+<td><code>{ project, recording, currentTime }</code>. <code>currentTime</code>: the new value of the property.</td>
+</tr>
+<tr>
+<td><code>annoudio:range</code></td>
+<td>The visitor chooses a new range with a drag on the waveform, or ends a drag of one of the edges of the range (2.1, <code>range</code>). Not for a change of the attribute. Added 2026-10-09, additive.</td>
+<td><code>{ project, recording, start, end }</code>. Seconds, at most 3 decimal places, inside the duration. The page sets <code>range</code> to the values it keeps.</td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ol>
+<li>A later v1 can add fields to a <code>detail</code>. Hosts must ignore fields they do not know.</li>
+<li>The player dispatches no other <code>annoudio:*</code> events in v1.0. A later v1 can add events.</li>
+<li><code>annoudio:timeupdate</code> waits at least 250 ms after the previous one. When the time changes inside that wait, the player sends one event at the end of the wait, with the newest value. So the last change is never lost.</li>
+</ol>
+<h3 id="42-the-method-seekseconds">4.2 The method <code>seek(seconds)</code></h3>
+<pre tabindex="0"><code class="language-js">await customElements.whenDefined(&quot;annoudio-player&quot;);
+document.querySelector(&quot;annoudio-player&quot;).seek(42);
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li><code>seek</code> moves the playback position to <code>seconds</code>. It does not start or stop playback. It returns <code>undefined</code>.</li>
+<li>The player limits the value to 0 and the duration.</li>
+<li>Before the duration is known, the player keeps the value and applies it when the duration is known. A later <code>seek</code> replaces a kept value.</li>
+<li>A value that is not a finite number has no effect. The player writes one <code>console.warn</code>. <code>seek</code> never throws.</li>
+<li>The method exists only after the element is defined. Wait for <code>customElements.whenDefined(&quot;annoudio-player&quot;)</code> first.</li>
+</ol>
+<p><code>seek</code> is the only public method. <code>currentTime</code> (4.3) is the only public property. Other members of the element object are implementation.</p>
+<h3 id="43-the-property-currenttime">4.3 The property <code>currentTime</code></h3>
+<p>Added 2026-10-09. Additive: a v1 release can add a property (12.2).</p>
+<pre tabindex="0"><code class="language-js">await customElements.whenDefined(&quot;annoudio-player&quot;);
+const seconds = document.querySelector(&quot;annoudio-player&quot;).currentTime;
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li><code>currentTime</code> is a read-only number: the playback position in seconds that the player shows. This is the current time of the media element, or the value of a <code>seek</code> that waits for the duration (4.2, rule 3).</li>
+<li>It is <code>NaN</code> before <code>annoudio:ready</code> of the current start (2.1, rule 1), and after the element leaves the document. A restart makes it <code>NaN</code> again until the next <code>annoudio:ready</code>.</li>
+<li>It has only a getter, as <code>HTMLMediaElement.duration</code>. An assignment has no effect. In strict-mode code, the browser throws a <code>TypeError</code> for it in the host&#39;s own code. Reading it never throws.</li>
+<li>Use <code>annoudio:timeupdate</code> (4.1) to follow it. Do not poll it.</li>
+<li>Like <code>seek</code>, it exists only after the element is defined. After <code>bundle-unavailable</code> (5, step 7), the fallback element has neither <code>seek</code> nor <code>currentTime</code>.</li>
+</ol>
+<hr>
+<h2 id="5-the-loader">5 The loader</h2>
+<p><code>/embed/v1.js</code> is a small classic script. It does these steps, in this order:</p>
+<ol>
+<li>It reads its own URL (section 2.3).</li>
+<li>If <code>window.customElements</code> does not exist, it stops. Fallback content stays visible.</li>
+<li>If <code>customElements.get(&quot;annoudio-player&quot;)</code> returns a definition, it stops. This makes a second copy of the snippet safe.</li>
+<li>It calls <code>import()</code> with the absolute URL of the current bundle, <code>{origin}/embed/v1/&lt;hash&gt;/player.js</code>. A classic script can use <code>import()</code> (MDN, <code>import()</code>). The browser evaluates one module URL once, so two loaders of one organisation share one bundle.</li>
+<li>The bundle checks <code>customElements.get</code> again and then calls <code>customElements.define(&quot;annoudio-player&quot;, …)</code> once. JavaScript runs one task at a time, so the check and the define cannot interleave. <code>define</code> throws <code>NotSupportedError</code> for a name that is already defined (MDN, <code>CustomElementRegistry.define</code>). The check prevents this.</li>
+<li>The browser upgrades every <code>&lt;annoudio-player&gt;</code> already in the document. It runs the start steps for each one. Elements added later start when they connect.</li>
+<li>If the import fails (network, 404, CORS, content security policy), the loader defines a small fallback element with the same name. It shows the message for <code>bundle-unavailable</code> (section 9) and dispatches <code>annoudio:error</code>.</li>
+</ol>
+<p>Rules:</p>
+<ol>
+<li>The loader and the bundle never throw into the host page. Every callback catches its own errors. An error becomes an error mode in section 9 and one <code>console.warn</code> that starts with <code>annoudio:</code>.</li>
+<li>The loader and the bundle create no global variables and change no built-in objects. The only global change is the one entry in <code>customElements</code>.</li>
+<li>They add nothing to the host document outside the element: no <code>&lt;style&gt;</code>, no <code>&lt;link&gt;</code>, no other elements.</li>
+<li>They do not use cookies, <code>localStorage</code>, <code>sessionStorage</code> or IndexedDB.</li>
+<li>They do not change the host page&#39;s URL or history.</li>
+<li>The shadow root is <code>open</code>. Its content is still implementation (section 3.3, rule 3).</li>
+<li>When the element leaves the document, the player stops playback and cancels its open requests.</li>
+<li>When one player starts playback, all other players on the page that the same bundle defined pause.</li>
+<li>Hosts must not link to a hashed bundle. Its URL is not part of the contract and it can disappear.</li>
+</ol>
+<h3 id="51-response-headers">5.1 Response headers</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 5.1 Response headers"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th><code>Cache-Control</code></th>
+<th>Other headers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/embed/v1.js</code></td>
+<td><code>public, max-age=300, stale-while-revalidate=3600</code></td>
+<td><code>ETag</code></td>
+</tr>
+<tr>
+<td><code>/embed/v1/&lt;hash&gt;/player.js</code></td>
+<td><code>public, max-age=31536000, immutable</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>/embed/v1/themes/{project}.json</code></td>
+<td><code>public, no-cache</code> (changed 2026-10-09, was <code>public, max-age=300, stale-while-revalidate=86400</code>); on 404: <code>public, max-age=60</code></td>
+<td><code>ETag</code></td>
+</tr>
+<tr>
+<td><code>/embed/v1/recordings/{project}/{id}.json</code></td>
+<td><code>public, max-age=300, stale-while-revalidate=86400</code>; on 404: <code>public, max-age=60</code></td>
+<td><code>ETag</code>. Added 2026-10-09, additive.</td>
+</tr>
+</tbody></table></div>
+<p>All four paths send <code>Access-Control-Allow-Origin: *</code>, <code>Cross-Origin-Resource-Policy: cross-origin</code> and <code>X-Content-Type-Options: nosniff</code>. The bundle needs CORS: the browser fetches modules with the CORS protocol (MDN, <code>&lt;script&gt;</code>, <code>type=&quot;module&quot;</code>). <code>Cross-Origin-Resource-Policy</code> lets hosts with <code>Cross-Origin-Embedder-Policy: require-corp</code> load the files. JavaScript files use <code>Content-Type: text/javascript; charset=utf-8</code>.</p>
+<p>The theme JSON is <code>no-cache</code> (changed 2026-10-09, a shorter cache time, so additive): the browser keeps the file but asks the stack again before each use, with <code>If-None-Match</code>, and a 304 answers while the theme is the same. So a theme that an operator saves shows on the next page load of every host page, also on a plain reload, and in the admin&#39;s own preview page and Try it links. Reason: with <code>max-age=300</code>, a reload kept the old theme for up to 5 minutes (Chromium revalidates only the page itself on a reload, not a <code>fetch()</code> of the player), and a maintainer who checked a change saw none. The request stays a CORS-simple GET: the browser cache adds <code>If-None-Match</code>, the player does not. Older v1 bundles get the same header; the player code did not change.</p>
+<p>A release keeps the bundles of the two releases before it. Reason: a browser can use a cached loader for up to 3900 s, and that loader names an older hash.</p>
+<h3 id="52-the-recording-json">5.2 The recording JSON</h3>
+<p>Added 2026-10-09, additive. A route of the stack for CMS plugins (the WordPress block and the Omeka S module), not a request of the player:</p>
+<pre tabindex="0"><code>GET {origin}/embed/v1/recordings/{project}/{id}.json
+</code></pre>
+<pre tabindex="0"><code class="language-json">{ &quot;id&quot;: &quot;1&quot;, &quot;title&quot;: &quot;Ferry crossing, 1962&quot;, &quot;url&quot;: &quot;https://archive.example/f.mp3&quot;, &quot;duration&quot;: 1834 }
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li><code>id</code> is the recording number of the catalogue (the <code>recording</code> attribute). <code>url</code> is the first audio address of the recording: the value for <code>src</code>. <code>duration</code> is in seconds, or <code>null</code> when the catalogue does not know it.</li>
+<li>Anonymous, <code>Access-Control-Allow-Origin: *</code>, the headers of 5.1. An <code>If-None-Match</code> with the current <code>ETag</code> gives 304.</li>
+<li>404 (with the 60 s cache rule) for an unknown project, an unknown recording, or a file name that is not <code>{number}.json</code>. A known project serves every recording of the catalogue: the catalogue is organisation-wide.</li>
+<li>The shape follows 3.2, rule 6: the stack can add keys; it cannot remove or rename them within v1.</li>
+</ol>
+<hr>
+<h2 id="6-network-contract">6 Network contract</h2>
+<p>The player makes only these requests. It makes no other request: no analytics, no fonts, no third-party hosts.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 6 Network contract"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Request</th>
+<th>When</th>
+<th>Kind</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>GET {loader origin}/embed/v1/&lt;hash&gt;/player.js</code></td>
+<td>Once per page.</td>
+<td>Module import. CORS. No credentials.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>GET {origin}/embed/v1/themes/{project}.json</code></td>
+<td>Once per project per page.</td>
+<td><code>fetch</code>, simple CORS request.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>GET {origin}/stories/{project}/{recording}/</code></td>
+<td>Once per instance per page.</td>
+<td><code>fetch</code>, simple CORS request.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>GET</code> of each <code>next</code> page link in the stories responses</td>
+<td>Only when an instance has more stories than one page holds.</td>
+<td><code>fetch</code>, simple CORS request.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>GET {src}</code> for waveform data</td>
+<td>Once per player, only when the audio host sends CORS headers.</td>
+<td><code>fetch</code>, simple CORS request.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>The audio, <code>{src}</code></td>
+<td>When the browser&#39;s media element loads it.</td>
+<td>Media element request, made by the browser.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Sound, image or video bodies of stories</td>
+<td>A sound: when the visitor plays it (<code>preload=&quot;none&quot;</code>; WebKit can still get the file once). An image: when it comes near the viewport (<code>loading=&quot;lazy&quot;</code>). A video: its metadata, when the story list shows. Changed 2026-10-09, additive.</td>
+<td>Media element or image request, made by the browser. No <code>crossorigin</code>. Only <code>http:</code> and <code>https:</code> body URLs.</td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ol>
+<li>Requests 2 to 5 are plain GETs. They send no <code>Prefer</code> header and no <code>Accept</code> header with <code>profile=&quot;…&quot;</code>. Either one forces a CORS preflight for every URL (<a href="https://github.com/micahchoo/annoudio/blob/main/design/stories-interface-C-common-caller.md"><code>design/stories-interface-C-common-caller.md</code></a> §1.8). The player sets no custom request headers. The browser&#39;s own cache can add <code>If-None-Match</code>; that does not cause a preflight.</li>
+<li>The player&#39;s <code>fetch</code> calls use <code>credentials: &quot;omit&quot;</code> and <code>mode: &quot;cors&quot;</code>. So they send no cookies.</li>
+<li>The media element has no <code>crossorigin</code> attribute. So any audio host works, also one without CORS. The browser applies its own cookie rules to media requests. The player does not read or set them.</li>
+<li>The stack never reads or sets a cookie on the routes in requests 1 to 4. The player never knows if a visitor is signed in (<a href="context.html"><code>CONTEXT.md</code></a>, fixed decisions).</li>
+<li>The player reads the stories with the URL scheme of <a href="https://github.com/micahchoo/annoudio/blob/main/design/stories-interface-C-common-caller.md"><code>design/stories-interface-C-common-caller.md</code></a> §1.1 and nothing else. It percent-encodes <code>project</code> and <code>recording</code>.</li>
+<li>The player follows a <code>next</code> link only when it has the same origin as the container. It follows at most 20 <code>next</code> links. If a page fails, the player shows <code>stories-unavailable</code>.</li>
+<li>Two players with the same instance on one page share one stories request. Two players with the same project share one theme request.</li>
+<li>For request 5, the player aborts the fetch when <code>Content-Length</code> is missing or above 20 000 000 bytes. Then it draws the timeline without a waveform. This limit is implementation and can change. Request 5 can download the audio a second time; that is the cost of a waveform.</li>
+<li>The player ignores story bodies of a type it does not know. It skips a story whose selector it cannot read, with one <code>console.warn</code>.</li>
+<li>The player puts story text into the page with <code>textContent</code> only (stories invariant 7). It sets <code>lang</code> on each text body from the body&#39;s <code>language</code>.</li>
+<li>The player shows each <code>Sound</code>, <code>Image</code> and <code>Video</code> body with an <code>http:</code> or <code>https:</code> <code>id</code> as one <code>story-media</code> part, after the text of its story. An image has the first text body of its story as <code>alt</code> (every media body comes with a short text). Playing a sound or a video body pauses the recording. Added 2026-10-09, additive.</li>
+<li>Replies (added 2026-10-09, additive). A reply is a WADM annotation with <code>motivation: &quot;replying&quot;</code> and the story IRI as its <code>target</code> (a plain IRI). The stack serves the published replies of a story inside its page item, under the key <code>annoudio:replies</code>: an array of complete annotations without <code>@context</code>, oldest first. A page or container that holds such an item adds one extension context object: <code>&quot;@context&quot;: [&quot;http://www.w3.org/ns/anno.jsonld&quot;, …, { &quot;annoudio:replies&quot;: { &quot;@reverse&quot;: &quot;oa:hasTarget&quot; } }]</code>. So for a JSON-LD processor each value is an annotation whose target is the item, which the reply says itself; the key adds no other statement (<a href="https://github.com/micahchoo/annoudio/blob/main/design/phase5b-notes.md"><code>design/phase5b-notes.md</code></a>). The player reads a value only when its <code>motivation</code> is <code>replying</code> and its <code>target</code> is the item&#39;s <code>id</code>. It shows the replies of the open story in the <code>replies</code> part, in array order, with the rules 9 to 11 of a story. Tags of a reply are ignored. The <code>?iris=1</code> variants list the story IRIs only; <code>total</code> counts the stories, not the replies. Each published reply is also at its own IRI, as a complete annotation.</li>
+<li>Value bodies (added 2026-10-09, additive; design/vocab.md §3). Each answer of a story is one body with <code>&quot;type&quot;: [&quot;TextualBody&quot;, &quot;rdf:Statement&quot;]</code>, <code>value</code> (the text to show), an optional <code>language</code>, <code>purpose</code> (<code>tagging</code> for an item of a list, else <code>describing</code>), <code>rdf:subject</code> (<code>{ &quot;id&quot;: &quot;{recording IRI}#t={start},{end}&quot; }</code>), <code>rdf:predicate</code> (<code>{ &quot;id&quot;: property IRI }</code>) and <code>rdf:object</code> (an <code>{ &quot;id&quot; }</code>, a literal with <code>@value</code> and <code>@language</code> or <code>type</code>, or a blank node with <code>type</code> and <code>rdfs:label</code>). They come after the text and media bodies, in field order. The player groups them by <code>rdf:predicate.id</code> and labels them with the theme <code>fields</code> (3.2, rule 8). It shows a date (<code>xsd:gYear</code>, <code>xsd:gYearMonth</code>, <code>xsd:date</code>) at its stored precision with <code>Intl.DateTimeFormat</code>, and the <code>rdf:object</code> address of a <code>link</code> field as a link with <code>rel=&quot;nofollow ugc&quot;</code>, only for <code>http:</code> and <code>https:</code>. All text goes in with <code>textContent</code>. A player of an earlier release reads a value body as a text line (a <code>tagging</code> one as a tag): extra text, no lost data. This stack no longer writes the tag pair of the earlier releases (<code>SpecificResource</code> + <code>TextualBody</code>, both <code>tagging</code>); the player still shows such a pair from another stack as a <code>tag</code>.</li>
+</ol>
+<hr>
+<h2 id="7-the-annotate-link">7 The Annotate link</h2>
+<h3 id="71-the-link">7.1 The link</h3>
+<p>When <code>annotate=&quot;link&quot;</code>, the player shows a normal <code>&lt;a href&gt;</code> link. It opens in the same tab:</p>
+<pre tabindex="0"><code>{origin}/annotate?project={project}&amp;recording={recording}&amp;t={seconds}&amp;return={page}
+</code></pre>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 7.1 The link"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>project</code>, <code>recording</code></td>
+<td>The attribute values, percent-encoded.</td>
+</tr>
+<tr>
+<td><code>t</code></td>
+<td>The current playback time, rounded down to a whole second. <code>0</code> before playback.</td>
+</tr>
+<tr>
+<td><code>return</code></td>
+<td><code>encodeURIComponent</code> of the host page URL without its fragment. The player leaves out <code>return</code> when the encoded value is longer than 2000 characters.</td>
+</tr>
+</tbody></table></div>
+<p>The <code>href</code> always holds the current time when the visitor follows the link. The player does not add a session, a token or any other parameter.</p>
+<h3 id="72-the-return-to-the-host-page">7.2 The return to the host page</h3>
+<p>The Annotate page sends the member back to <code>return</code> with this fragment:</p>
+<pre tabindex="0"><code>#annoudio-t=42&amp;annoudio-project=river-voices&amp;annoudio-recording=rec-0042&amp;annoudio-saved=draft
+</code></pre>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 7.2 The return to the host page"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>annoudio-t</code></td>
+<td>Seconds, a non-negative decimal with at most 3 decimal places: the start of the member&#39;s story, or the <code>t</code> the member came with.</td>
+</tr>
+<tr>
+<td><code>annoudio-project</code>, <code>annoudio-recording</code></td>
+<td>The instance.</td>
+</tr>
+<tr>
+<td><code>annoudio-saved</code></td>
+<td>Optional. <code>draft</code> means the member saved a story that waits for review. <code>published</code> means the save published it at once (the project publishes each story at once); added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>annoudio-reply</code></td>
+<td>Optional. The story id of a story that the member answered (7.3). Added 2026-10-09, additive.</td>
+</tr>
+<tr>
+<td><code>annoudio-story</code></td>
+<td>Optional. The id of a story to open, with no note: a link from a mail or the admin (&quot;Listen on the site&quot;, &quot;Open on the site&quot;). Added 2026-10-09, additive.</td>
+</tr>
+</tbody></table></div>
+<p>When the player starts, it reads <code>location.hash</code> as URL search parameters. The first player in document order whose <code>project</code> and <code>recording</code> match does these steps:</p>
+<ol>
+<li>It seeks to <code>annoudio-t</code> (as <code>seek</code>).</li>
+<li>It scrolls itself into view, with no smooth scroll.</li>
+<li>It moves focus to its <code>play-button</code>.</li>
+<li>If <code>annoudio-saved=draft</code>, it shows a note in the <code>message</code> part: &quot;Your story is sent. It shows here after review.&quot; With <code>annoudio-reply</code>, the note is &quot;Your reply is sent. It shows here after review.&quot; If <code>annoudio-saved=published</code> (added 2026-10-09, additive), the note is &quot;Your story is published. It can take one minute to show.&quot; (a reply: &quot;Your reply is published. …&quot;): a cache can keep the old list for up to <code>STORIES_MAX_AGE</code>.</li>
+<li>If <code>annoudio-reply</code> names a story of its container, it opens that story (as a visitor does: it seeks to the start and dispatches <code>annoudio:story-open</code>), so the thread shows. This happens before steps 2 and 3. Added 2026-10-09, additive.</li>
+<li>If <code>annoudio-story</code> names a story of its container, it opens that story in the same way as <code>annoudio-reply</code>, with no note. A reply id opens nothing. Added 2026-10-09, additive.</li>
+</ol>
+<p>The player does not start playback. It does not remove the fragment from the URL. Other players ignore the fragment. Fragment keys that start with <code>annoudio-</code> are reserved for the player. A host page that uses the fragment for its own routing loses that state on return.</p>
+<p>Why a fragment: the browser does not send it to the host&#39;s server. So it does not change server caches and does not need host code.</p>
+<h3 id="73-the-reply-link">7.3 The Reply link</h3>
+<p>Added 2026-10-09, additive. When <code>annotate=&quot;link&quot;</code>, the open story shows a Reply link in its thread, a normal <code>&lt;a href&gt;</code> that opens in the same tab:</p>
+<pre tabindex="0"><code>{origin}/annotate?project={project}&amp;recording={recording}&amp;t={start}&amp;replyTo={id}&amp;return={page}
+</code></pre>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 7.3 The Reply link"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>t</code></td>
+<td>The start of the story, rounded down to a whole second.</td>
+</tr>
+<tr>
+<td><code>replyTo</code></td>
+<td>The story id: the last path segment of the story IRI. The player shows a Reply link only for a story whose IRI is <code>{container IRI}{id}</code>.</td>
+</tr>
+<tr>
+<td><code>project</code>, <code>recording</code>, <code>return</code></td>
+<td>As in 7.1.</td>
+</tr>
+</tbody></table></div>
+<p>The Annotate page shows the story above a text box and sends the member back with the fragment of 7.2, with <code>annoudio-reply={id}</code>.</p>
+<hr>
+<h2 id="8-invariants">8 Invariants</h2>
+<ol>
+<li>The player never renders blank. When it cannot work, it shows a plain-language message in the <code>message</code> part (section 9). The one exception: the loader did not run at all. Then only fallback content can show (section 1, rule 5).</li>
+<li>The player shows only published stories. It cannot show a draft: the read routes never return one.</li>
+<li>The player never writes. Writes happen only on the Annotate page.</li>
+<li>The player has the same behaviour on every host page. It has no per-host configuration other than attributes and CSS.</li>
+<li>The player never changes the host page outside its own element, except the one <code>customElements</code> entry.</li>
+<li>Stories show in timeline order, as the container gives them. The player does not sort.</li>
+</ol>
+<hr>
+<h2 id="9-error-modes">9 Error modes</h2>
+<p>Each error shows a message in the <code>message</code> part, in the player&#39;s UI language, and dispatches <code>annoudio:error</code>. The player also writes one <code>console.warn</code> with the code and the details for the site owner.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 9 Error modes"><table>
+<thead>
+<tr>
+<th><code>code</code></th>
+<th>Cause</th>
+<th>What the player does</th>
+<th>Message (English)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>missing-attribute</code></td>
+<td><code>project</code>, <code>recording</code> or <code>src</code> is missing or empty.</td>
+<td>Shows only the message. No requests.</td>
+<td>&quot;This audio player is not set up correctly. The <code>project</code> value is missing.&quot; (names the attribute)</td>
+</tr>
+<tr>
+<td><code>invalid-attribute</code></td>
+<td><code>src</code> is not an <code>http:</code> or <code>https:</code> URL, or <code>origin</code> is not an origin.</td>
+<td>Shows only the message. No requests.</td>
+<td>&quot;This audio player is not set up correctly. The <code>src</code> value is not a web address.&quot;</td>
+</tr>
+<tr>
+<td><code>not-found</code></td>
+<td>The stories route answers 404: unknown project or recording.</td>
+<td>Plays the audio. Hides the Annotate link.</td>
+<td>&quot;Stories for this recording are not available.&quot;</td>
+</tr>
+<tr>
+<td><code>stories-unavailable</code></td>
+<td>Network error, CORS failure, a status other than 200, 304 or 404, or a body that is not a container.</td>
+<td>Plays the audio. Keeps the Annotate link.</td>
+<td>&quot;Stories could not load. Reload the page to try again.&quot;</td>
+</tr>
+<tr>
+<td><code>audio-unavailable</code></td>
+<td>The media element reports an error, for example 404 or a format the browser cannot play.</td>
+<td>Shows the stories without a timeline.</td>
+<td>&quot;The audio could not load.&quot;</td>
+</tr>
+<tr>
+<td><code>bundle-unavailable</code></td>
+<td>The loader could not import the bundle.</td>
+<td>Shows only the message (section 5, step 7).</td>
+<td>&quot;The audio player could not load. Reload the page to try again.&quot;</td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ol>
+<li>Within v1, the stack can add codes. Hosts must treat an unknown code as an error.</li>
+<li>The message text is not part of the contract. The codes are.</li>
+<li>A missing project theme is not an error (section 3.2, rule 4). A missing waveform is not an error.</li>
+</ol>
+<hr>
+<h2 id="10-performance">10 Performance</h2>
+<ol>
+<li><code>v1.js</code> is at most 1 KB after gzip. The bundle is at most 80 KB after gzip.</li>
+<li>The loader blocks nothing: <code>async</code> fetches it in parallel with parsing (MDN, <code>&lt;script&gt;</code>, <code>async</code>).</li>
+<li>With one page of stories, a player needs three requests on a cold cache: bundle (once per page), theme (once per project), container. The audio streams with <code>preload=&quot;metadata&quot;</code>.</li>
+<li>Requests 2 and 3 start at the same time. The audio request does not wait for them.</li>
+<li>The player does no work for the timeline before it is near the viewport. It does fetch its stories, so <code>annoudio:ready</code> can fire.</li>
+<li>Updates during playback use <code>requestAnimationFrame</code>. The player does not update when its tab is hidden.</li>
+<li>A new published story shows on host pages after at most <code>STORIES_MAX_AGE</code> seconds (default 60). The browser cache does this. The player has no cache of its own.</li>
+</ol>
+<hr>
+<h2 id="11-accessibility">11 Accessibility</h2>
+<p>The player meets WCAG 2.2 level AA with its default tokens. In detail:</p>
+<ol>
+<li>Keyboard: every control is a native <code>&lt;button&gt;</code>, <code>&lt;a&gt;</code> or <code>&lt;input type=&quot;range&quot;&gt;</code>. Tab reaches each one in visual order. The timeline is the range input: Left and Right arrows move 5 s, Page Up and Page Down move 30 s, Home and End go to the start and the end.</li>
+<li>Each story is reachable from the keyboard in the <code>stories</code> list. The timeline regions are a second way to reach them, not the only way.</li>
+<li>Labels: every control has an accessible name in the UI language (&quot;Play&quot;, &quot;Pause&quot;, &quot;Seek&quot;). The timeline has <code>aria-valuetext</code>, for example &quot;0:42 of 3:10&quot;. Each story has a name, for example &quot;Story by Leela, 0:42 to 0:51&quot;. The frame is a group named with the container <code>label</code> (the recording title), or &quot;Recording and its stories&quot; if there is none (was &quot;Audio player&quot; until 2026-10-09: the word people read is &quot;widget&quot;, CONTEXT.md).</li>
+<li>Focus: a visible focus ring of at least 2 px in <code>--annoudio-color-focus</code>, at least 3:1 against the surface with default tokens.</li>
+<li>Target size: every control is at least 24 × 24 CSS px.</li>
+<li>Reduced motion: with <code>prefers-reduced-motion: reduce</code>, the player has no transitions, no animated scroll and no animated waveform. The playback position still moves, because it is information.</li>
+<li>Contrast: see section 3.1, rule 6.</li>
+<li>Forced colours: see section 3.1, rule 5.</li>
+<li>No autoplay. Nothing plays until the visitor starts it.</li>
+<li>Reflow: the player works at 280 CSS px wide and at 200 % text size with no horizontal scroll inside it.</li>
+<li>Messages in the <code>message</code> part use <code>role=&quot;status&quot;</code>, so a screen reader reads them without a focus move.</li>
+<li>Language: the player&#39;s own text has the UI language. Each story text has its own <code>lang</code> (section 6, rule 10).</li>
+</ol>
+<hr>
+<h2 id="12-versioning">12 Versioning</h2>
+<h3 id="121-the-rule">12.1 The rule</h3>
+<p>The contract is v1. It has the path <code>/embed/v1.js</code> and the tag name <code>annoudio-player</code>. Every release of Annoudio serves <code>/embed/v1.js</code> with the v1 contract, also after v2 exists. A breaking change makes v2: a new path <code>/embed/v2.js</code> and a new tag name. So a v1 snippet and a v2 snippet can be on one page.</p>
+<h3 id="122-what-is-breaking">12.2 What is breaking</h3>
+<p>Breaking (needs v2):</p>
+<ul>
+<li>Remove or rename an attribute, token, part, event, <code>detail</code> field, error code or theme JSON key.</li>
+<li>Change the meaning or type of any of them.</li>
+<li>Make an optional attribute required, or remove a value of <code>annotate</code>.</li>
+<li>Change a default behaviour: for example, the default of <code>annotate</code>, the default origin, the Annotate URL, the return fragment, the order of strength in section 3.1.</li>
+<li>Remove the method <code>seek</code> or change what it does.</li>
+<li>Add a request that hosts must allow in their content security policy, to a new host.</li>
+</ul>
+<p>Not breaking (a v1 release can do it):</p>
+<ul>
+<li>Add an optional attribute, a token, a part, an event, a <code>detail</code> field, an error code, an <code>annotate</code> value or a theme JSON key.</li>
+<li>Make a required attribute optional.</li>
+<li>Change implementation: the bundle, the DOM inside the shadow tree, the message texts, internal limits.</li>
+<li>Change a default token value to fix an accessibility failure. The release notes say so.</li>
+</ul>
+<h3 id="123-deprecation">12.3 Deprecation</h3>
+<ol>
+<li>A deprecated item keeps working until the end of v1.</li>
+<li>The changelog and this file name each deprecated item, the date, and the replacement.</li>
+<li>When a page uses a deprecated item, the player writes one <code>console.info</code> per page per item. It starts with <code>annoudio:</code> and names the replacement.</li>
+</ol>
+<h3 id="124-prior-art-research-9">12.4 Prior art (research §9)</h3>
+<ul>
+<li>Hypothesis (<code>https://hypothes.is/embed.js</code>) and Plausible keep one loader URL and ship fixes behind it. Plausible kept its old script working when it made a new one in October 2025. Annoudio takes the stable loader and the hashed bundle from them.</li>
+<li>YouTube&#39;s IFrame API retires features with dated notices, not new URLs. Annoudio takes the dated deprecation notice.</li>
+<li>Disqus and giscus put the contract in attributes or a config object, not in the script internals. Annoudio does the same: attributes, tokens, parts, events.</li>
+<li>None of them puts a version in the loader path. Annoudio does, for two reasons. Each organisation runs its own copy and upgrades at its own time, so no central party can move all hosts at once. And a version in the path and the tag name lets v1 and v2 run on one page.</li>
+</ul>
+<hr>
+<h2 id="13-host-notes">13 Host notes</h2>
+<p>These are facts about host platforms. Phase 2 tests them. They are not promises.</p>
+<ul>
+<li>Content security policy: a host with a CSP must allow the origin in <code>script-src</code> and <code>connect-src</code>, and the audio host in <code>media-src</code> and <code>connect-src</code>. Image and video bodies (Phase 4) also need <code>img-src</code> and <code>media-src</code>. A strict <code>style-src</code> does not block the player&#39;s styles: they are constructed stylesheets. The browser reports one <code>style-src-elem</code> violation per player for an internal <code>&lt;style&gt;</code> element; it has no effect. If <code>src</code> is on a host without CORS, browsers log one or two console errors for the waveform request. The player works without a waveform.</li>
+<li>WordPress: a hand-pasted <code>&lt;script&gt;</code> survives only for users with the <code>unfiltered_html</code> capability (Custom HTML block). The WordPress block (Phase 7) removes this need.</li>
+<li>Omeka S: the HTML purifier setting can remove <code>&lt;script&gt;</code> and unknown elements from page content. The Omeka S module (Phase 7) removes this need.</li>
+</ul>
+<hr>
+<h2 id="14-alternatives-considered">14 Alternatives considered</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 14 Alternatives considered"><table>
+<thead>
+<tr>
+<th>Alternative</th>
+<th>Decision</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>An <code>&lt;iframe&gt;</code> from the origin instead of a custom element</td>
+<td>Rejected</td>
+<td>Fixed height, no theming by host CSS, no <code>::part</code>, <code>postMessage</code> for events. It does not give the session back either: Safari blocks third-party cookies (research §2).</td>
+</tr>
+<tr>
+<td>No version in the path (<code>/embed.js</code>), as Hypothesis, Disqus, giscus</td>
+<td>Rejected</td>
+<td>Section 12.4.</td>
+</tr>
+<tr>
+<td>A pinned bundle URL in the snippet, with <code>integrity</code></td>
+<td>Rejected</td>
+<td>No fix reaches a pasted snippet. The snippet lives for years.</td>
+</tr>
+<tr>
+<td><code>src</code> optional, with a catalogue lookup</td>
+<td>Deferred</td>
+<td>Section 2.2. It can come in a later v1 without a break.</td>
+</tr>
+<tr>
+<td>A <code>theme</code> attribute, or tokens inside the stories container</td>
+<td>Rejected</td>
+<td>A pasted attribute cannot change later. The container is Web Annotation Protocol data for all clients, not presentation.</td>
+</tr>
+<tr>
+<td>The project theme as a stylesheet (<code>theme.css</code>)</td>
+<td>Rejected</td>
+<td>Arbitrary CSS can break the player and ties the stack to private CSS names. JSON tokens do neither (section 3.2).</td>
+</tr>
+<tr>
+<td>Automatic dark mode</td>
+<td>Rejected</td>
+<td>The player must match the host page, not the operating system (section 3.1, rule 4).</td>
+</tr>
+<tr>
+<td>Properties that mirror the attributes, or <code>play()</code>, <code>pause()</code></td>
+<td>Deferred</td>
+<td>No v1 caller needs them. <code>seek</code> covers the return case and transcript links. Adding them later is not breaking. <code>currentTime</code> was added on 2026-10-09 (4.3): the Annotate page needs the time to fill a story range.</td>
+</tr>
+<tr>
+<td>A cancelable <code>annoudio:annotate</code></td>
+<td>Deferred</td>
+<td>A host could then stop a member from leaving to write a story. A later v1 can make it cancelable.</td>
+</tr>
+<tr>
+<td>A query parameter instead of a fragment on return</td>
+<td>Rejected</td>
+<td>Section 7.2.</td>
+</tr>
+<tr>
+<td>The player reads a session to show &quot;signed in as&quot;</td>
+<td>Rejected</td>
+<td>The player never knows about sessions (<a href="context.html"><code>CONTEXT.md</code></a>).</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="15-dependencies-outside-the-player-module">15 Dependencies outside the <code>player</code> module</h2>
+<p>These follow from this contract. They are not done here.</p>
+<ol>
+<li><a href="context.html"><code>CONTEXT.md</code></a>, module map, <code>player</code> row: add the theme route <code>GET {origin}/embed/v1/themes/{project}.json</code> as a dependency. The <code>projects</code> collection needs the theme token fields that this route serves.</li>
+<li><code>annotate-page</code>: it must send the member back with the fragment in section 7.2. It must accept <code>return</code> only for <code>http:</code> and <code>https:</code> URLs, or it is an open redirect. Recommendation: a list of allowed site origins per project.</li>
+<li><code>deploy</code>: the stack must keep the bundles of two earlier releases (section 5.1). The domain in the snippet must stay stable for years (research §9, main risk).</li>
+<li>Phase 1 &quot;done when&quot; pastes this snippet into a bare HTML file. That needs a stub <code>v1.js</code> that defines the element and shows <code>missing-attribute</code> and <code>not-found</code> correctly.</li>
+</ol>
+<hr>
+<h2 id="16-contract-tests">16 Contract tests</h2>
+<p>These run in Phase 2 against a fixture server, in Chromium, Firefox and WebKit. They use only the public surface.</p>
+<ol>
+<li>The snippet on a bare page makes no console errors, and the requests match section 6 exactly.</li>
+<li>Two copies of the loader on one page define the element once and fetch the bundle once.</li>
+<li>Each row of table 9 shows its message and dispatches <code>annoudio:error</code> with its code.</li>
+<li>A token set on <code>:root</code> changes the player. A project theme changes it. The host token wins over the project theme.</li>
+<li>Each part in table 3.3 can be styled with <code>::part()</code>. Host CSS for <code>button</code> does not change the player. The player&#39;s CSS does not change host elements.</li>
+<li>Each event in table 4.1 fires with the documented <code>detail</code>. <code>currentTime</code> is <code>NaN</code> before <code>annoudio:ready</code> and follows playback and <code>seek</code>; <code>annoudio:timeupdate</code> fires at most 4 times per second.</li>
+<li>The Annotate link carries the current <code>t</code> and <code>return</code>. The return fragment seeks the matching player only, and shows the draft note.</li>
+<li>Keyboard only: play, seek, open a story, follow the Annotate link. Axe finds no violations with default tokens.</li>
+<li>Reply threads (added 2026-10-09): the thread shows only under the open story, in order, as text; reply media bodies are <code>story-media</code> parts; the Reply link carries <code>replyTo</code> and the story start, and fires <code>annoudio:annotate</code> with <code>story</code>; <code>annotate=&quot;none&quot;</code> hides every Reply link; the fragment with <code>annoudio-reply</code> opens the story and shows the reply note; axe finds no violations with an open thread.</li>
+<li>The project frame and the new fragment keys (added 2026-10-09): a theme with <code>rightsLine</code> and <code>rightsIri</code> gives one <code>rights</code> part below the stories, a link to the licence; a theme without them gives none; an empty container shows its note in <code>message</code> and keeps the Annotate link; <code>annoudio-saved=published</code> shows the published note; <code>annoudio-story</code> opens the story with no note; axe finds no violations in these states.</li>
+<li>Answers (added 2026-10-09): with theme <code>fields</code>, value bodies show as <code>fields</code> &gt; <code>field</code> &gt; <code>field-label</code> + <code>field-value</code> in field order; a list value keeps the part <code>tag</code>; a field shown as tags gives <code>tag</code> parts with no label; <code>showAs: none</code> shows nothing; a value with no field label shows after the others with no label; a date shows at its precision; a link field gives a <code>nofollow ugc</code> link for <code>https:</code> only, text for <code>javascript:</code>; a relabel in the theme changes the label with the same stories; with no theme, list values are tags; axe finds no violations.</li>
+<li>The range and the intro (added 2026-10-09): <code>range=&quot;2,5&quot;</code> gives one <code>range</code> part that <code>::part(range)</code> styles; a drag on the waveform dispatches one <code>annoudio:range</code> with <code>start</code> before <code>end</code>; a change of the attribute moves the range and dispatches nothing; without the attribute there is no <code>range</code> part; the <code>intro</code> part shows above the stories; axe finds no violations with a range.</li>
+</ol>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

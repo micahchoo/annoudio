@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Annoudio: architecture concerns · Annoudio</title>
+<meta name="description" content="Date of research: 2026-10-09. All claims cite the page that owns them. Dates are &quot;last commit / last release&quot; as shown by the GitHub API on that day.">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html" aria-current="page">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/research/architecture-concerns.md"><code>research/architecture-concerns.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (13 sections)</summary><ol><li><a href="#what-this-answers">What this answers</a></li><li><a href="#1-wadm-fit-and-server-reuse">1. WADM fit and server reuse</a></li><li><a href="#2-cross-origin-embed-in-2026">2. Cross-origin embed in 2026</a></li><li><a href="#3-mediarecorder-in-2026">3. MediaRecorder in 2026</a></li><li><a href="#4-prior-art">4. Prior art</a></li><li><a href="#5-self-hosted-identity-providers-as-a-sidecar">5. Self-hosted identity providers as a sidecar</a></li><li><a href="#6-skos-vocabulary-editing">6. SKOS vocabulary editing</a></li><li><a href="#7-admin-gui-first-backends">7. Admin-GUI-first backends</a></li><li><a href="#8-upload-and-processing-chain">8. Upload and processing chain</a></li><li><a href="#9-embed-snippet-versioning">9. Embed snippet versioning</a></li><li><a href="#10-ops-for-non-technical-teams">10. Ops for non-technical teams</a></li><li><a href="#decisions-this-changes">Decisions this changes</a></li><li><a href="#unverified">Unverified</a></li></ol></details>
+<h1 id="annoudio-architecture-concerns">Annoudio: architecture concerns</h1>
+<p>Date of research: 2026-10-09. All claims cite the page that owns them. Dates are &quot;last commit / last release&quot; as shown by the GitHub API on that day.</p>
+<h2 id="what-this-answers">What this answers</h2>
+<p>Annoudio is an embeddable audio annotation widget: one Docker container per organisation, annotations stored as W3C Web Annotations, a custom-element player dropped into hand-built sites, WordPress and Omeka S, community accounts inside the container, and annotation bodies that can be text, browser-recorded voice notes, images or video.</p>
+<p>Hard constraint (added during research): a largely non-technical team runs the system day to day and wants a GUI for everything (projects, vocabularies, recording catalogue, review queue, theming, user management, and ideally updates and deploys). Every verdict below applies that constraint.</p>
+<p>The ten sections answer: (1) does the W3C model fit and can a server be reused; (2) what a cross-origin embed can and cannot do in 2026; (3) what browsers record and play; (4) what prior art exists; (5) which identity provider, if any; (6) how to edit SKOS vocabularies; (7) which admin-GUI backend; (8) the upload and processing chain; (9) how to version the embed snippet; (10) GUI tools to deploy and update the stack.</p>
+<p>Terms used throughout:</p>
+<ul>
+<li><strong>WADM</strong>: W3C Web Annotation Data Model. A JSON-LD format for &quot;this body says something about this target&quot;.</li>
+<li><strong>Media Fragment</strong>: a URL suffix such as <code>#t=30,60</code> that names a time range in audio or video.</li>
+<li><strong>IRI</strong>: an internationalised URL. WADM uses IRIs as identifiers.</li>
+<li><strong>SKOS</strong>: a W3C vocabulary for controlled term lists (concepts with labels, broader and narrower links).</li>
+<li><strong>OIDC</strong>: OpenID Connect, the standard login hand-off between an app and an identity provider.</li>
+</ul>
+<hr>
+<h2 id="1-wadm-fit-and-server-reuse">1. WADM fit and server reuse</h2>
+<h3 id="finding">Finding</h3>
+<p>WADM covers every structure Annoudio needs. An audio, image or video body is an &quot;External Web Resource&quot; with an <code>id</code>, a <code>format</code> (media type) and a <code>type</code>. The type for audio is <code>Sound</code>, not <code>Audio</code>. A time range on an audio target is a <code>SpecificResource</code> whose <code>selector</code> is a <code>FragmentSelector</code> with <code>conformsTo</code> set to the Media Fragments URL and <code>value</code> such as <code>t=30,60</code>. <code>scope</code> records the page the user was on. <code>rights</code> is an IRI that can sit on the annotation, the body or the target. A tag is a <code>TextualBody</code> with <code>purpose: tagging</code>; a tag that points at a SKOS concept is a <code>SpecificResource</code> body with <code>purpose: tagging</code> and <code>source</code> set to the concept IRI; the two can sit side by side in one <code>body</code> array. The Web Annotation Protocol asks a server for a small set of HTTP behaviours (GET/HEAD/OPTIONS on annotations and containers, POST to create, PUT and DELETE, ETags, Link headers, LDP containers with paging). No existing open-source server is both maintained and fitted with an admin GUI.</p>
+<h3 id="evidence">Evidence</h3>
+<ul>
+<li>External Web Resources: <code>id</code> MUST be exactly 1; <code>format</code> SHOULD be the media type; <code>language</code> optional. <a href="https://www.w3.org/TR/annotation-model/#external-web-resources">https://www.w3.org/TR/annotation-model/#external-web-resources</a> (REC 2017-02-23)</li>
+<li>Classes: the listed <code>type</code> values are <code>Dataset</code>, <code>Image</code>, <code>Video</code>, <code>Sound</code>, <code>Text</code>. &quot;Sound: the class for a resource primarily intended to be heard.&quot; <a href="https://www.w3.org/TR/annotation-model/#classes">https://www.w3.org/TR/annotation-model/#classes</a></li>
+<li>Segments: an IRI with a fragment MAY be used directly, but &quot;annotation systems may not discover annotations with fragment components when searching by means of the IRI without the fragment&quot;. The spec RECOMMENDS <code>FragmentSelector</code> instead. <a href="https://www.w3.org/TR/annotation-model/#segments-of-external-resources">https://www.w3.org/TR/annotation-model/#segments-of-external-resources</a></li>
+<li>Fragment Selector: <code>type</code> MUST be <code>FragmentSelector</code>; <code>value</code> MUST be exactly 1; <code>conformsTo</code> SHOULD be exactly 1. The table lists Media = <code>http://www.w3.org/TR/media-frags/</code>. The example body uses <code>&quot;selector&quot;: {&quot;type&quot;:&quot;FragmentSelector&quot;,&quot;conformsTo&quot;:&quot;http://www.w3.org/TR/media-frags/&quot;,&quot;value&quot;:&quot;t=30,60&quot;}</code>. <a href="https://www.w3.org/TR/annotation-model/#fragment-selector">https://www.w3.org/TR/annotation-model/#fragment-selector</a></li>
+<li>Specific Resource: <code>source</code> MUST be exactly 1; same classes for body and target. <a href="https://www.w3.org/TR/annotation-model/#specific-resources">https://www.w3.org/TR/annotation-model/#specific-resources</a></li>
+<li>Purpose on an external resource: the &quot;Qitara&quot; example tags a photo with a city IRI: <code>&quot;body&quot;: {&quot;type&quot;:&quot;SpecificResource&quot;,&quot;purpose&quot;:&quot;tagging&quot;,&quot;source&quot;:&quot;http://example.org/city1&quot;}</code>. <a href="https://www.w3.org/TR/annotation-model/#purpose-for-external-web-resources">https://www.w3.org/TR/annotation-model/#purpose-for-external-web-resources</a></li>
+<li>Motivation and purpose: <code>purpose</code> MAY be 0 or more on a <code>TextualBody</code>; the example has two bodies in one array, one with <code>&quot;purpose&quot;:&quot;tagging&quot;</code>. <a href="https://www.w3.org/TR/annotation-model/#motivation-and-purpose">https://www.w3.org/TR/annotation-model/#motivation-and-purpose</a></li>
+<li>Rights: &quot;There MAY be at exactly 0 or more <code>rights</code> statements ... and the value MUST be an IRI.&quot; Example sets <code>rights</code> on the annotation and on the body. <a href="https://www.w3.org/TR/annotation-model/#rights-information">https://www.w3.org/TR/annotation-model/#rights-information</a></li>
+<li>Scope: &quot;There MAY be 0 or more <code>scope</code> relationships for each Specific Resource.&quot; <a href="https://www.w3.org/TR/annotation-model/#scope-of-a-resource">https://www.w3.org/TR/annotation-model/#scope-of-a-resource</a></li>
+<li>Body cardinality: &quot;The <code>body</code> and/or <code>target</code> relationships of the Annotation may be arrays rather than a single object.&quot; <a href="https://www.w3.org/TR/annotation-model/#cardinality-of-bodies-and-targets">https://www.w3.org/TR/annotation-model/#cardinality-of-bodies-and-targets</a></li>
+<li>Appendix A (selector/media-type table) lists <code>Video (video/*)</code> with Fragment = ✔ but has no audio row. <a href="https://www.w3.org/TR/annotation-model/#correspondence-among-media-types-and-selectors">https://www.w3.org/TR/annotation-model/#correspondence-among-media-types-and-selectors</a></li>
+<li>Media Fragments time syntax: <code>t=10,20</code> is the interval [10,20); <code>t=,20</code> is [0,20); <code>t=10</code> is [10,end). Default format is Normal Play Time (<code>npt</code>). <code>npt-sec = 1*DIGIT [&quot;.&quot; *DIGIT]</code>; <code>hh:mm:ss</code> form needs minutes and seconds as exactly two digits. <a href="https://www.w3.org/TR/media-frags/#naming-time">https://www.w3.org/TR/media-frags/#naming-time</a> (REC 2012-09-25)</li>
+<li>Protocol, annotation IRI: server MUST support GET, HEAD, OPTIONS; MUST return JSON-LD with <code>application/ld+json</code>; MUST send <code>Link: &lt;http://www.w3.org/ns/ldp#Resource&gt;; rel=&quot;type&quot;</code>, an <code>ETag</code>, an <code>Allow</code> header. <a href="https://www.w3.org/TR/annotation-protocol/#annotation-retrieval">https://www.w3.org/TR/annotation-protocol/#annotation-retrieval</a> (REC 2017-02-23)</li>
+<li>Protocol, containers: server MUST provide one or more Annotation Containers; containers SHOULD be LDP Basic Containers; container IRI path MUST end in <code>/</code>; MUST support GET, HEAD, OPTIONS; MUST return <code>Link</code> headers for the container type and <code>ldp#constrainedBy</code>; if there are annotations the representation MUST link <code>first</code> or embed the first page; SHOULD include <code>total</code> and <code>modified</code>; <code>Prefer</code> header controls IRIs vs full descriptions. <a href="https://www.w3.org/TR/annotation-protocol/#annotation-containers">https://www.w3.org/TR/annotation-protocol/#annotation-containers</a></li>
+<li>Protocol, pages: an <code>AnnotationPage</code> MUST have an IRI, MUST link <code>next</code> if not last, MUST link <code>partOf</code>. <a href="https://www.w3.org/TR/annotation-protocol/#annotation-pages">https://www.w3.org/TR/annotation-protocol/#annotation-pages</a></li>
+<li>Protocol, writes: POST to a container, server MUST assign the <code>id</code>, MUST respond 201 with <code>Location</code>; <code>Slug</code> MAY suggest a path; PUT replaces (SHOULD support) with <code>If-Match</code>; DELETE returns 204. <a href="https://www.w3.org/TR/annotation-protocol/#creation-updating-and-deletion-of-annotations">https://www.w3.org/TR/annotation-protocol/#creation-updating-and-deletion-of-annotations</a></li>
+<li>Elucidate (dlcs/elucidate-server): MIT, Java, &quot;PostgreSQL 9.4+ (the <code>jsonb</code> type is required)&quot;, JWT auth. Last commit 2021-12-20; last release 1.5.1 on 2018-10-15; 24 open issues. No admin UI in README. <a href="https://github.com/dlcs/elucidate-server">https://github.com/dlcs/elucidate-server</a></li>
+<li>SimpleAnnotationServer (glenrobson): Apache-2.0, Java, IIIF/Mirador annotation lists. &quot;This project doesn&#39;t currently contain Authentication&quot;; &quot;Web annotations&quot; is on the roadmap, not done. Last commit 2025-02-05; last release 1.0.2 on 2020-09-15. <a href="https://github.com/glenrobson/SimpleAnnotationServer">https://github.com/glenrobson/SimpleAnnotationServer</a></li>
+<li>miiify (nationalarchives): MIT, &quot;Store annotations in Git, serve them from an optimized read-only store&quot;; IDs are injected at serve time; the write path is <code>miiify-import</code> then <code>miiify-compile</code>, both CLI. Last commit 2026-04-30; no GitHub releases; image <code>ghcr.io/nationalarchives/miiify:latest</code> is 100 MB compressed. <a href="https://github.com/nationalarchives/miiify">https://github.com/nationalarchives/miiify</a></li>
+<li>Hypothesis h: BSD-2-Clause, pushed 2026-09-28, 226 open issues; GitHub releases stopped at v0.39.0 (2019-11-05). Its API schema (<code>docs/_extra/api-reference/hypothesis-v1.yaml</code>) describes <code>TextQuoteSelector</code>, <code>RangeSelector</code>, <code>TextPositionSelector</code> and contains no reference to <code>anno.jsonld</code>, JSON-LD or the W3C model. It is a text-page annotator with its own JSON. <a href="https://github.com/hypothesis/h">https://github.com/hypothesis/h</a></li>
+<li>Omeka S module Annotate also exposes a protocol endpoint (see section 4).</li>
+</ul>
+<h3 id="verdict-for-annoudio">Verdict for Annoudio</h3>
+<p>Store annotations as WADM JSON-LD in Postgres <code>jsonb</code> and implement the protocol endpoints yourself (about eight routes; the MUSTs above are the whole checklist). Use <code>type: Sound</code> on audio bodies, <code>FragmentSelector</code> + <code>conformsTo</code> media-frags for time targets, and a two-body array (<code>SpecificResource</code> with <code>source</code> concept IRI + <code>TextualBody</code> with the label) for SKOS tags. Main risk: none of the reusable servers has an admin GUI, so a non-technical team would gain nothing from reuse and would lose the ability to see and moderate annotations in the same GUI as the recordings; Elucidate is dormant, SAS has no auth and no W3C support, miiify is CLI-driven, Hypothesis is a different data model.</p>
+<hr>
+<h2 id="2-cross-origin-embed-in-2026">2. Cross-origin embed in 2026</h2>
+<h3 id="finding-1">Finding</h3>
+<p>Theming through shadow DOM works today on all engines: CSS custom properties (<code>--name</code>) inherit from the host element into the shadow tree, <code>::part()</code> lets the host page style named inner elements, and <code>adoptedStyleSheets</code> lets one stylesheet serve many component instances. A script on a third-party page cannot read the container&#39;s session: Safari blocks all third-party cookies, Firefox partitions them per site, and Chrome keeps them on by default but has no plan to let embeds rely on them; the Storage Access API needs an iframe, a user gesture and in most browsers a prompt. CHIPS (partitioned cookies) is now in all three engines but only gives a cookie jar scoped to the embedding site, not the container&#39;s first-party session. The honest pattern is: anonymous reads via a public CORS API, writes only on a first-party page on the container&#39;s domain, with an optional short-lived token passed back on redirect.</p>
+<h3 id="evidence-1">Evidence</h3>
+<ul>
+<li>Custom property inheritance: &quot;A custom property defined using two dashes <code>--</code> instead of <code>@property</code> always inherits the value of its parent.&quot; <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties">https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties</a></li>
+<li>Across the shadow boundary: CSS Shadow Module §5.1 motivates custom properties with the outer page setting them on the host &quot;letting inheritance push the values down to where they were needed&quot;; §4.2 &quot;Property inheritance can carry values from one tree to another.&quot; <a href="https://drafts.csswg.org/css-shadow-1/#inheritance">https://drafts.csswg.org/css-shadow-1/#inheritance</a> (Editor&#39;s Draft)</li>
+<li>Encapsulation: &quot;The page CSS does not affect nodes inside the shadow DOM.&quot; <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM">https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM</a></li>
+<li><code>::part()</code>: &quot;The global <code>part</code> attribute makes a shadow tree element visible to its parent DOM&quot;; nested shadow trees need <code>exportparts</code>; Baseline &quot;Widely available ... since July 2020&quot;. <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/::part">https://developer.mozilla.org/en-US/docs/Web/CSS/::part</a></li>
+<li><code>adoptedStyleSheets</code>: &quot;Rules defined in the <code>CSSStyleSheet</code> will be scoped to the shadow DOM tree, as well as any other DOM trees to which we have assigned it.&quot; <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM">https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM</a> — Support: Chrome 73, Firefox 101, Safari 16.4. <a href="https://github.com/mdn/browser-compat-data/blob/main/api/ShadowRoot.json">https://github.com/mdn/browser-compat-data/blob/main/api/ShadowRoot.json</a></li>
+<li>Third-party cookies per browser: &quot;Google Chrome doesn&#39;t block third-party cookies by default, only in Incognito mode&quot;; &quot;Firefox enables Total Cookie Protection if Enhanced Tracking Protection is enabled, as it is by default&quot;; Safari &quot;allowing access to third-party cookies per frame can only be done at the code level, via the Storage Access API&quot;. <a href="https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies">https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies</a></li>
+<li>Safari ITP: &quot;ITP by default blocks all third-party cookies. There are no exceptions to this blocking.&quot; &quot;Third-party cookie access can only be granted through the Storage Access API.&quot; &quot;Third-party LocalStorage and IndexedDB are partitioned per first-party website and also made ephemeral.&quot; <a href="https://webkit.org/tracking-prevention/">https://webkit.org/tracking-prevention/</a></li>
+<li>Firefox Total Cookie Protection default for all desktop users: announced 2022-06-14, &quot;confining cookies to the site where they were created&quot;. <a href="https://blog.mozilla.org/en/products/firefox/firefox-rolls-out-total-cookie-protection-by-default-to-all-users-worldwide/">https://blog.mozilla.org/en/products/firefox/firefox-rolls-out-total-cookie-protection-by-default-to-all-users-worldwide/</a></li>
+<li>Chrome, 2025-04-22: &quot;we&#39;ve made the decision to maintain our current approach to offering users third-party cookie choice in Chrome&quot; and &quot;will not be rolling out a new standalone prompt for third-party cookies.&quot; <a href="https://privacysandbox.google.com/blog/privacy-sandbox-next-steps">https://privacysandbox.google.com/blog/privacy-sandbox-next-steps</a></li>
+<li>Chrome, 2025-10-17: most Privacy Sandbox APIs retired (Topics, Protected Audience, Attribution Reporting, Related Website Sets, IP Protection and others); &quot;We&#39;ll continue to support those APIs [CHIPS and FedCM] and evaluate opportunities for future enhancements&quot;; &quot;Chrome will maintain our current approach to offering users third-party cookie choice in Chrome.&quot; <a href="https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies">https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies</a></li>
+<li>Storage Access API: for &quot;cross-site content loaded in a third-party context (i.e., embedded in an <code>&lt;iframe&gt;</code>)&quot;; &quot;The permission request must be associated with a user gesture (transient activation)&quot;; &quot;Chrome shows prompts for all embedded content that has not previously received storage access&quot;; &quot;Safari shows prompts for all embedded content that has not previously received storage access&quot;; Firefox denies if the user has not interacted with the embedded origin as first party within 30 days. <a href="https://developer.mozilla.org/en-US/docs/Web/API/Storage_Access_API">https://developer.mozilla.org/en-US/docs/Web/API/Storage_Access_API</a> — Support for <code>requestStorageAccess</code>: Chrome 119, Firefox 65, Safari 11.1. <a href="https://github.com/mdn/browser-compat-data/blob/main/api/Document.json">https://github.com/mdn/browser-compat-data/blob/main/api/Document.json</a></li>
+<li>CHIPS: &quot;Cookies marked <code>Partitioned</code> are double-keyed: by the origin that sets them and the origin of the top-level page&quot;; &quot;Partitioned cookies must be set with <code>Secure</code>&quot;; &quot;Baseline 2025 ... Since December 2025, this feature works across the latest devices and browser versions.&quot; <a href="https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies">https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies</a> — Support for the <code>Partitioned</code> attribute: Chrome 114, Firefox 141, Safari 26.2 (shipped in 18.4, removed in 18.5, re-shipped in 26.2). <a href="https://github.com/mdn/browser-compat-data/blob/main/http/headers/Set-Cookie.json">https://github.com/mdn/browser-compat-data/blob/main/http/headers/Set-Cookie.json</a></li>
+</ul>
+<h3 id="verdict-for-annoudio-1">Verdict for Annoudio</h3>
+<p>Ship the player as a custom element with an open shadow root, expose theme tokens as <code>--annoudio-*</code> custom properties and named <code>part</code>s, and share one <code>adoptedStyleSheets</code> sheet across instances. Do not try to detect a container session from the embed. Read annotations anonymously through a public CORS endpoint. The &quot;Annotate&quot; action opens a first-party page on the container&#39;s domain; after login, redirect back with a short-lived, single-use token in the URL fragment if the embed needs to show &quot;signed in as&quot;. Main risk: a product owner expects &quot;comment inline on the host page&quot;; that needs an iframe plus Storage Access prompts on Safari and Chrome, which is a worse user experience than the redirect.</p>
+<hr>
+<h2 id="3-mediarecorder-in-2026">3. MediaRecorder in 2026</h2>
+<h3 id="finding-2">Finding</h3>
+<p>Each engine records a different default. Chrome picks <code>audio/webm;codecs=opus</code>. Firefox picks <code>audio/ogg;codecs=opus</code>. Safari picks <code>audio/mp4</code> (AAC) and, since Safari 18.4, can also write <code>audio/webm</code> with Opus if asked. <code>MediaRecorder.isTypeSupported()</code> is available in all three since April 2021. For playback, Opus-in-WebM plays everywhere on current versions, but Safari only added Ogg Opus in 18.4 (macOS 15.4, iOS 18.4) and had partial WebM Opus before 17.4, and Chrome lacks AAC in Chromium builds. So a server-side transcode to one format is still required if the org&#39;s visitors use older Safari or iOS. The safest single playback format today is AAC in MP4 (<code>.m4a</code>); the smallest is Opus in WebM.</p>
+<h3 id="evidence-2">Evidence</h3>
+<ul>
+<li><code>isTypeSupported</code>: &quot;returns a Boolean which is <code>true</code> if the MIME media type specified is one the user agent should be able to successfully record&quot;; Baseline &quot;available across browsers since April 2021&quot;. <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/isTypeSupported_static">https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/isTypeSupported_static</a> — MediaRecorder support: Chrome 47, Firefox 25, Safari 14.1. <a href="https://github.com/mdn/browser-compat-data/blob/main/api/MediaRecorder.json">https://github.com/mdn/browser-compat-data/blob/main/api/MediaRecorder.json</a></li>
+<li>MDN gives no per-browser default: <code>mimeType</code> is &quot;chosen by the browser&quot; when not specified. <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/mimeType">https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/mimeType</a> — The defaults below come from the browsers&#39; source code.</li>
+<li>Chrome default: in <code>media_recorder_handler.cc</code>, for audio-only streams the actual MIME type is built as <code>&quot;audio/webm&quot;</code> + <code>&quot;;codecs=&quot;</code> + <code>&quot;opus&quot;</code>. Chrome&#39;s accepted audio codecs are <code>opus</code> and <code>pcm</code>. <a href="https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/renderer/modules/mediarecorder/media_recorder_handler.cc">https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/renderer/modules/mediarecorder/media_recorder_handler.cc</a> (main, 2026-10)</li>
+<li>Firefox default: <code>SelectMimeType()</code> in <code>dom/media/MediaRecorder.cpp</code> sets the container to <code>AUDIO_OGG</code> for audio-only and <code>VIDEO_WEBM</code> when video is present, with codecs <code>opus</code> and <code>&quot;vp8, opus&quot;</code>. <a href="https://hg.mozilla.org/mozilla-central/file/tip/dom/media/MediaRecorder.cpp">https://hg.mozilla.org/mozilla-central/file/tip/dom/media/MediaRecorder.cpp</a> (tip, 2026-10)</li>
+<li>Safari default: <code>MediaRecorderPrivateAVFImpl.cpp</code> sets <code>options.mimeType = videoTrack ? &quot;video/mp4&quot; : &quot;audio/mp4&quot;</code> when empty; <code>isTypeSupported</code> accepts <code>audio/mp4</code> with <code>mp4a</code> (and <code>opus</code> when <code>HAVE(AVASSETWRITER_WITH_OPUS_SUPPORTED)</code>), and <code>audio/webm</code> with <code>opus</code>. <a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/platform/mediarecorder/MediaRecorderPrivateAVFImpl.cpp">https://github.com/WebKit/WebKit/blob/main/Source/WebCore/platform/mediarecorder/MediaRecorderPrivateAVFImpl.cpp</a></li>
+<li>Safari 14.1 added MediaRecorder: &quot;record audio and video, then encode them using the platform&#39;s available set of default encodings&quot;. <a href="https://webkit.org/blog/11648/new-webkit-features-in-safari-14-1/">https://webkit.org/blog/11648/new-webkit-features-in-safari-14-1/</a></li>
+<li>Safari 18.4: MediaRecorder &quot;now supports creating WebM files using the Opus audio codec and either VP8 or VP9&quot;; &quot;adding Ogg container support for both Opus and Vorbis audio&quot;. <a href="https://webkit.org/blog/16574/webkit-features-in-safari-18-4/">https://webkit.org/blog/16574/webkit-features-in-safari-18-4/</a></li>
+<li>Opus playback: Chrome 33, Edge 14, Firefox 15, Safari 11 (CAF only at first); &quot;Safari supports Opus in the <code>&lt;audio&gt;</code> element only when packaged in a CAF file&quot; (older note). <a href="https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs">https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs</a> — caniuse per-version Safari: 17.4 &quot;Supported in a WebM container (all bitrates). Has a known regression&quot;; 17.5–18.3 &quot;Supported in a WebM container (all bitrates)&quot;; 18.4+ partial note &quot;requiring macOS 15.4 Sequoia or later&quot;. iOS Safari: 18.4+ full. <a href="https://github.com/Fyrd/caniuse/blob/main/features-json/opus.json">https://github.com/Fyrd/caniuse/blob/main/features-json/opus.json</a></li>
+<li>Ogg in Safari: &quot;Safari 18.4+ (on macOS 15.4+, iOS 18.4+, iPadOS 18.4+, and visionOS 2.4+) added support for Opus and Vorbis codecs in Ogg containers.&quot; <a href="https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers">https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers</a> — caniuse ogg-vorbis: Safari 14.1–18.3 partial (&quot;Supports the Vorbis audio codec, but not the Ogg container&quot;), 18.4+ full. <a href="https://github.com/Fyrd/caniuse/blob/main/features-json/ogg-vorbis.json">https://github.com/Fyrd/caniuse/blob/main/features-json/ogg-vorbis.json</a></li>
+<li>WebM container in Safari: full from 16.0 (14.1–15.6 &quot;requires macOS 11.3 Big Sur or later&quot;). <a href="https://github.com/Fyrd/caniuse/blob/main/features-json/webm.json">https://github.com/Fyrd/caniuse/blob/main/features-json/webm.json</a></li>
+<li>AAC: &quot;Chrome supports AAC only in MP4 containers, and only supports AAC&#39;s Main Profile. In addition, AAC is not available in Chromium builds.&quot; &quot;Firefox relies upon a platform&#39;s native support for AAC.&quot; <a href="https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs">https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Audio_codecs</a></li>
+<li>Opus-in-MP4 playback per browser: MDN lists MP4 as an Opus container but gives no per-browser versions. Not verified; see Unverified.</li>
+</ul>
+<h3 id="verdict-for-annoudio-2">Verdict for Annoudio</h3>
+<p>Record with whatever the browser picks (probe <code>isTypeSupported</code> in the order <code>audio/webm;codecs=opus</code>, <code>audio/ogg;codecs=opus</code>, <code>audio/mp4</code>), upload the raw blob, keep it, and transcode server-side with ffmpeg to AAC-in-MP4 (<code>.m4a</code>) as the single playback file. Serve the original as a second <code>&lt;source&gt;</code> only if its type is WebM/Opus. Main risk: Firefox on a platform without system AAC; mitigate by also emitting Opus/WebM when CPU budget allows and listing both sources.</p>
+<hr>
+<h2 id="4-prior-art">4. Prior art</h2>
+<h3 id="finding-3">Finding</h3>
+<p>The Omeka S &quot;Annotate&quot; module is a real WADM backend with a protocol endpoint and an admin tab, but it is explicitly &quot;no end user friendly interface&quot;, recommends one body and one target per annotation, and documents image <code>xywh</code> fragments, not time fragments. Omeka S media give a stable numeric <code>o:id</code> and an <code>o:original_url</code>, which is what Annoudio needs as the target IRI source. In IIIF land, Clover renders audio/video canvases and VTT &quot;supplementing&quot; annotations as captions and transcript, Ramp is a React IIIF AV player, Mirador 4 still has an open issue for annotations on video, and Annona is image-only. Among audio widgets, wavesurfer.js (regions plugin) and peaks.js (segments) both display and edit time ranges on a waveform and are maintained; Label Studio has an audio region labeler but is a labeling product; Annotorious is image-only; audio-annotator is dead. None stores or renders WADM; Annoudio would map annotations to regions itself.</p>
+<h3 id="evidence-3">Evidence</h3>
+<p>(a) Omeka S</p>
+<ul>
+<li>Annotate module: &quot;The three parts of the web annotation standard are implemented: Web Annotation Vocabulary ... Data Model ... Protocol&quot;. &quot;This module has no end user friendly interface and is designed to be a backend for other modules or themes&quot;. &quot;Annotations can be created via the tab &#39;Annotations&#39; of each resource (item sets, items and media). They can be browsed and managed via the main admin menu (<code>admin/annotation</code>).&quot; &quot;it is recommended to keep one body and one target by annotation currently&quot;. Protocol endpoint: &quot;<code>/annotations/</code>: LDP <code>BasicContainer</code> of all annotations, paginated as <code>AnnotationPage</code>&quot;; &quot;<code>/annotations/:id</code> — single annotation as a W3C <code>Annotation</code>.&quot; Selectors: targets combine <code>oa:hasSource</code> and <code>oa:hasSelector</code>; the module can &quot;serialize image rectangles as <code>oa:FragmentSelector</code> (<code>#xywh=</code>)&quot;. No mention of <code>t=</code> or time selectors. Canonical repo is on GitLab; the GitHub mirror shows release 3.4.13 on 2026-04-16, last commit 2026-04-06. <a href="https://github.com/Daniel-KM/Omeka-S-module-Annotate">https://github.com/Daniel-KM/Omeka-S-module-Annotate</a> and <a href="https://gitlab.com/Daniel-KM/Omeka-S-module-Annotate">https://gitlab.com/Daniel-KM/Omeka-S-module-Annotate</a></li>
+<li>Omeka S media fields: <code>MediaRepresentation.php</code> emits <code>o:id</code>, <code>o:source</code>, <code>o:media_type</code>, <code>o:sha256</code>, <code>o:size</code>, <code>o:filename</code>, <code>o:original_url</code>. <a href="https://github.com/omeka/omeka-s/blob/develop/application/src/Api/Representation/MediaRepresentation.php">https://github.com/omeka/omeka-s/blob/develop/application/src/Api/Representation/MediaRepresentation.php</a> — REST read: &quot;<code>GET /api/:api_resource/:id</code> Get one resource by a known ID.&quot; &quot;Resource IDs are exposed as <code>o:id</code> in the API output for all resources.&quot; <a href="https://omeka.org/s/docs/developer/api/rest_api/">https://omeka.org/s/docs/developer/api/rest_api/</a> and <a href="https://omeka.org/s/docs/developer/api/rest_api_reference/">https://omeka.org/s/docs/developer/api/rest_api_reference/</a> — Omeka S latest release v4.2.1 on 2026-06-18. <a href="https://github.com/omeka/omeka-s/releases">https://github.com/omeka/omeka-s/releases</a></li>
+</ul>
+<p>(b) IIIF AV</p>
+<ul>
+<li>Clover IIIF: v3.16.2 on 2026-09-29, MIT, last commit 2026-10-09. &quot;Renders a multi-canvas Video, Sound, and Image viewer&quot;; &quot;Renders annotations with the motivation of <code>supplementing</code> with a content resource having the format of <code>text/vtt</code>&quot;; <code>options.annotations.motivations</code> filters textual annotations in the Information Panel; chapter markers from <code>structures</code> ranges with <code>#t=</code>; web component <code>&lt;clover-viewer&gt;</code> built with Preact. <a href="https://samvera-labs.github.io/clover-iiif/docs/viewer">https://samvera-labs.github.io/clover-iiif/docs/viewer</a> and <a href="https://github.com/samvera-labs/clover-iiif">https://github.com/samvera-labs/clover-iiif</a></li>
+<li>Mirador: v4.2.6 on 2026-10-02, Apache-2.0. Open issue #4251 &quot;Annotation on video support + improve video handling&quot; (updated 2026-07-22). <a href="https://github.com/ProjectMirador/mirador/issues/4251">https://github.com/ProjectMirador/mirador/issues/4251</a> and <a href="https://github.com/ProjectMirador/mirador/releases">https://github.com/ProjectMirador/mirador/releases</a></li>
+<li>Ramp: v5.1.1 on 2026-08-05, license ISC (package.json), React 19 required for v5; standalone bundle uses Preact; components <code>IIIFPlayer</code>, <code>MediaPlayer</code>, <code>StructuredNavigation</code>, <code>Transcript</code>. <a href="https://github.com/samvera-labs/ramp">https://github.com/samvera-labs/ramp</a></li>
+<li>Annona: MIT, release v1.3.2 on 2020-06-26, last commit 2026-03-31. &quot;display W3 Web Annotations in a visual format&quot; with Image, Storyboard (OpenSeadragon) and Range views; no audio view. <a href="https://github.com/ncsu-libraries/annona">https://github.com/ncsu-libraries/annona</a></li>
+</ul>
+<p>(c) Audio widgets</p>
+<ul>
+<li>peaks.js (bbc): v3.4.2 on 2024-08-15, last commit 2025-11-08, LGPL-3.0, 65 open issues. <code>segments.add</code> takes <code>startTime</code>, <code>endTime</code>, <code>editable</code>, <code>color</code>, <code>labelText</code>; needs a <code>mediaElement</code> plus precomputed waveform data or Web Audio. <a href="https://github.com/bbc/peaks.js">https://github.com/bbc/peaks.js</a> and <a href="https://github.com/bbc/peaks.js/blob/master/doc/API.md">https://github.com/bbc/peaks.js/blob/master/doc/API.md</a></li>
+<li>wavesurfer.js: 8.0.2 on 2026-10-07, BSD-3-Clause, 13 open issues. Regions plugin options <code>id, start, end, drag, resize, color, content, minLength, maxLength, channelIdx</code>; events <code>region-created</code>, <code>region-updated</code>, <code>region-removed</code>, <code>region-clicked</code>, <code>region-double-clicked</code>, <code>region-in</code>, <code>region-out</code>; <code>enableDragSelection</code>. <a href="https://github.com/katspaugh/wavesurfer.js/blob/main/src/plugins/regions.ts">https://github.com/katspaugh/wavesurfer.js/blob/main/src/plugins/regions.ts</a></li>
+<li>Hyperaudio Lite: v2.6.6 on 2026-09-21, MIT. Interactive transcript player; word timing via <code>data-m</code> milliseconds; not an annotation tool. <a href="https://github.com/hyperaudio/hyperaudio-lite">https://github.com/hyperaudio/hyperaudio-lite</a></li>
+<li>audio-annotator (CrowdCurio): BSD-2-Clause, last commit 2017-08-22, no releases; wavesurfer-based region labeling for crowdsourcing. <a href="https://github.com/CrowdCurio/audio-annotator">https://github.com/CrowdCurio/audio-annotator</a></li>
+<li>Annotorious: v3.4.0 on 2025-05-27, last commit 2026-10-06, BSD-3-Clause. &quot;Add image annotation to your site&quot;; works with OpenSeadragon and IIIF; no audio or video. <a href="https://annotorious.dev/">https://annotorious.dev/</a> and <a href="https://github.com/annotorious/annotorious">https://github.com/annotorious/annotorious</a></li>
+<li>Label Studio: 1.23.2 on 2026-09-29, Apache-2.0. <code>&lt;Audio&gt;</code> tag &quot;plays audio and shows its waveform&quot;; regions labeled with <code>&lt;Labels&gt;</code>; export <code>value</code> has <code>start</code>, <code>end</code> in seconds, <code>channel</code>, <code>labels</code>. It is a labeling app, not an embeddable public player. <a href="https://labelstud.io/tags/audio">https://labelstud.io/tags/audio</a></li>
+</ul>
+<h3 id="verdict-for-annoudio-3">Verdict for Annoudio</h3>
+<p>Reuse wavesurfer.js plus its regions plugin inside the custom element for the read side (regions = annotation time ranges, <code>region-clicked</code> opens the body panel) and for range selection on the first-party annotate page. Keep peaks.js as the fallback if precomputed waveforms for long recordings matter (LGPL applies). Treat Omeka S as a target host, not a backend: the Omeka media <code>o:original_url</code> is the target <code>source</code>, and the Omeka Annotate module can later receive a copy through its <code>/annotations/</code> protocol endpoint. Main risk: wavesurfer decodes audio in the browser for the waveform; long recordings need server-side peaks or the <code>decoder: none</code> style fallback.</p>
+<hr>
+<h2 id="5-self-hosted-identity-providers-as-a-sidecar">5. Self-hosted identity providers as a sidecar</h2>
+<h3 id="finding-4">Finding</h3>
+<p>Every full identity provider adds at least one more container and a mental model (flows, stages, realms, policies) that a non-technical admin must learn. Authentik and Keycloak are the heaviest (364 MB and 253 MB images, 2 GB RAM recommended) and have the richest admin consoles, but those consoles are built for IT staff. Zitadel is lighter but has no email magic-link primary login. Ory Kratos is headless (you build every screen). Pocket ID is passkey-only. Rauthy is the lightest full OIDC provider with an admin UI and documented magic-link login. lldap and Dex are not user-facing login services for this use case. The reasonable first step is accounts and &quot;login by emailed code&quot; inside the app itself, with an OIDC provider added later.</p>
+<h3 id="evidence-4">Evidence</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Evidence"><table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Last release</th>
+<th>License</th>
+<th>Image (compressed, amd64)</th>
+<th>Min RAM (docs)</th>
+<th>Services</th>
+<th>OIDC provider</th>
+<th>Passwordless email</th>
+<th>Admin UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Authentik 2026.8.3</td>
+<td>2026-09-17</td>
+<td>repo &quot;NOASSERTION&quot; (custom)</td>
+<td>364 MB (<code>ghcr.io/goauthentik/server</code>)</td>
+<td>&quot;at least 2 CPU cores and 2 GB of RAM&quot;</td>
+<td>server + worker + PostgreSQL; Redis removed in 2025.10</td>
+<td>yes</td>
+<td>example blueprint <code>flows-login-email-magic-link.yaml</code></td>
+<td>full web admin, flow/stage model</td>
+</tr>
+<tr>
+<td>Keycloak 26.8.0</td>
+<td>2026-10-01</td>
+<td>Apache-2.0</td>
+<td>253 MB (<code>quay.io/keycloak/keycloak</code>)</td>
+<td>&quot;2 GB for smaller production deployments&quot; (heap via MaxRAMPercentage)</td>
+<td>Keycloak + PostgreSQL (<code>dev-file</code> deprecated in prod)</td>
+<td>yes</td>
+<td>not built in; community extension p2-inc/keycloak-magic-link v0.90</td>
+<td>full admin console, realm model</td>
+</tr>
+<tr>
+<td>Zitadel v4.19.4</td>
+<td>2026-10-01</td>
+<td>AGPL-3.0</td>
+<td>50 MB api + 66 MB login</td>
+<td>&quot;at least 2 GB RAM&quot;</td>
+<td>Traefik + API + Login (Next.js) + PostgreSQL</td>
+<td>yes</td>
+<td>passkeys; console docs show no email-code primary login</td>
+<td>console</td>
+</tr>
+<tr>
+<td>Ory Kratos v26.2.0 (+ Hydra v26.2.0)</td>
+<td>2026-03-20</td>
+<td>Apache-2.0</td>
+<td>27 MB + 18 MB</td>
+<td>not stated</td>
+<td>Kratos + Hydra + SQL DB + your own UI</td>
+<td>Hydra</td>
+<td>one-time code by email; &quot;You need a good email delivery provider&quot;</td>
+<td>none (headless)</td>
+</tr>
+<tr>
+<td>lldap v0.6.3</td>
+<td>2026-04-30</td>
+<td>GPL-3.0</td>
+<td>26 MB</td>
+<td>not stated</td>
+<td>single; SQLite default</td>
+<td>no (&quot;For more features (OAuth/OpenID support, ...) you can install&quot; other tools)</td>
+<td>password reset by SMTP</td>
+<td>simple web UI</td>
+</tr>
+<tr>
+<td>Pocket ID v2.18.0</td>
+<td>2026-10-04</td>
+<td>BSD-2-Clause</td>
+<td>33 MB</td>
+<td>not stated</td>
+<td>&quot;one container or one binary&quot;, built-in SQLite</td>
+<td>yes (certified)</td>
+<td>passkeys only; admin-issued one-time login code</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Rauthy v0.37.1</td>
+<td>2026-10-07</td>
+<td>Apache-2.0</td>
+<td>35 MB</td>
+<td>&quot;Hiqlite single instance ~40mb&quot;</td>
+<td>single; embedded Hiqlite, Postgres optional</td>
+<td>yes</td>
+<td>docs list email magic link and passkeys</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Casdoor v4.18.0</td>
+<td>2026-10-07</td>
+<td>Apache-2.0</td>
+<td>n/a (tag not on Docker Hub)</td>
+<td>not stated</td>
+<td>single Go binary + SQL DB (SQLite allowed)</td>
+<td>yes, also SAML/CAS</td>
+<td>email and SMS codes</td>
+<td>web console</td>
+</tr>
+<tr>
+<td>Logto v1.44.0</td>
+<td>2026-09-30</td>
+<td>MPL-2.0</td>
+<td>312 MB (<code>svhd/logto</code>)</td>
+<td>not stated</td>
+<td>Logto + PostgreSQL</td>
+<td>yes</td>
+<td>email/phone verification code; built-in email service is cloud-only</td>
+<td>console (multi-tenancy cloud-only)</td>
+</tr>
+<tr>
+<td>Dex v2.46.0</td>
+<td>2026-10-07</td>
+<td>Apache-2.0</td>
+<td>48 MB</td>
+<td>not stated</td>
+<td>single</td>
+<td>yes</td>
+<td>n/a; &quot;portal to other identity providers through connectors&quot;</td>
+<td>none</td>
+</tr>
+</tbody></table></div>
+<p>Sources: <a href="https://docs.goauthentik.io/install-config/install/docker-compose">https://docs.goauthentik.io/install-config/install/docker-compose</a> ; <a href="https://docs.goauthentik.io/core/architecture">https://docs.goauthentik.io/core/architecture</a> ; authentik release notes 2025.10 &quot;Removed Redis dependency: authentik no longer uses Redis at all&quot; <a href="https://github.com/goauthentik/authentik/blob/main/website/docs/releases/2025/v2025.10.mdx">https://github.com/goauthentik/authentik/blob/main/website/docs/releases/2025/v2025.10.mdx</a> ; <a href="https://docs.goauthentik.io/add-secure-apps/flows-stages/flow/flows/">https://docs.goauthentik.io/add-secure-apps/flows-stages/flow/flows/</a> ; <a href="https://www.keycloak.org/server/containers">https://www.keycloak.org/server/containers</a> ; <a href="https://github.com/p2-inc/keycloak-magic-link">https://github.com/p2-inc/keycloak-magic-link</a> ; <a href="https://zitadel.com/docs/self-hosting/deploy/compose">https://zitadel.com/docs/self-hosting/deploy/compose</a> ; <a href="https://zitadel.com/docs/guides/manage/console/users">https://zitadel.com/docs/guides/manage/console/users</a> ; <a href="https://www.ory.com/docs/kratos/passwordless/one-time-code">https://www.ory.com/docs/kratos/passwordless/one-time-code</a> ; <a href="https://github.com/lldap/lldap">https://github.com/lldap/lldap</a> ; <a href="https://pocket-id.org/docs/">https://pocket-id.org/docs/</a> ; <a href="https://pocket-id.org/docs/setup/installation">https://pocket-id.org/docs/setup/installation</a> ; <a href="https://sebadob.github.io/rauthy/">https://sebadob.github.io/rauthy/</a> ; <a href="https://github.com/sebadob/rauthy">https://github.com/sebadob/rauthy</a> ; <a href="https://casdoor.ai/docs/overview/">https://casdoor.ai/docs/overview/</a> ; <a href="https://docs.logto.io/logto-oss/">https://docs.logto.io/logto-oss/</a> ; <a href="https://docs.logto.io/end-user-flows/sign-up-and-sign-in/sign-in">https://docs.logto.io/end-user-flows/sign-up-and-sign-in/sign-in</a> ; <a href="https://github.com/dexidp/dex">https://github.com/dexidp/dex</a> . Image sizes measured with <code>docker manifest inspect</code> on 2026-10-09; licenses and release dates from the GitHub API on 2026-10-09.</p>
+<ul>
+<li>In-app libraries: django-allauth 65.19.7 (2026-10-01), MIT: <code>ACCOUNT_LOGIN_BY_CODE_ENABLED</code> — &quot;a one-time code is sent to that email address which allows the user to login. This method is often referred to as &#39;Magic Code Login&#39;.&quot; <a href="https://docs.allauth.org/en/latest/account/configuration.html">https://docs.allauth.org/en/latest/account/configuration.html</a> — authlib v1.8.0 (2026-08-30), BSD-3: &quot;The ultimate Python library in building OAuth and OpenID Connect servers&quot;, OpenID Connect Core and Discovery. <a href="https://github.com/lepture/authlib">https://github.com/lepture/authlib</a> — better-auth v1.7.7 (2026-09-30), MIT; Auth.js next-auth 4.24.15 (2026-07-20), ISC; Lucia &quot;was deprecated on March 2025&quot;. <a href="https://github.com/lucia-auth/lucia">https://github.com/lucia-auth/lucia</a></li>
+</ul>
+<p>Admin-UI rating for a non-technical operator (judgement, based on the docs above): Authentik and Keycloak consoles expose every concept (flows, stages, policies, realms, clients, mappers) and are built for IT staff; Rauthy, Pocket ID and Casdoor consoles are small and list users, groups and clients; Kratos has no UI; Dex and lldap are not designed as the account system for a public community.</p>
+<h3 id="verdict-for-annoudio-4">Verdict for Annoudio</h3>
+<p>Start with accounts inside the app: email + &quot;login by code&quot; (allauth in Django, or better-auth&#39;s equivalent in Node), with user management in the same admin GUI as everything else. Do not ship an identity-provider container in v1. If organisations later need single sign-on, add Rauthy (35 MB, embedded DB, admin UI, OIDC) as the sidecar and let the app act as an OIDC client; expose the app itself as an OIDC provider only if a real consumer appears (authlib covers that in Python). Main risk: a magic-code login is only as strong as the mailbox and depends on SMTP deliverability; the team must own a transactional email account from day one.</p>
+<hr>
+<h2 id="6-skos-vocabulary-editing">6. SKOS vocabulary editing</h2>
+<h3 id="finding-5">Finding</h3>
+<p>No maintained JavaScript library exists that edits a SKOS concept hierarchy and exports Turtle or JSON-LD and can be dropped into another admin UI. The maintained editors are full server applications in PHP (TemaTres), Ruby on Rails (iQvoc), Java (VocBench 3, OpenTheso) or Python (Atramhasis, vocabseditor). Skosmos is a browser only; SkoHub Vocabs is a static-site publisher and its editor is archived. A flat hierarchical term list in Annoudio&#39;s own admin GUI, with stable concept IRIs and a SKOS export, is the honest first version; it can later be imported into any of these tools.</p>
+<h3 id="evidence-5">Evidence</h3>
+<ul>
+<li>TemaTres: v3.6.1 on 2026-04-30, last commit 2026-10-01, GPL-2.0; &quot;MySQL version 5.0 or greater&quot;, &quot;PHP ... 7.4 or greater&quot;. <a href="https://github.com/tematres/TemaTres-Vocabulary-Server">https://github.com/tematres/TemaTres-Vocabulary-Server</a></li>
+<li>Skosmos: v3.4 on 2026-08-31, PHP 8.1–8.4; &quot;a web-based tool providing services for accessing controlled vocabularies ... accessed via SPARQL endpoints&quot;. No editing. <a href="https://github.com/NatLibFi/Skosmos">https://github.com/NatLibFi/Skosmos</a></li>
+<li>VocBench 3: Bitbucket, Java WAR deployed with Semantic Turkey; &quot;management of OWL ontologies, SKOS/SKOS-XL thesauri, OntoLex lexicons&quot;; last commit 2026-10-08; LICENSE is a BSD-style &quot;All rights reserved&quot; notice (exact variant not verified). <a href="https://vocbench.uniroma2.it/">https://vocbench.uniroma2.it/</a> and <a href="https://bitbucket.org/art-uniroma2/vocbench3">https://bitbucket.org/art-uniroma2/vocbench3</a></li>
+<li>SkoHub Vocabs: &quot;Static site generator for Simple Knowledge Management Systems (SKOS)&quot;, parses Turtle in <code>./data</code>; Apache-2.0; last commit 2026-07-02; no releases. <a href="https://github.com/skohub-io/skohub-vocabs">https://github.com/skohub-io/skohub-vocabs</a> — skohub-editor is archived (2025-10-30). <a href="https://github.com/skohub-io/skohub-editor">https://github.com/skohub-io/skohub-editor</a></li>
+<li>iQvoc: v.4.15.1 on 2026-09-04, Apache-2.0, Rails; &quot;editorial features for registered users&quot;, &quot;publishing the vocabulary in the Semantic Web&quot;; Docker Compose with Postgres; can run as a Rails engine. <a href="https://github.com/innoq/iqvoc">https://github.com/innoq/iqvoc</a></li>
+<li>OpenTheso: v26.07.06 on 2026-07-27, CeCILL-C, Java; &quot;import: SKOS, Turtle, JsonLD and CSV&quot;; &quot;export: SKOS, Turtle, JsonLD, CSV and PDF&quot;; OpenAPI and GraphQL. <a href="https://github.com/miledrousset/opentheso">https://github.com/miledrousset/opentheso</a></li>
+<li>Atramhasis: GPL-3.0, Python, last commit 2026-09-21; &quot;an online SKOS editor&quot;. <a href="https://github.com/OnroerendErfgoed/atramhasis">https://github.com/OnroerendErfgoed/atramhasis</a> — vocabseditor: MIT, Python, last commit 2025-09-04. <a href="https://github.com/acdh-oeaw/vocabseditor">https://github.com/acdh-oeaw/vocabseditor</a> — skosjs: Apache-2.0, JavaScript, last commit 2022-01-17, needs a SPARQL 1.1 endpoint. <a href="https://github.com/tkurz/skosjs">https://github.com/tkurz/skosjs</a> — Cognithive/SKOS-editor: C#, last commit 2019-05-24. <a href="https://github.com/Cognithive/SKOS-editor">https://github.com/Cognithive/SKOS-editor</a></li>
+</ul>
+<h3 id="verdict-for-annoudio-5">Verdict for Annoudio</h3>
+<p>Build the vocabulary as a tree of concepts (IRI, prefLabel per language, altLabels, broader, definition) in the admin GUI, and export it as SKOS JSON-LD and Turtle from one endpoint (<code>/vocab/{scheme}.ttl</code>, <code>.jsonld</code>). Mint concept IRIs under the org&#39;s domain and never change them; the WADM tag bodies point at them. Import SKOS Turtle so an org that already has a thesaurus in TemaTres or OpenTheso can load it. Main risk: the team invents labels that drift from an external vocabulary; the import path plus <code>exactMatch</code> links keeps that reversible.</p>
+<hr>
+<h2 id="7-admin-gui-first-backends">7. Admin-GUI-first backends</h2>
+<h3 id="finding-6">Finding</h3>
+<p>Three options give a non-technical team a GUI for records, files, users and roles. Directus is a GUI-first data platform: collections, roles, policies, files and no-code Flows are all edited in the Data Studio, and it runs as one container plus Postgres. Its licence is no longer open source (Monospace Sustainable Core License, free core tier with limits) and it has no magic-link login. Payload CMS is MIT, runs as one Next.js app plus Postgres, models schema in TypeScript (a developer task) but gives editors an admin UI with built-in drafts (<code>_status: draft|published</code>) that is a ready review queue, auth-enabled collections for public community accounts, custom endpoints in-process for JSON-LD, and hooks. Strapi has end-user accounts but no official Docker image and puts Review Workflows behind the Enterprise plan. Django + admin + allauth is the lowest-magic path, but the Django docs say the admin &quot;is not intended for building your entire front end around&quot;, so the team&#39;s review and vocabulary screens would be custom.</p>
+<h3 id="evidence-6">Evidence</h3>
+<ul>
+<li>Directus v12.5.0 on 2026-10-07; image <code>directus/directus:12.5.0</code> 234 MB; &quot;Directus is licensed under the Monospace Sustainable Core License (MSCL)&quot;; &quot;Higher limits and features require a paid license&quot;. <a href="https://directus.com/docs/self-hosting/overview">https://directus.com/docs/self-hosting/overview</a> and <a href="https://github.com/directus/directus/blob/main/license">https://github.com/directus/directus/blob/main/license</a> — Auth drivers: <code>local</code>, <code>oauth2</code>, <code>openid</code>, <code>ldap</code>, <code>saml</code>; no passwordless. <a href="https://directus.com/docs/configuration/auth-sso">https://directus.com/docs/configuration/auth-sso</a> — Roles, policies, Public role: &quot;The Public role governs unauthenticated requests&quot;; users have an &quot;Unverified&quot; status after registration. <a href="https://directus.com/docs/guides/auth/access-control">https://directus.com/docs/guides/auth/access-control</a> — Flows triggers: Event Hook, Webhook, Schedule (CRON), Another Flow, Manual (&quot;a manual click of a button within the Data Studio&quot;); operations include Condition, Run Script, Create/Read/Update Data. <a href="https://github.com/directus/docs/tree/main/content/guides/06.flows">https://github.com/directus/docs/tree/main/content/guides/06.flows</a> — Custom endpoint extension: export <code>{ id, handler(router, context) }</code>. <a href="https://directus.com/docs/guides/extensions/api-extensions/endpoints">https://directus.com/docs/guides/extensions/api-extensions/endpoints</a></li>
+<li>Payload v3.90.2 on 2026-09-23, MIT. Auth: &quot;Any Collection can opt in with <code>auth: true</code>&quot;; <code>verify: true</code> for email verification; forgot-password built in; no magic link listed (custom strategies allowed). <a href="https://payloadcms.com/docs/authentication/overview">https://payloadcms.com/docs/authentication/overview</a> — Postgres: <code>@payloadcms/db-postgres</code> &quot;leverages Drizzle ORM and <code>node-postgres</code>&quot;; push in dev, migrations elsewhere. <a href="https://payloadcms.com/docs/database/postgres">https://payloadcms.com/docs/database/postgres</a> — Custom endpoints: <code>endpoints</code> array with <code>path</code>, <code>method</code>, <code>handler</code>; &quot;Custom endpoints are not authenticated by default&quot;. <a href="https://payloadcms.com/docs/rest-api/overview">https://payloadcms.com/docs/rest-api/overview</a> — Drafts: <code>_status</code> is <code>draft</code> or <code>published</code>; access rules can limit publishing to admins and reads to published; autosave; scheduled publish needs a jobs queue. <a href="https://payloadcms.com/docs/versions/drafts">https://payloadcms.com/docs/versions/drafts</a> — Hooks &quot;allow you to execute your own side effects during specific events of the Document lifecycle&quot;. <a href="https://payloadcms.com/docs/hooks/overview">https://payloadcms.com/docs/hooks/overview</a> — Deployment: &quot;Payload can be deployed anywhere that Next.js can run&quot;; a multi-stage Dockerfile example; needs &quot;a database, file storage, an email provider&quot;. <a href="https://payloadcms.com/docs/production/deployment">https://payloadcms.com/docs/production/deployment</a></li>
+<li>Strapi v5.57.0 on 2026-10-07; LICENSE: MIT for code outside <code>ee/</code>. <a href="https://github.com/strapi/strapi/blob/develop/LICENSE">https://github.com/strapi/strapi/blob/develop/LICENSE</a> — &quot;Strapi does not build any official container images.&quot; <a href="https://docs.strapi.io/cms/installation/docker">https://docs.strapi.io/cms/installation/docker</a> — Users &amp; Permissions: end-user accounts with Public and Authenticated roles, email confirmation; no passwordless on the page. <a href="https://docs.strapi.io/cms/features/users-permissions">https://docs.strapi.io/cms/features/users-permissions</a> — Review Workflows: &quot;This feature is available with an Enterprise plan.&quot; <a href="https://docs.strapi.io/cms/features/review-workflows">https://docs.strapi.io/cms/features/review-workflows</a></li>
+<li>Django admin: &quot;reads metadata from your models to provide a quick, model-centric interface where trusted users can manage content ... The admin&#39;s recommended use is limited to an organization&#39;s internal management tool. It&#39;s not intended for building your entire front end around.&quot; <a href="https://docs.djangoproject.com/en/5.2/ref/contrib/admin/">https://docs.djangoproject.com/en/5.2/ref/contrib/admin/</a> — allauth login by code, see section 5. Procrastinate for jobs, see section 8.</li>
+</ul>
+<h3 id="verdict-for-annoudio-6">Verdict for Annoudio</h3>
+<p>Choose Payload CMS on Postgres: two services (app + Postgres), MIT, admin UI for recordings, projects, vocabulary concepts, annotations, users and theme settings, a built-in draft/published review queue with per-role publish rights, public community accounts as an auth collection with email verification, and in-process custom endpoints that serialise WADM JSON-LD and the protocol routes. Add magic-code login as a custom auth strategy. Directus is the alternative if GUI schema editing and no-code Flows matter more than licence terms; check the MSCL free-tier limits first. Main risk: Payload&#39;s schema lives in code, so adding a field is a developer deploy, not a GUI click.</p>
+<hr>
+<h2 id="8-upload-and-processing-chain">8. Upload and processing chain</h2>
+<h3 id="finding-7">Finding</h3>
+<p>Uppy with its Tus plugin gives resumable browser uploads; tusd (34 MB image) or <code>@tus/server</code> in-process receives them. ffmpeg transcodes the voice note once (libopus or the native AAC encoder). Transcription on CPU is feasible with the <code>small</code> model: faster-whisper used about 1.5 GB RAM and 1m42s for 13 minutes of audio on an 8-thread desktop CPU; whisper.cpp needs about 0.85 GB for <code>small</code> and 0.39 GB for <code>base</code>. ClamAV wants 3–4 GiB RAM on its own, which is more than the rest of the stack. A Postgres-backed job queue (pg-boss for Node, Procrastinate for Python) avoids a Redis container to run, monitor and back up.</p>
+<h3 id="evidence-7">Evidence</h3>
+<ul>
+<li>Uppy <a href="mailto:uppy@6.0.4">uppy@6.0.4</a> on 2026-09-30, MIT. Tus plugin &quot;brings resumable file uploading with Tus to Uppy by wrapping the tus-js-client&quot;; options <code>endpoint</code>, <code>chunkSize</code> (default Infinity), <code>retryDelays</code> (default <code>[0, 1000, 3000, 5000]</code>); &quot;Transloadit runs <code>tusd</code> in production&quot;. <a href="https://uppy.io/docs/tus/">https://uppy.io/docs/tus/</a></li>
+<li>tusd v2.10.1 on 2026-09-16, MIT; &quot;official reference implementation of the tus resumable upload protocol&quot;; stores on disk, Google Cloud Storage or S3; image <code>tusproject/tusd:v2.10.1</code> is 34 MB. <a href="https://github.com/tus/tusd">https://github.com/tus/tusd</a> — <code>@tus/server</code> (tus-node-server, released 2026-09-22, MIT) &quot;A tus server integrated into your existing Node.js server&quot; with <code>FileStore</code> and <code>S3Store</code>, Express and Fastify examples. <a href="https://github.com/tus/tus-node-server">https://github.com/tus/tus-node-server</a></li>
+<li>ffmpeg encoders: &quot;libopus Opus Interactive Audio Codec encoder wrapper&quot;; the native AAC encoder is FFmpeg&#39;s default. <a href="https://ffmpeg.org/ffmpeg-codecs.html">https://ffmpeg.org/ffmpeg-codecs.html</a></li>
+<li>faster-whisper v1.2.1 on 2025-10-31, MIT, Python 3.9+; small model on CPU, int8, beam 5: 1m42s and 1477 MB RAM for 13 minutes of audio; with <code>batch_size=8</code>: 51s and 3608 MB; &quot;Executed with 8 threads on an Intel Core i7-12700K&quot;. FFmpeg not required (PyAV bundled). <a href="https://github.com/SYSTRAN/faster-whisper">https://github.com/SYSTRAN/faster-whisper</a></li>
+<li>whisper.cpp v1.9.5 on 2026-10-06, MIT; memory: tiny ~273 MB, base ~388 MB, small ~852 MB, medium ~2.1 GB, large ~3.9 GB. <a href="https://github.com/ggml-org/whisper.cpp">https://github.com/ggml-org/whisper.cpp</a></li>
+<li>ClamAV 1.5.4 on 2026-08-07, GPL-2.0; image <code>clamav/clamav:1.5</code> 148 MB; RAM &quot;Minimum: 3 GiB&quot;, &quot;Preferred: 4 GiB&quot;; loading signatures &quot;upwards of 1.2 GiB of RAM&quot;; daily reload &quot;upwards of 2.4 GiB of RAM for a short period&quot;. <a href="https://docs.clamav.net/manual/Installing/Docker.html">https://docs.clamav.net/manual/Installing/Docker.html</a></li>
+<li>pg-boss 12.37.1 on 2026-10-08, MIT: &quot;relies on Postgres&#39;s SKIP LOCKED ... Concurrent workers claim jobs without blocking each other, and job processing gets the safety of guaranteed atomic commits.&quot; <a href="https://github.com/timgit/pg-boss">https://github.com/timgit/pg-boss</a></li>
+<li>Procrastinate 3.10.0 on 2026-09-23, MIT: &quot;Python 3.10+ distributed task processing library, leveraging PostgreSQL 13+ to store task definitions, manage locks&quot;; Django integration. <a href="https://github.com/procrastinate-org/procrastinate">https://github.com/procrastinate-org/procrastinate</a></li>
+<li>Redis 8 alpine image is 37 MB; it is one more stateful service to run and back up (measured 2026-10-09).</li>
+</ul>
+<h3 id="verdict-for-annoudio-7">Verdict for Annoudio</h3>
+<p>Uppy + Tus in the annotate page, uploads received in-process (<code>@tus/server</code> with <code>FileStore</code>, or tusd if a second container is acceptable), a pg-boss queue in the same Postgres, and one worker that runs <code>ffmpeg -i in -c:a aac -b:a 96k out.m4a</code>, probes with <code>ffprobe</code> to validate the media type, resizes images, and optionally transcribes with faster-whisper <code>small</code> int8 when the org enables it. Skip ClamAV in v1; the files are audio and images that are never executed and are re-encoded. Main risk: transcription on a 2–4 GB VPS competes with the app for RAM; run it as a separate low-priority worker with a concurrency of one and a per-org toggle.</p>
+<hr>
+<h2 id="9-embed-snippet-versioning">9. Embed snippet versioning</h2>
+<h3 id="finding-8">Finding</h3>
+<p>Every widely embedded script keeps one stable loader URL and puts the contract in attributes or a global config object. Hypothesis loads <code>https://hypothes.is/embed.js</code> and reads a JSON block or <code>window.hypothesisConfig()</code>; the client ships continuous versions (v1.1766.0) behind that URL. Disqus loads <code>https://SHORTNAME.disqus.com/embed.js</code> and reads <code>disqus_config</code> (<code>page.url</code>, <code>page.identifier</code>). giscus loads <code>https://giscus.app/client.js</code> with <code>data-*</code> attributes and talks to the host via <code>postMessage</code>. YouTube loads <code>https://www.youtube.com/iframe_api</code> and calls <code>onYouTubeIframeAPIReady</code>; it retires methods with dated deprecation notices rather than new URLs. Plausible introduced a new script in October 2025 and kept the old one working for sites that need it. None of them puts a version in the loader path; all of them promise the attributes, not the internals.</p>
+<h3 id="evidence-8">Evidence</h3>
+<ul>
+<li>Hypothesis: <code>&lt;script src=&quot;https://hypothes.is/embed.js&quot; async&gt;&lt;/script&gt;</code>; config via <code>&lt;script type=&quot;application/json&quot; class=&quot;js-hypothesis-config&quot;&gt;</code> or <code>window.hypothesisConfig()</code>. <a href="https://github.com/hypothesis/client/blob/main/docs/publishers/embedding.rst">https://github.com/hypothesis/client/blob/main/docs/publishers/embedding.rst</a> and <a href="https://github.com/hypothesis/client/blob/main/docs/publishers/config.rst">https://github.com/hypothesis/client/blob/main/docs/publishers/config.rst</a> — latest tag v1.1766.0 (2026-10). <a href="https://github.com/hypothesis/client/tags">https://github.com/hypothesis/client/tags</a></li>
+<li>Disqus: <code>s.src = 'https://EXAMPLE.disqus.com/embed.js'</code>; <code>this.page.url</code> &quot;the location of the page for permalinking purposes&quot;; <code>this.page.identifier</code> &quot;a unique value, used to identify the page and discussion thread&quot;; no versioning statement. <a href="https://help.disqus.com/en/articles/1717112-universal-embed-code">https://help.disqus.com/en/articles/1717112-universal-embed-code</a></li>
+<li>giscus (MIT, last commit 2026-05-26): <code>&lt;script src=&quot;https://giscus.app/client.js&quot; data-repo=&quot;...&quot; data-theme=&quot;...&quot;&gt;</code>; host page communicates with <code>iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app')</code>. <a href="https://github.com/giscus/giscus/blob/main/ADVANCED-USAGE.md">https://github.com/giscus/giscus/blob/main/ADVANCED-USAGE.md</a></li>
+<li>YouTube IFrame API: <code>tag.src = &quot;https://www.youtube.com/iframe_api&quot;</code>; &quot;The API will call this function [<code>onYouTubeIframeAPIReady</code>] when the page has finished downloading the JavaScript for the player API&quot;; deprecations announced with dates (for example search-result loading &quot;no longer supported as of 15 November 2020&quot;); no versioning promise. <a href="https://developers.google.com/youtube/iframe_api_reference">https://developers.google.com/youtube/iframe_api_reference</a></li>
+<li>Plausible: &quot;In October 2025, we introduced an updated version of the Plausible tracking script&quot;; &quot;Continue using the old script if you need this functionality&quot;; default tracking changes &quot;take effect automatically without needing to update the snippet on your site&quot;. <a href="https://github.com/plausible/docs/blob/master/docs/script-update-guide.md">https://github.com/plausible/docs/blob/master/docs/script-update-guide.md</a> and <a href="https://plausible.io/docs/script-extensions">https://plausible.io/docs/script-extensions</a></li>
+</ul>
+<h3 id="verdict-for-annoudio-8">Verdict for Annoudio</h3>
+<p>Snippet shape:</p>
+<pre tabindex="0"><code class="language-html">&lt;script async src=&quot;https://ORG.annoudio.example/embed/v1.js&quot;&gt;&lt;/script&gt;
+&lt;annoudio-player recording=&quot;https://ORG.annoudio.example/recordings/123&quot;&gt;&lt;/annoudio-player&gt;
+</code></pre>
+<p>The contract is: the <code>/embed/v1.js</code> path, the <code>annoudio-player</code> tag name, its attributes (<code>recording</code>, <code>lang</code>, <code>theme</code>), the <code>--annoudio-*</code> CSS tokens and <code>part</code> names, and the DOM events it emits. <code>v1.js</code> is a tiny loader that imports the current hashed bundle, so fixes ship without host edits (the Hypothesis and Plausible pattern). A breaking change gets <code>/embed/v2.js</code> and a new tag attribute set; <code>v1.js</code> keeps serving for years. Main risk: the loader URL is also the org&#39;s domain, so a domain change breaks every host page; put the embed host on a stable subdomain from day one.</p>
+<hr>
+<h2 id="10-ops-for-non-technical-teams">10. Ops for non-technical teams</h2>
+<h3 id="finding-9">Finding</h3>
+<p>Four GUI tools manage a Docker Compose stack on one VPS. Portainer CE is closest to raw Docker: it edits the compose file in a web editor, has &quot;Update the stack&quot; and &quot;Pull and redeploy&quot; buttons, but its backup covers only Portainer&#39;s own configuration, scheduled S3 backup is a paid-edition feature, and upgrading Portainer itself is three CLI commands. Coolify deploys compose from git or raw text with a Deploy button and updates itself from a Settings page. Dokploy deploys compose from git or raw text, backs up named volumes to S3 on a schedule and restores them from the UI, backs itself up to S3, but updates itself through the install script. Komodo runs a Core plus Periphery agents and defines stacks &quot;in the UI, on the host, or in a git repo with auto-deploy on push&quot;; its docs pages on backups could not be read.</p>
+<h3 id="evidence-9">Evidence</h3>
+<ul>
+<li>Portainer CE 2.45.2 on 2026-10-08, Zlib licence, image 42 MB. Stacks: &quot;edit your compose file manually&quot;, &quot;Update the stack&quot;, &quot;Pull and redeploy&quot; with &quot;Re-pull image and redeploy&quot;, GitOps updates. <a href="https://docs.portainer.io/user/docker/stacks/edit">https://docs.portainer.io/user/docker/stacks/edit</a> — Backup: &quot;This backup is only intended to back up the Portainer configuration&quot;; &quot;Store in S3&quot; scheduled is Business Edition. <a href="https://docs.portainer.io/admin/settings/general">https://docs.portainer.io/admin/settings/general</a> — Upgrade: <code>docker stop portainer</code>, <code>docker rm portainer</code>, <code>docker pull portainer/portainer-ce:lts</code>, <code>docker run ...</code>. <a href="https://docs.portainer.io/start/upgrade/docker">https://docs.portainer.io/start/upgrade/docker</a></li>
+<li>Coolify v4.4.3 on 2026-10-08, Apache-2.0, image 184 MB. Compose from a repository or &quot;Raw (deploy file as-is)&quot;; redeploy with the Deploy button; raw mode skips proxy labels and networking. <a href="https://coolify.io/docs/knowledge-base/docker/compose">https://coolify.io/docs/knowledge-base/docker/compose</a> — Self-update: Settings &gt; Updates, &quot;Automatic updates&quot; with a cron frequency (default daily), &quot;Check now&quot;. <a href="https://coolify.io/docs/get-started/upgrade">https://coolify.io/docs/get-started/upgrade</a></li>
+<li>Dokploy v0.30.8 on 2026-09-29, Apache-2.0 outside a <code>/proprietary</code> directory, image <code>dokploy/dokploy:v0.30.8</code> 764 MB; &quot;at least 2GB of RAM and 30GB of disk space&quot;; installer adds Traefik and Docker. <a href="https://docs.dokploy.com/docs/core/installation">https://docs.dokploy.com/docs/core/installation</a> — Compose: UI env vars are written to <code>.env</code> but &quot;not automatically injected into containers&quot; (use <code>env_file</code>). <a href="https://docs.dokploy.com/docs/core/docker-compose">https://docs.dokploy.com/docs/core/docker-compose</a> — Volume Backups: &quot;backup Docker named volumes to S3 destinations&quot;, cron schedule, restore from the UI into a new volume. <a href="https://docs.dokploy.com/docs/core/volume-backups">https://docs.dokploy.com/docs/core/volume-backups</a> — Dokploy&#39;s own backup &quot;saves your entire Dokploy file system and database&quot; to S3 with restore in the UI. <a href="https://docs.dokploy.com/docs/core/backups">https://docs.dokploy.com/docs/core/backups</a> — Self-update: <code>curl -sSL https://dokploy.com/install.sh | sh -s update</code>. <a href="https://docs.dokploy.com/docs/core/installation">https://docs.dokploy.com/docs/core/installation</a></li>
+<li>Komodo v2.3.3 on 2026-09-01, GPL-3.0, core image 257 MB. &quot;Core: Web server hosting the API and browser UI&quot;; &quot;Periphery: Small, stateless agent running on each connected server&quot;; compose files &quot;in the UI, on the host, or in a git repo with auto-deploy on push&quot;. <a href="https://komo.do/docs/intro">https://komo.do/docs/intro</a> and <a href="https://github.com/moghtech/komodo/blob/main/docsite/docs/resources.md">https://github.com/moghtech/komodo/blob/main/docsite/docs/resources.md</a></li>
+</ul>
+<h3 id="verdict-for-annoudio-9">Verdict for Annoudio</h3>
+<p>Ship the org container as a Compose stack and document it for Dokploy: a non-technical operator can paste the compose, set the env vars in the UI, press Deploy, schedule volume and database backups to S3, and restore from the same screen. Coolify is the alternative when self-updating from the GUI matters more than volume restore. Portainer stays the choice for an org that already has IT staff. Main risk: Dokploy is pre-1.0 (v0.30.x) and its image is 764 MB; pin a version and test an update on a staging VPS before the org does.</p>
+<hr>
+<h2 id="decisions-this-changes">Decisions this changes</h2>
+<ol>
+<li>Non-technical GUI constraint: every day-to-day object (project, recording, vocabulary concept, annotation, review state, user, theme) must be a record in one admin UI; no CLI-only path for an operator task. This rules out reusing Elucidate, SAS, miiify and Hypothesis h (section 1), rules out headless Kratos and config-heavy Authentik/Keycloak in v1 (section 5), and favours Payload or Directus over a hand-built Django admin (section 7).</li>
+<li>WADM: use <code>type: Sound</code> for audio bodies; always <code>FragmentSelector</code> + <code>conformsTo: http://www.w3.org/TR/media-frags/</code>; SKOS tags are a two-body array (section 1).</li>
+<li>Protocol endpoints are implemented in-app on Postgres <code>jsonb</code>; the checklist is the MUST list in section 1.</li>
+<li>The embed never detects a container session; &quot;Annotate&quot; is a first-party page with redirect back (section 2).</li>
+<li>Voice notes are transcoded to <code>.m4a</code> by a worker; the raw blob is kept (section 3).</li>
+<li>Read-side widget is built on wavesurfer.js regions inside a custom element (section 4).</li>
+<li>Accounts and login-by-code live in the app; no identity-provider container in v1; Rauthy is the later sidecar (section 5).</li>
+<li>Vocabularies are a tree in the admin UI with SKOS export and import; no external editor embedded (section 6).</li>
+<li>Backend: Payload CMS + Postgres, two services (section 7).</li>
+<li>Jobs run in Postgres (pg-boss); no Redis; no ClamAV in v1 (section 8).</li>
+<li>Snippet contract is <code>/embed/v1.js</code> + <code>&lt;annoudio-player&gt;</code> attributes, tokens and parts (section 9).</li>
+<li>Deployment story targets Dokploy, with Coolify as the alternative (section 10).</li>
+</ol>
+<h2 id="unverified">Unverified</h2>
+<ul>
+<li>Opus-in-MP4 playback support per browser version. MDN lists MP4 as an Opus container without versions; WebKit source gates Opus in MP4 behind <code>HAVE(AVASSETWRITER_WITH_OPUS_SUPPORTED)</code>. Treat Opus-in-MP4 as unsupported for playback until tested.</li>
+<li>Firefox AAC-in-MP4 playback on Linux depends on system codecs (&quot;relies upon a platform&#39;s native support&quot;); not tested here.</li>
+<li>Omeka S Annotate module: whether a <code>t=</code> time <code>FragmentSelector</code> on a media target round-trips through its API. The README documents <code>xywh</code> only. The GitLab repository is canonical; only the GitHub mirror was read. Its licence is not stated in the GitHub metadata.</li>
+<li>Authentik&#39;s licence (GitHub reports &quot;NOASSERTION&quot;); Directus MSCL free-tier limits (the docs page says higher limits need a paid licence but does not list them); VocBench 3 exact licence variant.</li>
+<li>Rauthy&#39;s email magic-link login: stated on the project docs landing page summary, not confirmed against a configuration reference.</li>
+<li>Pocket ID SMTP and Postgres support; Casdoor Docker image size (tag <code>v4.18.0</code> not found on Docker Hub).</li>
+<li>Keycloak image memory figures beyond &quot;2 GB for smaller production deployments&quot;.</li>
+<li>Komodo backup features and database choice; Dokploy self-update from the web UI (docs show only the install script).</li>
+<li>Plausible&#39;s exact new snippet markup (docs page shows only <code>plausible.init</code> examples).</li>
+<li>Ramp licence is taken from <code>package.json</code> (<code>ISC</code>); the repo has no LICENSE file.</li>
+<li>MDN Baseline for CHIPS says &quot;Since December 2025&quot;; BCD lists Safari 26.2. Both were read on 2026-10-09; the Safari minor that re-shipped <code>Partitioned</code> was not cross-checked against WebKit release notes.</li>
+<li>Chrome&#39;s default recorder MIME type was read from the Blink source on <code>main</code>, not from a shipped release tag.</li>
+</ul>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Upgrade an Annoudio stack · Annoudio</title>
+<meta name="description" content="This file does not depend on the tool that runs the stack. For the buttons, read GUIDE-dokploy.md or GUIDE-coolify.md.">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy" aria-current="page">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html" aria-current="page">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/UPGRADE.md"><code>deploy/UPGRADE.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (7 sections)</summary><ol><li><a href="#what-an-upgrade-is">What an upgrade is</a></li><li><a href="#before-the-upgrade">Before the upgrade</a></li><li><a href="#the-upgrade">The upgrade</a></li><li><a href="#after-the-upgrade-check">After the upgrade: check</a></li><li><a href="#roll-back">Roll back</a></li><li><a href="#release-notes-the-lifecycle-release-migration-20261009163307phase5clifecycle">Release notes: the lifecycle release (migration <code>20261009_163307_phase5c_lifecycle</code>)</a></li><li><a href="#rules-for-the-people-who-make-releases">Rules for the people who make releases</a></li></ol></details>
+<h1 id="upgrade-an-annoudio-stack">Upgrade an Annoudio stack</h1>
+<p>This file does not depend on the tool that runs the stack. For the buttons, read <a href="deploy-dokploy.html"><code>GUIDE-dokploy.md</code></a> or <a href="deploy-coolify.html"><code>GUIDE-coolify.md</code></a>.</p>
+<h2 id="what-an-upgrade-is">What an upgrade is</h2>
+<p>An upgrade = get the new release from git, then redeploy. The tool builds the two images again and starts new containers. The data stays in the volumes.</p>
+<p>At each start, the app runs the database migrations before the server starts (<a href="https://github.com/micahchoo/annoudio/blob/main/deploy/app/entrypoint.sh"><code>deploy/app/entrypoint.sh</code></a>). A migration changes the tables to agree with the new release. A migration that ran before does not run again. While the migrations run, the healthcheck is red and the old containers are already stopped, so the site is down for that time (usually seconds).</p>
+<p>You do not run a command for the migrations. You do not change the volumes.</p>
+<h2 id="before-the-upgrade">Before the upgrade</h2>
+<ol>
+<li>Read the release notes of the new release. Look for the words &quot;manual step&quot; and &quot;breaking&quot;.</li>
+<li>Make a Postgres backup and a <code>media</code> backup now, by hand (<a href="backup.html"><code>BACKUP.md</code></a>). Write down the file names. This is your way back.</li>
+<li>Write down the release that runs now (the git branch or commit). This is the release for a rollback.</li>
+<li>Choose a quiet time. Members who write a story during the upgrade can lose it.</li>
+</ol>
+<h2 id="the-upgrade">The upgrade</h2>
+<ol>
+<li>In the tool, change the git branch to the new release, or pull the newest commit of the branch.</li>
+<li>Click Deploy (Redeploy).</li>
+<li>Watch the deployment log. The build takes some minutes.</li>
+<li>Open the log of the <code>app</code> service. Look for these lines, in this order:<ul>
+<li><code>[migrate] waiting for the migration lock</code></li>
+<li><code>Migrating: &lt;name&gt;</code> and <code>Migrated: &lt;name&gt;</code>, one pair for each new migration (or no pair, if the release has no new migration)</li>
+<li><code>[migrate] done</code></li>
+<li><code>▲ Next.js</code> and then <code>Ready</code></li>
+</ul>
+</li>
+</ol>
+<h2 id="after-the-upgrade-check">After the upgrade: check</h2>
+<p>Do all five checks. Each takes less than a minute.</p>
+<ol>
+<li>The tool shows <code>app</code> as healthy, and <code>worker</code> and <code>postgres</code> as running.</li>
+<li><code>https://&lt;your address&gt;/admin</code> opens, and you can sign in.</li>
+<li><code>https://&lt;your address&gt;/embed/v1.js</code> opens and shows JavaScript.</li>
+<li>A page on your site with a player shows its stories.</li>
+<li>The log of <code>worker</code> shows <code>[media worker] started</code>, then <code>[media worker] the review mail is on the schedule: 08:00 &lt;time zone&gt;</code>, and no error after it. The time zone is the <code>TZ</code> of your settings (UTC if you did not set it).</li>
+</ol>
+<h2 id="roll-back">Roll back</h2>
+<p>Do this when a check fails and you cannot fix it in 15 minutes.</p>
+<p><strong>The rule: a migration does not run backward.</strong> The old release cannot always read the tables of the new release. So a rollback is two steps: the old code and the old database.</p>
+<ol>
+<li>In the tool, change the git branch back to the release that you wrote down. Click Deploy.</li>
+<li>If the upgrade ran a migration (look for <code>Migrated:</code> in the upgrade log): restore the Postgres backup that you made before the upgrade (<a href="backup.html"><code>BACKUP.md</code></a>, or the Restore button of the tool). Then restart <code>app</code>.</li>
+<li>Do the five checks again.</li>
+</ol>
+<p>Stories that members wrote between the backup and the rollback are lost. That is why you upgrade at a quiet time.</p>
+<p>You do not need to restore <code>media</code> for a rollback: an upgrade does not change the files in it.</p>
+<h2 id="release-notes-the-lifecycle-release-migration-20261009163307phase5clifecycle">Release notes: the lifecycle release (migration <code>20261009_163307_phase5c_lifecycle</code>)</h2>
+<p>No manual step. It is not breaking: the migration only adds columns and fills one of them.</p>
+<ul>
+<li>The app now sends mail to operators through the same <code>SMTP_URL</code>: a daily review mail at 08:00, and a password-reset mail from <strong>Forgot password?</strong> on the login screen. Before this release, a reset link went only to the log.</li>
+<li>New optional setting <code>TZ</code> (for example <code>Asia/Kolkata</code>): the time zone of the 08:00 review mail and of the dates that the app writes. Without it: UTC. Add it on the Environment screen before you deploy, or later and then redeploy.</li>
+<li><code>ANNOUDIO_MEDIA_CONSUMER</code> stays as it is. It now also starts the consumer of the review mail. The compose file sets it; you do not.</li>
+<li>A rollback to the release before this one needs the database restore (the migration added columns).</li>
+</ul>
+<h2 id="rules-for-the-people-who-make-releases">Rules for the people who make releases</h2>
+<ul>
+<li>Every change to a collection ships with its migration in <code>app/src/migrations</code> (<code>pnpm payload migrate:create &lt;name&gt;</code>). Without it, the new release starts on the old tables and fails.</li>
+<li>Do not set <code>prodMigrations</code> in <code>payload.config.ts</code>. The entrypoint runs the migrations under a lock. <code>prodMigrations</code> would run them again in each app process, without the lock.</li>
+<li>A migration that deletes or renames a column is a breaking change. Say so in the release notes.</li>
+<li>Name each release as a git branch or tag that never moves, for example <code>release-1.2</code>. A rollback needs the old name.</li>
+</ul>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

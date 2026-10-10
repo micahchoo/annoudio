@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Run Annoudio with Coolify · Annoudio</title>
+<meta name="description" content="The other choice to Dokploy. Coolify updates itself from its screens, but it has fewer backup and restore screens for a compose stack from git. Read GUIDE-dokploy.md first for the words, the settings ">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy" aria-current="page">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html" aria-current="page">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/GUIDE-coolify.md"><code>deploy/GUIDE-coolify.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (6 sections)</summary><ol><li><a href="#install-and-deploy">Install and deploy</a></li><li><a href="#back-up">Back up</a></li><li><a href="#restore">Restore</a></li><li><a href="#upgrade-annoudio">Upgrade Annoudio</a></li><li><a href="#upgrade-coolify-itself">Upgrade Coolify itself</a></li><li><a href="#unverified-here">Unverified here</a></li></ol></details>
+<h1 id="run-annoudio-with-coolify">Run Annoudio with Coolify</h1>
+<p>The other choice to Dokploy. Coolify updates itself from its screens, but it has fewer backup and restore screens for a compose stack from git. Read <a href="deploy-dokploy.html"><code>GUIDE-dokploy.md</code></a> first for the words, the settings and the first operator; this guide gives only the Coolify steps.</p>
+<p>Checked against the Coolify v4 documentation (read on 2026-10-09). Not tested on a real Coolify server: every step is <strong>Unverified</strong> on a screen, and the words can be a little different.</p>
+<h2 id="install-and-deploy">Install and deploy</h2>
+<ol>
+<li>Install Coolify on a server with 4 GB of memory (Coolify documentation, &quot;Installation&quot;). Point the A record of your domain to the server.</li>
+<li>Open your project and environment. Click <strong>+ New</strong>. Choose <strong>Public Repository</strong> (or a Git App for a private repository). Paste the HTTPS address of the repository. Click <strong>Check Repository</strong>.</li>
+<li>In <strong>General &gt; Build pipeline</strong>, set <strong>Build strategy</strong> to <strong>Compose</strong>. Set:<ul>
+<li><strong>Branch</strong>: the release, for example <code>release-1.0</code></li>
+<li><strong>Base Directory</strong>: <code>/</code></li>
+<li><strong>Docker Compose Location</strong>: <code>/deploy/docker-compose.yml</code></li>
+</ul>
+</li>
+<li>Click <strong>Save</strong>. Look at <strong>Docker Compose Content</strong>: you see the services <code>app</code>, <code>worker</code>, <code>postgres</code>, <code>media-init</code>.</li>
+<li>Open <strong>Environment Variables</strong>. Coolify made a line for each <code>${…}</code> in the compose file. The required ones (<code>POSTGRES_PASSWORD</code>, <code>PAYLOAD_SECRET</code>, <code>ANNOUDIO_ORIGIN</code>, <code>SMTP_URL</code>, <code>EMAIL_FROM</code>) are marked; Coolify does not deploy until they have values. Fill them in (see <a href="deploy-dokploy.html"><code>GUIDE-dokploy.md</code></a>, step 1). Keep <code>TRUST_PROXY</code> at <code>1</code>. Set <code>TZ</code> to your time zone (for example <code>Asia/Kolkata</code>) if operators must get the daily review mail at 08:00 local time; without it, 08:00 UTC.</li>
+<li>Open <strong>Domains</strong>. Click <strong>Add domain</strong>. Choose the service <code>app</code>. Type <code>https://stories.example.org:3000</code>. The <code>:3000</code> tells the Coolify proxy the port in the container; visitors still use the normal HTTPS port.</li>
+<li>Click <strong>Deploy</strong>. Open <strong>Deployment Logs</strong> and wait. Then open the <strong>Runtime Logs</strong> of <code>app</code> and look for <code>[migrate] done</code> and <code>▲ Next.js</code>.</li>
+<li>Immediately open <code>https://stories.example.org/admin</code> and make the first operator (<a href="deploy-dokploy.html"><code>GUIDE-dokploy.md</code></a>, step 6).</li>
+</ol>
+<h2 id="back-up">Back up</h2>
+<ul>
+<li><strong>Media</strong>: open the application, <strong>Backups</strong>, <strong>Storage backups</strong>, <strong>Add</strong>. Choose the volume that ends in <code>media</code> as <strong>Backup target</strong>. <strong>Frequency</strong>: <code>30 2 * * *</code>. Click <strong>Create schedule</strong>. Open the schedule, select <strong>S3</strong>, choose your S3 storage, <strong>Enable S3</strong>, <strong>Save changes</strong>. Keep <strong>Archive behavior</strong> at <strong>Keep containers running</strong> (why: <a href="backup.html"><code>BACKUP.md</code></a>). Click <strong>Back up now</strong> and look at <strong>Executions</strong>.</li>
+<li><strong>Database</strong>: <strong>Gap.</strong> Coolify&#39;s scheduled database backup is for Coolify databases and for a database inside a Service (&quot;Docker Compose Empty&quot; or one-click). The documentation does not say that it works for a database inside a git Compose application. Check the <strong>Backups</strong> page of the application for <strong>Database backups</strong>. If it is not there, use one of these:<ol>
+<li>A person with a terminal runs the <code>pg_dump</code> command of <a href="backup.html"><code>BACKUP.md</code></a> every day (or as a cron job on the server).</li>
+<li>Run Annoudio as Dokploy instead, which backs up a compose database from its screens.</li>
+</ol>
+</li>
+<li>Never make a storage backup of the <code>pgdata</code> volume as your only database backup. A file copy of a running database can be broken.</li>
+<li>Keep the Environment Variables in the password manager.</li>
+</ul>
+<h2 id="restore">Restore</h2>
+<p><strong>Gap.</strong> Coolify&#39;s storage backup page &quot;does not provide a dashboard restore action&quot; (Coolify documentation). Download the archive from <strong>Executions</strong> (<strong>Download</strong>), and restore with the commands of <a href="backup.html"><code>BACKUP.md</code></a>. This needs a terminal on the server.</p>
+<h2 id="upgrade-annoudio">Upgrade Annoudio</h2>
+<ol>
+<li>Make the backups of <a href="upgrade.html"><code>UPGRADE.md</code></a>, &quot;Before the upgrade&quot;.</li>
+<li>In <strong>General</strong>, change <strong>Branch</strong> to the new release. Click <strong>Save</strong>, then <strong>Deploy</strong>.</li>
+<li>The migrations run at the start of <code>app</code>. Look for <code>[migrate] done</code> in the <strong>Runtime Logs</strong>.</li>
+<li>Do the five checks in <a href="upgrade.html"><code>UPGRADE.md</code></a>.</li>
+<li>To roll back: set the old branch, deploy, and restore the database backup if the upgrade ran a migration.</li>
+</ol>
+<h2 id="upgrade-coolify-itself">Upgrade Coolify itself</h2>
+<p><strong>Settings → Updates</strong>. Choose <strong>Automatic updates</strong> with an <strong>Update frequency</strong>, or check by hand. Make a Coolify instance backup first (Coolify documentation, &quot;Instance backup&quot;).</p>
+<h2 id="unverified-here">Unverified here</h2>
+<ul>
+<li>How Coolify reads the optional limits in the compose file (<code>STORIES_PAGE_SIZE:</code> with no value). In plain Docker Compose, a name with no value is not set in the container, which is what the app needs. If Coolify makes an empty value from it, the app reads 0. Check the limits after the first deploy, or remove those lines from your copy.</li>
+<li>Whether Coolify keeps the project name <code>name: annoudio-prod</code> or uses its own. Coolify uses its own names for containers and volumes; the volume names in this guide can differ.</li>
+<li>That the one-time service <code>media-init</code> (it exits after a second) does not show as &quot;failed&quot; in Coolify.</li>
+</ul>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

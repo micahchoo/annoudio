@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Unverified · Annoudio</title>
+<meta name="description" content="Date: 2026-10-09 (closing pass). This file collects every &quot;not verified&quot;, &quot;unverified&quot; and &quot;not tested&quot; item of design/phase-notes.md that is still open. No automated test checks these items. Each row">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html" aria-current="page">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/design/UNVERIFIED.md"><code>design/UNVERIFIED.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (10 sections)</summary><ol><li><a href="#player-embed">Player (<code>embed/</code>)</a></li><li><a href="#annotate-page-members">Annotate page (members)</a></li><li><a href="#admin-operators">Admin (operators)</a></li><li><a href="#media-pipeline-worker">Media pipeline (worker)</a></li><li><a href="#mail">Mail</a></li><li><a href="#read-api-and-proxies">Read API and proxies</a></li><li><a href="#deploy-and-operations">Deploy and operations</a></li><li><a href="#cms-plugins-plugins">CMS plugins (<code>plugins/</code>)</a></li><li><a href="#known-and-not-fixed">Known and not fixed</a></li><li><a href="#closed-since-the-notes-were-written">Closed since the notes were written</a></li></ol></details>
+<h1 id="unverified">Unverified</h1>
+<p>Date: 2026-10-09 (closing pass). This file collects every &quot;not verified&quot;, &quot;unverified&quot; and &quot;not tested&quot; item of <code>design/phase*-notes.md</code> that is still open. No automated test checks these items. Each row gives the cheapest check and what the check needs:</p>
+<ul>
+<li><strong>device</strong>: a real phone, a Mac, or a browser that Playwright does not run;</li>
+<li><strong>server</strong>: a real VPS, a real proxy, a real SMTP or a real CDN;</li>
+<li><strong>person</strong>: a person who does the task (an operator, a member, a screen-reader user);</li>
+<li><strong>time</strong>: a test that waits for the clock;</li>
+<li><strong>here</strong>: this machine is enough; no one did it yet.</li>
+</ul>
+<p>Rows closed by later phases are listed at the end, with the phase that closed them.</p>
+<h2 id="player-embed">Player (<code>embed/</code>)</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Player (embed/)"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P1</td>
+<td>Real Safari on macOS and iOS. WebKit here is Playwright&#39;s WPE build on Linux. iOS loads no audio data before a tap. <code>currentTime</code> and <code>annoudio:timeupdate</code> are tested in WebKit only.</td>
+<td>2 §6.1, 3b</td>
+<td>Open <code>bare.html</code> of the player fixture on an iPhone and a Mac over the LAN; tap play; open a story; check the time moves.</td>
+<td>device</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Forced colours in Firefox and WebKit, and Windows high contrast.</td>
+<td>2 §6.2</td>
+<td>Windows with a high-contrast theme, open the fixture page in Edge and Firefox.</td>
+<td>device</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Screen reader output (NVDA, VoiceOver). Only axe and accessible names are tested.</td>
+<td>2 §6.3</td>
+<td>A screen-reader user opens a story list and plays one story.</td>
+<td>person, device</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>The 20 MB waveform limit with a large real file; decode memory for long recordings.</td>
+<td>2 §6.4</td>
+<td>Point the fixture at a 60-minute <code>.m4a</code>; watch memory in the browser task manager.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>200 % text size. Only 280 CSS px reflow is tested.</td>
+<td>2 §6.5</td>
+<td>Set the browser text size to 200 % and open the fixture page.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Contrast of theme values that a project sets (the player does not check them, by contract).</td>
+<td>2 §6.6</td>
+<td>None in code. The operator guide can tell operators to check contrast.</td>
+<td>person</td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Revalidation (<code>304</code>) through the browser cache, and behaviour behind a CDN.</td>
+<td>2 §6.7, 3b</td>
+<td>Put the demo stack behind a CDN; reload a page two times and read the network panel.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>Two organisations on one page, beyond the one <code>origin</code> test.</td>
+<td>2 §6.8</td>
+<td>A static page with two snippets from two stacks (demo :3500 and a second compose stack).</td>
+<td>here</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>Real playback of the derived <code>.m4a</code> and <code>.mp4</code> in Firefox on Linux without system AAC/H.264. Playwright&#39;s Firefox has its own codecs.</td>
+<td>4a, 4b</td>
+<td>Distribution Firefox on a Linux machine with no extra codec packages; play a published voice note in the demo.</td>
+<td>device</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>The player on a host page with the published photo of the demo.</td>
+<td>6b</td>
+<td>Open the WordPress test host page of the demo and open the photo story.</td>
+<td>here</td>
+</tr>
+</tbody></table></div>
+<h2 id="annotate-page-members">Annotate page (members)</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Annotate page (members)"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A1</td>
+<td>Real Safari and iOS recording (<code>audio/mp4</code> from MediaRecorder). The recorder test uses Chromium&#39;s fake microphone. This is the Phase 4 done-when test.</td>
+<td>4b</td>
+<td>Record a voice note on an iPhone in the demo; publish it; play it in Chrome and Firefox. Then record in Chrome and play on the iPhone.</td>
+<td>device</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>The Annotate page, the reply form, Your stories and Your account in Firefox and WebKit. App e2e runs in Chromium only.</td>
+<td>3b, 4b, 5b, 5c</td>
+<td>Add <code>firefox</code> and <code>webkit</code> projects to <a href="https://github.com/micahchoo/annoudio/blob/main/app/playwright.config.ts"><code>app/playwright.config.ts</code></a> and run <code>annotate</code>, <code>replies</code>, <code>mine</code> once.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Cross-site cookie behaviour from a link on another site (<code>SameSite=Lax</code>). The tests open the Annotate page directly.</td>
+<td>3</td>
+<td>Follow the Annotate link from the WordPress test host (another port is another site only with another host name; use <code>127.0.0.2</code> or a hosts entry).</td>
+<td>here</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>A hidden concept: the Annotate page filter in a browser.</td>
+<td>5</td>
+<td>One e2e step: hide a concept, open the Annotate page, check the picker.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>A5</td>
+<td>A reply with a media body, end to end.</td>
+<td>5b</td>
+<td>One e2e test: reply with a photo, publish, read the player.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>A6</td>
+<td>The 15-minute limit of a voice note is checked by the worker after the upload, not by the recorder. A member can record 20 minutes and lose them.</td>
+<td>4b</td>
+<td>A real phone: record 16 minutes. Check the message the member sees.</td>
+<td>device, time</td>
+</tr>
+<tr>
+<td>A7</td>
+<td>Real MediaRecorder files. The fixtures copy their codecs and containers, but they are not browser output.</td>
+<td>4a</td>
+<td>Record one file in each browser (A1, P9) and keep it as a fixture.</td>
+<td>device</td>
+</tr>
+</tbody></table></div>
+<h2 id="admin-operators">Admin (operators)</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Admin (operators)"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>O1</td>
+<td>axe on the Payload lists other than Stories (Projects, Recordings, Concepts, Members, Operators, Media bodies), the project settings form, the concept form and the member page. Their selection checkboxes have no names.</td>
+<td>5c</td>
+<td>Add these screens to the axe loop of <a href="https://github.com/micahchoo/annoudio/blob/main/app/tests/e2e/lifecycle.e2e.spec.ts"><code>app/tests/e2e/lifecycle.e2e.spec.ts</code></a>.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>O2</td>
+<td>The admin in the dark theme.</td>
+<td>5, 5c</td>
+<td>Set the operator&#39;s theme to dark in Account; screenshot each screen of <code>design/phase5c-screens/</code>.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>O3</td>
+<td>The theme preview with the operator&#39;s real fonts.</td>
+<td>5</td>
+<td>Set a font token to a web font of the pilot site.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>O4</td>
+<td>The browser duration probe in Firefox and Safari, and for an audio address that answers without CORS headers.</td>
+<td>5</td>
+<td>&quot;Add a player&quot; in Firefox and Safari with an address on a server with no CORS headers.</td>
+<td>device</td>
+</tr>
+<tr>
+<td>O5</td>
+<td>The theme form in a browser (the int tests run the same <code>validate</code> functions through the local API).</td>
+<td>3b</td>
+<td>Type a bad colour in the Theme tab and save.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>O6</td>
+<td>The <strong>Media</strong> column and the Publish error toast of <code>media-not-ready</code> in a browser.</td>
+<td>4b</td>
+<td>One e2e step: open a story whose body is processing and select Publish.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>O7</td>
+<td>Every task without help from a developer: approve a story, add a term, add a recording, embed it.</td>
+<td>ROADMAP Phase 7</td>
+<td>The team trial.</td>
+<td>person</td>
+</tr>
+</tbody></table></div>
+<h2 id="media-pipeline-worker">Media pipeline (worker)</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Media pipeline (worker)"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M1</td>
+<td>Voice note and video through the production images (6b ran a photo only; 5c e2e uses a fake transcoder).</td>
+<td>6b</td>
+<td>In the demo, record a voice note and upload a short video on the Annotate page; read the worker log (it now has one line when a job starts and one when it ends).</td>
+<td>here</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>The worker test suite in the Docker image (ffmpeg 8.1.2). Only the smoke test ran there.</td>
+<td>4a</td>
+<td>Run <code>pnpm test</code> in a container from the worker image with the test database.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Transcode time and memory of a 3-minute 1080p video on a small VPS. The 10-minute ffmpeg timeout is a guess.</td>
+<td>4a</td>
+<td>Upload such a video on a 2 vCPU / 4 GB VPS and time the job from the worker log.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>The tus path behind Traefik (Dokploy): the body size limit and the timeouts of the proxy.</td>
+<td>4b</td>
+<td>Upload a 250 MB video through a Dokploy stack.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>M5</td>
+<td><code>FileStore.deleteExpired</code> on a real volume (no test waits one day).</td>
+<td>4b</td>
+<td>Start an upload, stop it, check the <code>media</code> volume after 24 h.</td>
+<td>time</td>
+</tr>
+</tbody></table></div>
+<h2 id="mail">Mail</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Mail"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>M2, M4 and M5 through a real SMTP server. 6b sent M1, M3, M6 and M7 through Mailpit.</td>
+<td>5c, 6b</td>
+<td>In the demo, return a story (M2), publish a reply (M4, M5) and read Mailpit.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>Deliverability (SPF, DKIM) with the organisation&#39;s mail provider.</td>
+<td>5c</td>
+<td>Send a login code to a Gmail and an Outlook address from the pilot stack.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>The real 08:00 digest trigger. The schedule row and one <code>mail.digest</code> job are tested; the clock is not.</td>
+<td>5c, 6b</td>
+<td>Leave the demo stack running past 08:00 in its <code>TZ</code>; read Mailpit.</td>
+<td>time</td>
+</tr>
+<tr>
+<td>E4</td>
+<td><code>TZ</code> with a wrong name (for example <code>IST</code>): Node falls back to UTC with no message.</td>
+<td>6b</td>
+<td>Set <code>TZ=IST</code> in the demo <code>.env</code>; read the worker start line.</td>
+<td>here</td>
+</tr>
+</tbody></table></div>
+<h2 id="read-api-and-proxies">Read API and proxies</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Read API and proxies"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R1</td>
+<td>A CDN or proxy in front of the app: <code>TRUST_PROXY</code>, <code>Vary</code>, <code>304</code> through a shared cache.</td>
+<td>3b</td>
+<td>The same stack behind Cloudflare; read the response headers.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>R2</td>
+<td><code>X-Forwarded-For</code> as Traefik in Dokploy writes it (the per-IP login-code limit reads it).</td>
+<td>3b</td>
+<td>On a Dokploy stack, request six codes from one phone; check the sixth is refused.</td>
+<td>server, device</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>A Web Annotation client (Mirador, Hypothesis) that reads <code>annoudio:replies</code>. Only jsonld.js was tested; pyld was not.</td>
+<td>5b</td>
+<td>Load a container URL of the demo in pyld (<code>pip install pyld</code>) and expand it.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>JSON-LD SKOS files from TemaTres or OpenTheso.</td>
+<td>5</td>
+<td>Export a small vocabulary from a TemaTres demo and import it.</td>
+<td>here</td>
+</tr>
+</tbody></table></div>
+<h2 id="deploy-and-operations">Deploy and operations</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Deploy and operations"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>D1</td>
+<td>Every Dokploy and Coolify step on a real server. Button names marked &quot;Unverified&quot; in the guides were not found in the source.</td>
+<td>6, 6b</td>
+<td>Follow <a href="deploy-dokploy.html"><code>deploy/GUIDE-dokploy.md</code></a> literally on a clean VPS (the Phase 6 done-when test).</td>
+<td>server, person</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>How Dokploy shows a database restore that exits 1 (the three <code>pgboss</code> errors).</td>
+<td>6</td>
+<td>Part of D1: one restore in the Dokploy GUI.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>A Next build on a 4 GB VPS with Dokploy running.</td>
+<td>6</td>
+<td>Part of D1: watch the build log and the memory.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Coolify: database backup for a git compose application; value-less environment keys; how it shows the exited <code>media-init</code>.</td>
+<td>6</td>
+<td>Follow <a href="deploy-coolify.html"><code>deploy/GUIDE-coolify.md</code></a> on a clean VPS.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>D5</td>
+<td><code>migrate</code> of a real database with data from an older release. Tested on empty databases and on rows written by hand.</td>
+<td>5</td>
+<td>Before the first upgrade: restore a copy of the pilot database into a staging stack and run the new image.</td>
+<td>server</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>An upgrade from one release to the next with <a href="upgrade.html"><code>deploy/UPGRADE.md</code></a>. There is only one release.</td>
+<td>6</td>
+<td>Tag the current tree as a release; upgrade the demo to the next one.</td>
+<td>here</td>
+</tr>
+</tbody></table></div>
+<h2 id="cms-plugins-plugins">CMS plugins (<code>plugins/</code>)</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in CMS plugins (plugins/)"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+<th>Cheapest check</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>C1</td>
+<td>Real HTTPS stacks, mixed content (an <code>https</code> site with an <code>http</code> stack), and a CSP on the host.</td>
+<td>7a §5.1</td>
+<td>Put the test hosts and the demo behind a local TLS proxy (Caddy).</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>WordPress multisite; editor and contributor roles (only author was tested).</td>
+<td>7a §5.2</td>
+<td>A WordPress multisite container; repeat the author test as an editor.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Classic themes in a browser; Omeka S themes other than <code>default</code>.</td>
+<td>7a §5.3</td>
+<td>Switch the test hosts to Twenty Twenty-One and an Omeka S community theme; run the plugin tests.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>A private Omeka media: visitors cannot fetch its original file; the block does not warn.</td>
+<td>7a §5.4</td>
+<td>Make one media private; open the public page as a visitor.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>The plugins in Firefox and WebKit (Chromium only in this phase).</td>
+<td>7a §5.5</td>
+<td>Add the two browsers to <code>plugins/tests</code> Playwright config.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C6</td>
+<td>Translations: strings are marked, but no <code>.pot</code>/<code>.po</code> files exist.</td>
+<td>7a §5.6</td>
+<td><code>wp i18n make-pot</code>; one Omeka S <code>.po</code>.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C7</td>
+<td>Uninstall paths (<code>uninstall.php</code>, <code>Module::uninstall</code>).</td>
+<td>7a §5.8</td>
+<td>Uninstall both plugins on the test hosts; check the options and tables are gone.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C8</td>
+<td>The 5-minute cache expiry of the recording lookup (no test waits 300 s).</td>
+<td>7b §4.1</td>
+<td>Change the address of a recording in the admin; reload the page after 5 minutes.</td>
+<td>time</td>
+</tr>
+<tr>
+<td>C9</td>
+<td>A slow stack (between 2 s and the timeout); only &quot;connection refused&quot; was tested.</td>
+<td>7b §4.2</td>
+<td>Put a delay proxy (<code>toxiproxy</code>) between a test host and the demo.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C10</td>
+<td>WordPress object caches for transients (Redis, Memcached).</td>
+<td>7b §4.3</td>
+<td>Install the Redis object cache plugin on the test host; rerun the plugin tests.</td>
+<td>here</td>
+</tr>
+<tr>
+<td>C11</td>
+<td>Omeka S with a read-only or shared <code>temp_dir</code>.</td>
+<td>7b §4.4</td>
+<td>Mount <code>temp_dir</code> read-only on the Omeka test host.</td>
+<td>here</td>
+</tr>
+</tbody></table></div>
+<h2 id="known-and-not-fixed">Known and not fixed</h2>
+<p>These items are not unverified: tests show them. They are here because earlier notes listed them with the unverified items.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Known and not fixed"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>K1</td>
+<td>Text typed into an existing story or reply before React hydrates can be lost (React 19.2 resets a non-empty server textarea).</td>
+<td>3, 3b, 5b</td>
+</tr>
+<tr>
+<td>K2</td>
+<td>Firefox in the embed tests still opens a PulseAudio stream with silent samples.</td>
+<td>3b §9</td>
+</tr>
+<tr>
+<td>K3</td>
+<td>A new member name changes only the stories that the member saves after the change.</td>
+<td>5c</td>
+</tr>
+<tr>
+<td>K4</td>
+<td>WebKit ignores <code>preload=&quot;none&quot;</code> and gets a voice note once when the story list shows.</td>
+<td>4b</td>
+</tr>
+</tbody></table></div>
+<h2 id="closed-since-the-notes-were-written">Closed since the notes were written</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in Closed since the notes were written"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Source</th>
+<th>Closed by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Real SMTP for M1, M3, M6, M7; operator password reset through an email adapter</td>
+<td>3, 5c, 6</td>
+<td>6b (Mailpit, real SMTP)</td>
+</tr>
+<tr>
+<td><code>pnpm build</code> not run</td>
+<td>3</td>
+<td>3b and every later phase</td>
+</tr>
+<tr>
+<td>No admin &quot;Publish&quot; test</td>
+<td>3</td>
+<td>5c e2e, 6b seed (the admin&#39;s Publish button)</td>
+</tr>
+<tr>
+<td>The start at <code>t</code> and &quot;Use the player time&quot;</td>
+<td>3</td>
+<td><a href="https://github.com/micahchoo/annoudio/blob/main/app/tests/e2e/annotate.e2e.spec.ts"><code>app/tests/e2e/annotate.e2e.spec.ts</code></a></td>
+</tr>
+<tr>
+<td>Uploads and <code>/media/&lt;id&gt;</code> in the production image</td>
+<td>6</td>
+<td>6b (a photo; voice and video stay open: M1)</td>
+</tr>
+<tr>
+<td>The Dashboard and the Stories column count replies as stories</td>
+<td>5b</td>
+<td>5c (Today replaced the Dashboard; the column counts stories only)</td>
+</tr>
+<tr>
+<td>The demo stack lacks the 5c fixes</td>
+<td>5c</td>
+<td>6b (demo rebuilt)</td>
+</tr>
+<tr>
+<td>The worker logs nothing per job</td>
+<td>6b</td>
+<td>closing pass (<a href="https://github.com/micahchoo/annoudio/blob/main/design/closing-notes.md"><code>design/closing-notes.md</code></a>)</td>
+</tr>
+<tr>
+<td>A deleted project still has its stories served</td>
+<td>6b</td>
+<td>closing pass (<a href="https://github.com/micahchoo/annoudio/blob/main/design/closing-notes.md"><code>design/closing-notes.md</code></a>)</td>
+</tr>
+</tbody></table></div>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

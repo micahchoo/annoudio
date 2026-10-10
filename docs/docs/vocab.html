@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Project vocabulary: the specification · Annoudio</title>
+<meta name="description" content="Status: decision, 2026-10-09. This file replaces vocab-A-properties.md, vocab-B-schemes.md and vocab-C-templates.md as the build source. The owner chose B's model with C's surface, plus A's field lock">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html" aria-current="page">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/design/vocab.md"><code>design/vocab.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (12 sections)</summary><ol><li><a href="#1-words">1 Words</a></li><li><a href="#2-the-catalogue">2 The catalogue</a></li><li><a href="#3-storage">3 Storage</a></li><li><a href="#4-migration-of-todays-concepts-and-tag-pairs">4 Migration of today&#39;s concepts and tag pairs</a></li><li><a href="#5-entity-records">5 Entity records</a></li><li><a href="#6-import-and-export">6 Import and export</a></li><li><a href="#7-the-member-and-the-visitor">7 The member and the visitor</a></li><li><a href="#8-admin-screens">8 Admin screens</a></li><li><a href="#9-data-model-and-interfaces">9 Data model and interfaces</a></li><li><a href="#10-payload-feasibility-3902">10 Payload feasibility (3.90.2)</a></li><li><a href="#11-build-slices">11 Build slices</a></li><li><a href="#12-open-questions-defaults-in-bold">12 Open questions (defaults in bold)</a></li></ol></details>
+<h1 id="project-vocabulary-the-specification">Project vocabulary: the specification</h1>
+<p>Status: decision, 2026-10-09. This file replaces <a href="https://github.com/micahchoo/annoudio/blob/main/design/vocab-A-properties.md"><code>vocab-A-properties.md</code></a>, <a href="https://github.com/micahchoo/annoudio/blob/main/design/vocab-B-schemes.md"><code>vocab-B-schemes.md</code></a> and <a href="https://github.com/micahchoo/annoudio/blob/main/design/vocab-C-templates.md"><code>vocab-C-templates.md</code></a> as the build source. The owner chose <strong>B&#39;s model with C&#39;s surface</strong>, plus A&#39;s field lock and A&#39;s <code>story_values</code> table. This file merges them. It does not explore again: for reasons and prior art, read the three source files. Read <a href="context.html"><code>CONTEXT.md</code></a> first.</p>
+<p>The requirement (owner): &quot;each project [owns] an ontology/vocabulary like dcterms foaf etc. importable, and [is] able to add custom labels to their fields and have values in them.&quot;</p>
+<p>In one paragraph: a project&#39;s <strong>vocabulary</strong> is an ordered list of <strong>fields</strong>. Each field puts one RDF <strong>property</strong> on the Annotate form, with a label that members read as a question (&quot;Where did this happen?&quot;). An operator adds fields from a <strong>catalogue</strong> of 14 plain questions, from an <strong>ontology</strong> (Advanced), or as their own question. Choice answers come from <strong>lists</strong> (Topics, Places, People). Each answer of a story is one <strong>value body</strong> in the stored WADM: a <code>TextualBody</code> that is also an <code>rdf:Statement</code>. Labels reach the widget through the theme JSON, so a relabel rebuilds nothing.</p>
+<h2 id="1-words">1 Words</h2>
+<p>Decisions, one line of reasoning each:</p>
+<ol>
+<li><strong>The project tab is &quot;Vocabulary&quot;.</strong> It is the word of the requirement and of today&#39;s tab; the sidebar job <strong>Concepts</strong> becomes <strong>Vocabulary</strong> too (≤ 3 words, <a href="ia.html"><code>ia.md</code></a> §4.1).</li>
+<li><strong>A row is a &quot;field&quot;.</strong> The admin shows its plain label first, and the property beneath in small text (<code>dcterms:spatial</code>): the operator reads meaning, the archivist can still check the IRI.</li>
+<li><strong>A controlled list is a &quot;list&quot;; one entry is an &quot;item&quot;.</strong> &quot;Lists&quot; is the tab; &quot;Topics&quot;, &quot;Places&quot;, &quot;People&quot; are list names. &quot;Concept&quot; was an operator-only SKOS word that the audit flagged (<a href="https://github.com/micahchoo/annoudio/blob/main/design/workflow-audit.md"><code>workflow-audit.md</code></a> #32).</li>
+<li><strong>Members see question labels only.</strong> Never &quot;field&quot;, &quot;property&quot;, &quot;list&quot;, &quot;ontology&quot;, an IRI or a prefix (C §7 rule 6). &quot;Question&quot; is the member&#39;s word and the button <strong>Add a question</strong>; each question becomes one field.</li>
+<li><strong>&quot;Concept&quot; and &quot;Topic&quot; retire as UI words.</strong> &quot;Topics&quot; stays only as the default name of the migrated list and its field, because members already know it. Code keeps the collection slug <code>concepts</code> (no table rename).</li>
+<li><strong>&quot;Ontology&quot;</strong> = an RDF file of properties and classes, loaded once for the organisation. <strong>&quot;Value&quot;</strong> = one answer of one story for one field. <strong>&quot;Entity&quot;</strong> = an item of an entity list (a person, a place, a thing with a class).</li>
+</ol>
+<p>Proposed <a href="context.html"><code>CONTEXT.md</code></a> rows (its owner applies them in slice 1): <strong>Vocabulary</strong> (changed: ordered fields of a project), <strong>Field</strong>, <strong>Property</strong>, <strong>Ontology</strong>, <strong>List</strong>, <strong>Item</strong>, <strong>Entity</strong>, <strong>Value</strong>, <strong>Value body</strong> (new); <strong>Concept</strong> and <strong>Topic</strong> removed. The fixed decision &quot;SKOS tags are two bodies&quot; becomes &quot;each value is one value body (§3)&quot;.</p>
+<h2 id="2-the-catalogue">2 The catalogue</h2>
+<p>Check: each IRI must be a term of a bundled ontology, because a field&#39;s property is a row of <code>ontology-terms</code>. B bundles dcterms, dctype, foaf, skos, schema.org. Two C entries fail that check: <code>rdfs:seeAlso</code> and the MARC relators.</p>
+<ul>
+<li><strong>Bundle rdfs</strong> (rdf and rdfs core, under 30 terms): <code>rdfs:seeAlso</code> is the standard &quot;more about this&quot; link, and the cost is nil.</li>
+<li><strong>Bundle MARC relators</strong> (about 270 properties, <code>http://id.loc.gov/vocabulary/relators/</code>). Reason: speaker, interviewer, interviewee and performer are the core roles of oral history, LoC declares each one a sub-property of <code>dcterms:contributor</code>, and no bundled ontology has them (schema.org <code>performer</code> has range Event). The bundle script reads every <code>relators:*</code> subject as a property, whatever its <code>rdf:type</code>, with the label from <code>skos:prefLabel</code> or <code>madsrdf:authoritativeLabel</code>. Check the LoC licence line and the typing in slice 1.</li>
+</ul>
+<p>Final catalogue (labels and help in the project language; English shown):</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 2 The catalogue"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Label</th>
+<th>Help</th>
+<th>Property</th>
+<th>Value type</th>
+<th>Default list</th>
+<th>Max</th>
+<th>Own answers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>topics</td>
+<td>Topics</td>
+<td>What is this part about?</td>
+<td><code>dcterms:subject</code></td>
+<td>list</td>
+<td>Topics (items)</td>
+<td>10</td>
+<td>no</td>
+</tr>
+<tr>
+<td>place</td>
+<td>Place</td>
+<td>Where did this happen?</td>
+<td><code>dcterms:spatial</code></td>
+<td>list</td>
+<td>Places (items)</td>
+<td>3</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>when</td>
+<td>When it happened</td>
+<td>A year is enough.</td>
+<td><code>dcterms:temporal</code></td>
+<td>date</td>
+<td>—</td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>speaker</td>
+<td>Who is speaking</td>
+<td></td>
+<td><code>relators:spk</code></td>
+<td>entity</td>
+<td>People (<code>foaf:Person</code>)</td>
+<td>3</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>interviewee</td>
+<td>Who is interviewed</td>
+<td></td>
+<td><code>relators:ive</code></td>
+<td>entity</td>
+<td>People</td>
+<td>3</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>interviewer</td>
+<td>Who asks the questions</td>
+<td></td>
+<td><code>relators:ivr</code></td>
+<td>entity</td>
+<td>People</td>
+<td>3</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>performer</td>
+<td>Who sings or plays</td>
+<td></td>
+<td><code>relators:prf</code></td>
+<td>entity</td>
+<td>People</td>
+<td>5</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>mentions</td>
+<td>People mentioned</td>
+<td></td>
+<td><code>schema:mentions</code></td>
+<td>entity</td>
+<td>People</td>
+<td>10</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>language</td>
+<td>Language spoken</td>
+<td></td>
+<td><code>dcterms:language</code></td>
+<td>list</td>
+<td>Languages (seed: the project language, <code>sameAs</code> its <code>id.loc.gov/vocabulary/iso639-1/</code> IRI)</td>
+<td>3</td>
+<td>no</td>
+</tr>
+<tr>
+<td>kind</td>
+<td>Kind of sound</td>
+<td>Speech, song, music…</td>
+<td><code>dcterms:type</code></td>
+<td>list</td>
+<td>Kinds of sound (seed: Speech, Song, Music, Sounds of a place)</td>
+<td>3</td>
+<td>no</td>
+</tr>
+<tr>
+<td>title</td>
+<td>Short title</td>
+<td>A name for this part.</td>
+<td><code>dcterms:title</code></td>
+<td>text</td>
+<td>—</td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>hear</td>
+<td>What you hear</td>
+<td></td>
+<td><code>dcterms:description</code></td>
+<td>text</td>
+<td>—</td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>link</td>
+<td>Link to more</td>
+<td>A web address.</td>
+<td><code>rdfs:seeAlso</code></td>
+<td>link</td>
+<td>—</td>
+<td>3</td>
+<td>—</td>
+</tr>
+<tr>
+<td>source</td>
+<td>Where you know this from</td>
+<td>A book, an archive, a person.</td>
+<td><code>dcterms:source</code></td>
+<td>text</td>
+<td>—</td>
+<td>1</td>
+<td>—</td>
+</tr>
+</tbody></table></div>
+<p>Changes against C, one reason each: &quot;interviewee&quot; added (the most common oral-history role); C&#39;s <code>language</code> value type became a list (the owner&#39;s model has six value types, and a list gives IRIs); C&#39;s &quot;source about the story&quot; now has the segment as subject, as all fields (§3.2 rule 2; open question 3); C&#39;s EDTF &quot;about 1962&quot; is out of v1, because B&#39;s model stores <code>xsd:gYear</code>, <code>xsd:gYearMonth</code> or <code>xsd:date</code>, which every RDF and SHACL tool reads, and C left the EDTF datatype IRI unchecked. &quot;Keywords&quot; (<code>schema:keywords</code>) is dropped: it asks the same thing as Topics, and a free-word field next to a list splits one idea in two. A catalogue question that needs a list makes that list on first use. A second question that names the same list (&quot;People&quot;) reuses it.</p>
+<h2 id="3-storage">3 Storage</h2>
+<h3 id="31-value-types">3.1 Value types</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 3.1 Value types"><table>
+<thead>
+<tr>
+<th>Value type</th>
+<th>Member control</th>
+<th><code>rdf:object</code></th>
+<th><code>purpose</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>text</td>
+<td>text box, grows to 5 lines; ≤ 500 characters</td>
+<td><code>{ &quot;@value&quot;: …, &quot;@language&quot;: project language }</code></td>
+<td>describing</td>
+</tr>
+<tr>
+<td>date</td>
+<td>Year, Month (select), Day</td>
+<td><code>{ &quot;@value&quot;: &quot;1962&quot;, &quot;type&quot;: &quot;xsd:gYear&quot; }</code>, <code>xsd:gYearMonth</code> or <code>xsd:date</code></td>
+<td>describing</td>
+</tr>
+<tr>
+<td>number</td>
+<td><code>inputmode=&quot;decimal&quot;</code></td>
+<td><code>{ &quot;@value&quot;: &quot;25&quot;, &quot;type&quot;: &quot;xsd:decimal&quot; }</code></td>
+<td>describing</td>
+</tr>
+<tr>
+<td>link</td>
+<td><code>https:</code> address and an optional label</td>
+<td><code>{ &quot;id&quot;: address }</code>; <code>value</code> = the label, else the address</td>
+<td>describing</td>
+</tr>
+<tr>
+<td>list</td>
+<td>chips (≤ 8 items) or a search box (&gt; 8)</td>
+<td><code>{ &quot;id&quot;: item IRI }</code></td>
+<td>tagging</td>
+</tr>
+<tr>
+<td>entity</td>
+<td>the same controls as a list</td>
+<td><code>{ &quot;id&quot;: entity IRI }</code></td>
+<td>describing</td>
+</tr>
+</tbody></table></div>
+<p><strong>Own answer</strong> (list or entity field with &quot;Members may type their own answer&quot;): <code>rdf:object</code> is a blank node with the class of the list, so the stored statement stays one triple pattern and RDF still says &quot;a person named Ravi&quot;: <code>{ &quot;type&quot;: &quot;http://xmlns.com/foaf/0.1/Person&quot;, &quot;rdfs:label&quot;: { &quot;@value&quot;: &quot;Ravi&quot;, &quot;@language&quot;: &quot;en&quot; } }</code>. For a SKOS list the class is <code>skos:Concept</code>. The jsonld.js and <code>jsonld-streaming-parser</code> check of this shape is a done-when of slice 3 (B and A tested only IRI and literal objects).</p>
+<h3 id="32-body-rules">3.2 Body rules</h3>
+<ol>
+<li>Each value is one body: <code>&quot;type&quot;: [&quot;TextualBody&quot;, &quot;rdf:Statement&quot;]</code>, <code>value</code> (the text a person reads), <code>purpose</code>, <code>rdf:subject</code>, <code>rdf:predicate</code>, <code>rdf:object</code>. Body-level <code>language</code> = the language of <code>value</code>.</li>
+<li><code>rdf:subject</code> is the <strong>segment IRI</strong> <code>{recording IRI}#t={start},{end}</code>. <code>stories</code> writes it; a range change rewrites it.</li>
+<li><code>rdf:predicate</code> and <code>rdf:object</code> IRIs are objects with full IRIs (<code>{ &quot;id&quot;: &quot;http://…&quot; }</code>), never CURIEs and never plain strings. Only <code>xsd:</code> in a literal&#39;s <code>type</code> is a CURIE (<code>anno.jsonld</code> defines it).</li>
+<li><strong>The <code>@language</code> trap.</strong> Inside a literal, write <code>@language</code>, never <code>language</code>. In <code>anno.jsonld</code>, <code>language</code> maps to <code>dc:language</code>, and jsonld.js refuses <code>{ &quot;@value&quot;, &quot;language&quot; }</code> (B §3.1).</li>
+<li>Body order: text, media, then values in field order. Order is display only.</li>
+<li>A reply has no values (<code>reply-and-values</code>).</li>
+<li>A stored value body without all three <code>rdf:</code> keys is refused by <code>deriveColumns</code>.</li>
+</ol>
+<h3 id="33-one-story-with-four-values">3.3 One story with four values</h3>
+<p>Project <code>river-voices</code>, recording 1, range 1:02–1:35. Values: text (Short title), date (When it happened), list (Place), entity (Who is speaking).</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;@context&quot;: &quot;http://www.w3.org/ns/anno.jsonld&quot;,
+  &quot;id&quot;: &quot;https://org.example/stories/river-voices/1/0192a3b4-7c1d-7e00-8000-000000000001&quot;,
+  &quot;type&quot;: &quot;Annotation&quot;,
+  &quot;motivation&quot;: &quot;commenting&quot;,
+  &quot;created&quot;: &quot;2026-10-09T10:00:00Z&quot;,
+  &quot;creator&quot;: { &quot;id&quot;: &quot;https://org.example/members/m-100&quot;, &quot;type&quot;: &quot;Person&quot;, &quot;nickname&quot;: &quot;Asha&quot; },
+  &quot;rights&quot;: &quot;https://creativecommons.org/licenses/by/4.0/&quot;,
+  &quot;body&quot;: [
+    { &quot;type&quot;: &quot;TextualBody&quot;, &quot;value&quot;: &quot;My father ran this ferry from Fort Kochi.&quot;, &quot;format&quot;: &quot;text/plain&quot;, &quot;language&quot;: &quot;en&quot; },
+    { &quot;type&quot;: [&quot;TextualBody&quot;, &quot;rdf:Statement&quot;], &quot;purpose&quot;: &quot;describing&quot;, &quot;value&quot;: &quot;The last ferry&quot;, &quot;language&quot;: &quot;en&quot;,
+      &quot;rdf:subject&quot;: { &quot;id&quot;: &quot;https://org.example/recordings/1#t=62,95&quot; },
+      &quot;rdf:predicate&quot;: { &quot;id&quot;: &quot;http://purl.org/dc/terms/title&quot; },
+      &quot;rdf:object&quot;: { &quot;@value&quot;: &quot;The last ferry&quot;, &quot;@language&quot;: &quot;en&quot; } },
+    { &quot;type&quot;: [&quot;TextualBody&quot;, &quot;rdf:Statement&quot;], &quot;purpose&quot;: &quot;describing&quot;, &quot;value&quot;: &quot;1962&quot;,
+      &quot;rdf:subject&quot;: { &quot;id&quot;: &quot;https://org.example/recordings/1#t=62,95&quot; },
+      &quot;rdf:predicate&quot;: { &quot;id&quot;: &quot;http://purl.org/dc/terms/temporal&quot; },
+      &quot;rdf:object&quot;: { &quot;@value&quot;: &quot;1962&quot;, &quot;type&quot;: &quot;xsd:gYear&quot; } },
+    { &quot;type&quot;: [&quot;TextualBody&quot;, &quot;rdf:Statement&quot;], &quot;purpose&quot;: &quot;tagging&quot;, &quot;value&quot;: &quot;Fort Kochi&quot;, &quot;language&quot;: &quot;en&quot;,
+      &quot;rdf:subject&quot;: { &quot;id&quot;: &quot;https://org.example/recordings/1#t=62,95&quot; },
+      &quot;rdf:predicate&quot;: { &quot;id&quot;: &quot;http://purl.org/dc/terms/spatial&quot; },
+      &quot;rdf:object&quot;: { &quot;id&quot;: &quot;https://org.example/vocab/river-voices/c/fort-kochi&quot; } },
+    { &quot;type&quot;: [&quot;TextualBody&quot;, &quot;rdf:Statement&quot;], &quot;purpose&quot;: &quot;describing&quot;, &quot;value&quot;: &quot;K. Joseph&quot;,
+      &quot;rdf:subject&quot;: { &quot;id&quot;: &quot;https://org.example/recordings/1#t=62,95&quot; },
+      &quot;rdf:predicate&quot;: { &quot;id&quot;: &quot;http://id.loc.gov/vocabulary/relators/spk&quot; },
+      &quot;rdf:object&quot;: { &quot;id&quot;: &quot;https://org.example/vocab/river-voices/c/k-joseph&quot; } }
+  ],
+  &quot;target&quot;: {
+    &quot;type&quot;: &quot;SpecificResource&quot;,
+    &quot;source&quot;: &quot;https://org.example/recordings/1&quot;,
+    &quot;scope&quot;: &quot;https://org.example/projects/river-voices&quot;,
+    &quot;selector&quot;: { &quot;type&quot;: &quot;FragmentSelector&quot;, &quot;conformsTo&quot;: &quot;http://www.w3.org/TR/media-frags/&quot;, &quot;value&quot;: &quot;t=62,95&quot; }
+  }
+}
+</code></pre>
+<h3 id="34-the-same-story-as-trig">3.4 The same story as TriG</h3>
+<p>The export has three layers (B §8): 1 stories (the stored WADM), 2 statements (asserted, published stories only), 3 the vocabulary. Turtle puts all three in one graph. TriG puts layers 1 and 3 in the default graph and each story&#39;s statements in a named graph whose name is the story IRI, so &quot;who said it&quot; stays with &quot;what was said&quot;.</p>
+<pre tabindex="0"><code class="language-trig">@prefix oa: &lt;http://www.w3.org/ns/oa#&gt; .        @prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
+@prefix dc: &lt;http://purl.org/dc/elements/1.1/&gt; . @prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; . @prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .  @prefix foaf: &lt;http://xmlns.com/foaf/0.1/&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .  @prefix relators: &lt;http://id.loc.gov/vocabulary/relators/&gt; .
+@prefix c: &lt;https://org.example/vocab/river-voices/c/&gt; . @prefix s: &lt;https://org.example/vocab/river-voices/s/&gt; .
+@prefix story: &lt;https://org.example/stories/river-voices/1/&gt; .
+
+# Layer 1: the stored WADM as RDF (default graph); B §8 shows it in full. Each value body reads:
+#   [ a oa:TextualBody , rdf:Statement ; oa:hasPurpose oa:tagging ; rdf:value &quot;Fort Kochi&quot; ; dc:language &quot;en&quot; ;
+#     rdf:subject &lt;https://org.example/recordings/1#t=62,95&gt; ; rdf:predicate dcterms:spatial ; rdf:object c:fort-kochi ]
+
+# Layer 2: the statements, asserted, in the story&#39;s own graph.
+story:0192a3b4-7c1d-7e00-8000-000000000001 {
+  &lt;https://org.example/recordings/1#t=62,95&gt; dcterms:isPartOf &lt;https://org.example/recordings/1&gt; ;
+    dcterms:title &quot;The last ferry&quot;@en ;
+    dcterms:temporal &quot;1962&quot;^^xsd:gYear ;
+    dcterms:spatial c:fort-kochi ;
+    relators:spk c:k-joseph .
+}
+
+# Layer 3: the vocabulary terms this story uses (default graph).
+c:fort-kochi a skos:Concept ; skos:prefLabel &quot;Fort Kochi&quot;@en ; skos:inScheme s:places .
+c:k-joseph a foaf:Person ; rdfs:label &quot;K. Joseph&quot; ; skos:inScheme s:people ; owl:sameAs &lt;http://www.wikidata.org/entity/Q00000&gt; .   # example address
+</code></pre>
+<p>An own answer exports as <code>relators:spk [ a foaf:Person ; rdfs:label &quot;Ravi&quot;@en ]</code>. A Turtle export is the same triples with the layer 2 graph merged into the default graph. The full SHACL profile is in layer 3 (§6).</p>
+<h2 id="4-migration-of-todays-concepts-and-tag-pairs">4 Migration of today&#39;s concepts and tag pairs</h2>
+<p>One migration, <code>vocab_profile</code>, up and down, tested on rows in the old shape (<a href="https://github.com/micahchoo/annoudio/blob/main/.claude/rules/app-migrations.md"><code>.claude/rules/app-migrations.md</code></a>):</p>
+<ol>
+<li>Seed the bundled ontologies when <code>ontologies</code> is empty (slice 1 owns the seed).</li>
+<li>Per project: make the list <strong>Topics</strong>, kind <code>items</code>, with IRI <code>{origin}/vocab/{project}</code> (today&#39;s scheme IRI). Set <code>list</code> on every concept of the project. <strong>Concept IRIs do not change</strong> (<code>{origin}/vocab/{project}/c/{key}</code>).</li>
+<li>Per project with ≥ 1 concept: make the field <strong>Topics</strong> → <code>dcterms:subject</code>, list Topics, max 10, show as tags, position 1. A project with no concepts gets no field: members see no questions, as they now see no topics.</li>
+<li>Every story, main and versions tables: each pair (<code>SpecificResource</code> <code>tagging</code> + label <code>TextualBody</code> <code>tagging</code>) becomes one value body with <code>rdf:predicate</code> <code>dcterms:subject</code>, <code>rdf:object</code> the concept IRI, <code>value</code> and <code>language</code> from the label body, <code>rdf:subject</code> the segment IRI. <code>modified</code> does not change: the member changed nothing.</li>
+<li>Fill <code>story-values</code> from the rewritten stories. Rebuild every precomputed representation. Every ETag changes once; caches refetch once.</li>
+<li>Down: <code>dcterms:subject</code> value bodies become pairs again. Down refuses when any other value body exists.</li>
+</ol>
+<p>The new widget bundle ships in the same release: today&#39;s <code>parseBodies</code> reads pairs. An older bundle of another stack sees a list value as a tag and a literal as one more line of story text: extra text, no lost data (B §3.2; CONTRACT §6 rule 9).</p>
+<h2 id="5-entity-records">5 Entity records</h2>
+<p>Minimum: <strong>label</strong>, <strong>class</strong> (from the list), <strong>same as</strong> (one optional address: Wikidata, VIAF, an Omeka item). No other fields, no hierarchy. An entity is a row of <code>concepts</code> whose list has kind <code>entities</code>; its IRI is <code>{origin}/vocab/{project}/c/{key}</code>, as an item&#39;s.</p>
+<p>Where: <strong>per project</strong>, as items are. Reason: the delete guard, the counts and the project delete already work per project, and a shared register needs an owner and an edit policy that nobody asked for. B&#39;s &quot;organisation-wide&quot; applies to ontologies only (dcterms is the same for every project; Ravi in River Voices need not be Ravi in Kitchen Songs). <strong>Copy from project</strong> (copy a list with new IRIs and <code>sameAs</code> to the source) is a later, additive action.</p>
+<p>Items of a SKOS list may also carry &quot;same as&quot;; it exports as <code>skos:exactMatch</code> (for an entity: <code>owl:sameAs</code>).</p>
+<h2 id="6-import-and-export">6 Import and export</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 6 Import and export"><table>
+<thead>
+<tr>
+<th>Format</th>
+<th>In</th>
+<th>Out</th>
+<th>Parser or writer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Turtle, N-Triples</td>
+<td>ontology, SKOS list, SHACL profile</td>
+<td>lists, profile, linked data</td>
+<td><code>n3</code> 2.7.12 (have)</td>
+</tr>
+<tr>
+<td>JSON-LD</td>
+<td>the same</td>
+<td>lists, profile, linked data</td>
+<td><code>jsonld-streaming-parser</code> 5.0.1 (have); no remote <code>@context</code></td>
+</tr>
+<tr>
+<td>RDF/XML</td>
+<td>ontology (FOAF ships as RDF/XML)</td>
+<td>—</td>
+<td><code>rdfxml-streaming-parser</code>, <strong>new dependency</strong>, a version at least two weeks old</td>
+</tr>
+<tr>
+<td>TriG</td>
+<td>—</td>
+<td>linked data (§3.4)</td>
+<td><code>n3</code></td>
+</tr>
+<tr>
+<td>SHACL (in Turtle or JSON-LD)</td>
+<td>the profile: <code>sh:path</code> → property, <code>sh:name</code> → label, <code>sh:description</code> → help, <code>sh:order</code>, <code>sh:minCount ≥ 1</code> → required, <code>sh:maxCount</code> → max, <code>sh:datatype</code> → value type, <code>sh:class</code> + <code>skos:inScheme</code> → list</td>
+<td>one <code>sh:NodeShape</code> with no target, one <code>sh:property</code> per field</td>
+<td>own mapping</td>
+</tr>
+<tr>
+<td>Omeka S resource template JSON</td>
+<td><code>o:label</code>, <code>o:resource_template_property[]</code> (<code>vocabulary_namespace_uri</code>, <code>local_name</code>, <code>o:alternate_label</code>, <code>o:alternate_comment</code>, <code>o:is_required</code>, <code>data_types[{ name }]</code>); a property of an ontology that is not loaded is listed and left out</td>
+<td>the same keys; data types <code>literal</code>, <code>numeric:timestamp</code>, <code>numeric:integer</code>, <code>uri</code>, <code>customvocab:{list}</code>, <code>resource</code></td>
+<td>own mapping</td>
+</tr>
+<tr>
+<td>SKOS</td>
+<td>one file, one preview per <code>skos:ConceptScheme</code>; today&#39;s rules (merge by IRI, never remove)</td>
+<td>one list</td>
+<td>today&#39;s <code>skos.ts</code>, per list</td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ul>
+<li><strong>One upload path.</strong> <strong>Load a vocabulary file</strong> takes any input row. The preview says what it found: &quot;3 properties (a new ontology), 1 list (40 items), 1 form of 6 fields&quot;. The operator ticks what to load. Loaded properties appear under &quot;From an ontology&quot; in <strong>Add a question</strong>; they do not become fields by themselves. A SHACL form or an Omeka template <strong>adds</strong> fields after the existing ones; it never removes a field.</li>
+<li><strong>Prefix clash</strong> (A §4.4): an ontology whose prefix <code>anno.jsonld</code> defines for another namespace, or whose prefix is an <code>anno.jsonld</code> term (<code>body</code>, <code>type</code>…), is refused with &quot;Change the prefix&quot;. The prefix is display and export only; stored bodies hold full IRIs.</li>
+<li><strong>No fetch.</strong> No remote context, no <code>owl:imports</code>, no request to any address in a file (<a href="https://github.com/micahchoo/annoudio/blob/main/design/phase5-notes.md"><code>phase5-notes.md</code></a> decision 10).</li>
+<li><strong>Limits.</strong> 5 MB, 20 000 terms, 5000 items per list.</li>
+<li><strong>The 1 MiB note.</strong> A Next.js Server Action takes 1 MiB by default, and today&#39;s SKOS import holds to 1 MB for that reason. All vocabulary uploads move to one Payload collection endpoint, <code>POST /api/ontologies/import</code> (a route handler: no Server Action body limit; Payload&#39;s <code>req.user</code> gives the operator check). The endpoint reads the body as a stream and stops at 5 MB. The bundled files load in the migration and need no upload.</li>
+<li>A file that this stack exports, it can import again with no change.</li>
+</ul>
+<h2 id="7-the-member-and-the-visitor">7 The member and the visitor</h2>
+<h3 id="71-annotate-form-p4-phone-360-px">7.1 Annotate form (P4, phone, 360 px)</h3>
+<pre tabindex="0"><code>┌ River Voices ───────────────── Asha ▾ ┐
+│ Ferry crossing, 1962                  │
+│ ▶ 1:02–1:35   [ Use the player time ] │
+│ Your story                            │
+│ [My father ran this ferry from …    ] │
+│ [ Record a voice note ] [ Attach ]    │
+│ ── About this part ────────────────── │
+│ Place                                 │
+│ Where did this happen?                │
+│ [ Fort Kochi ✕ ] [ search…         ]  │
+│ When it happened (optional)           │
+│ A year is enough.                     │
+│ Year [1962] Month [    ▾] Day [  ▾]   │
+│ Who is speaking (optional)            │
+│ [ Ravi                             ]  │
+│  Not in the list. We send &quot;Ravi&quot; as   │
+│  your own answer.                     │
+│ Topics (optional)                     │
+│ ( Ferries ✓ ) ( Work ) ( Monsoon )    │
+│ More questions (2)                 ▸  │
+│ ───────────────────────────────────── │
+│ [ Send for review ]                   │
+└───────────────────────────────────────┘
+</code></pre>
+<p>Rules:</p>
+<ol>
+<li>Questions follow the story text and the media. A reply form shows none.</li>
+<li>Show every required field, then the first three others in field order. Fold the rest under <strong>More questions (N)</strong>. A folded field with an error unfolds.</li>
+<li>A list with ≤ 8 visible items shows chips; a longer list shows a search box (ARIA 1.2 combobox) over labels. With <strong>own answers</strong> on, a text that matches no item is sent as an own answer, and the line under the box says so.</li>
+<li>Optional fields say &quot;(optional)&quot;; required fields have no mark. Most fields are optional, so the mark goes on the common case (A §7).</li>
+<li>Errors name the label: &quot;Place: give an answer.&quot; &quot;When it happened: the day is not in that month.&quot; Focus goes to the first error; the form keeps its text (<a href="ia.html"><code>ia.md</code></a> P9).</li>
+<li>A hidden field with a value in this story shows that value read-only with &quot;This question is no longer asked&quot;. The save keeps it (<code>keep</code>, §9.1).</li>
+<li>Each control has a visible label, help as <code>aria-describedby</code>, and targets ≥ 44 px. No IRI, prefix or the word &quot;property&quot;.</li>
+</ol>
+<h3 id="72-widget">7.2 Widget</h3>
+<pre tabindex="0"><code>┌ Asha · 1:02–1:35 ──────────────────────────────┐  story-meta
+│ My father ran this ferry from Fort Kochi.      │  story-text
+│ Short title       The last ferry               │  fields &gt; field &gt; field-label, field-value
+│ When it happened  1962                         │
+│ Place             Fort Kochi                   │
+│ Who is speaking   K. Joseph                    │
+│ [Ferries] [Work]                               │  a field shown as tags: tag parts, no label
+└────────────────────────────────────────────────┘
+</code></pre>
+<p>New parts (CONTRACT §3.3, additive; slice 6 adds rule 9 there): <code>fields</code> (a <code>&lt;dl&gt;</code>, absent with no values), <code>field</code>, <code>field-label</code> (<code>&lt;dt&gt;</code>), <code>field-value</code> (<code>&lt;dd&gt;</code>, one per value). A list value keeps the part <code>tag</code> too, so host CSS for <code>::part(tag)</code> still works.</p>
+<p>Theme JSON (CONTRACT §3.2 rule 6, new key): <code>&quot;fields&quot;: [{ &quot;property&quot;: &quot;http://purl.org/dc/terms/title&quot;, &quot;label&quot;: &quot;Short title&quot;, &quot;showAs&quot;: &quot;line&quot; }, …]</code>.</p>
+<p>Rules: array order is field order; hidden fields are in it (old stories show their values). The player groups value bodies by <code>rdf:predicate.id</code>. <code>showAs: &quot;none&quot;</code> hides the value in the widget (it stays in the public WADM; the admin says so). A predicate not in <code>fields</code> shows its value after the others with no label. A date shows at its stored precision with <code>Intl.DateTimeFormat</code>. A link is a link only for <code>http:</code>/<code>https:</code>, with <code>rel=&quot;nofollow ugc&quot;</code>. All text uses <code>textContent</code>. A relabel reaches hosts within the theme cache time (300 s).</p>
+<h2 id="8-admin-screens">8 Admin screens</h2>
+<p>Project tabs: Overview · Project · Review and rights · Sign-in · <strong>Vocabulary</strong> · <strong>Lists</strong> · Theme. The sidebar job <strong>Vocabulary</strong> opens the Vocabulary tab (a project picker for &gt; 1 project).</p>
+<p>O10v Vocabulary tab:</p>
+<pre tabindex="0"><code>┌ River Voices · Vocabulary ────────────────────────────────────────────────────────┐
+│ What we ask about each recording                                                  │
+│ Members answer these questions below their story, in this order.                 │
+│ ⠿ Place                      From &quot;Places&quot; · up to 3 · own answers  17 stories [Edit]│
+│   dcterms:spatial                                                                 │
+│ ⠿ When it happened           Date · optional                         9 stories [Edit]│
+│   dcterms:temporal                                                                │
+│ ⠿ Who is speaking            From &quot;People&quot; · own answers             4 stories [Edit]│
+│   relators:spk                                                                    │
+│ ⠿ Topics                     From &quot;Topics&quot; · up to 10 · as tags     41 stories [Edit]│
+│   dcterms:subject                                                                 │
+│ [ + Add a question ]   [ See it on a phone ]                                      │
+│ ▸ For other systems                                                               │
+└───────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>Add a question (one dialog, three sections):</p>
+<pre tabindex="0"><code>┌ Add a question ───────────────────────────────────────────┐
+│ Common questions: Place · When it happened · Who is       │
+│   speaking · Topics ✓ asked · … 14 in all                 │
+│ ▸ Advanced: from an ontology  Search [ boat ] [ All ▾ ]   │
+│   Ferry route — River Archive (ra)  [ Load a vocabulary file ]
+│ Your own question  [ Write a new question ]               │
+└───────────────────────────────────────────────────────────┘
+</code></pre>
+<p>Edit a field (drawer; also the end step of each section above):</p>
+<pre tabindex="0"><code>┌ Edit: Place ──────────────────────────────────────────┐
+│ Question members see [ Place ]  Help [ Where did… ]   │
+│ Kind of answer  Text · Date · Number · Link ·         │
+│   (•) From a list  ( ) People, places or things       │
+│ List [ Places ▾ ] [ New list ]   How many answers [3] │
+│ [x] Members may type their own answer                 │
+│ [ ] Members must answer                               │
+│ Show in the widget (•) Label: value ( ) Tags ( ) No   │
+│ 17 stories answer this. Kind and list are fixed.      │
+│ Saved as: dcterms:spatial (Dublin Core)               │
+│ [ Save ]  [ Hide from new stories ]                   │
+└───────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Field lock</strong> (A §10.4): when a story (any version) has a value for the field, property, value type and list are fixed, and the field cannot be removed, only hidden. Label, help, max, required, show as, own answers, hidden and position stay free. Required and max apply at the next save only. <strong>Your own question</strong> asks label, help and kind of answer, then mints <code>{origin}/vocab/{project}/p/{key}</code> (key rules of <a href="https://github.com/micahchoo/annoudio/blob/main/design/phase5-notes.md"><code>phase5-notes.md</code></a> decision 11), shown read-only: &quot;Address: … (never changes)&quot;.</p>
+<p>O10l Lists tab:</p>
+<pre tabindex="0"><code>┌ River Voices · Lists ─────────────────────────────────────────────┐
+│ Members pick from these lists when they answer a question.        │
+│ Topics            31 items     asked by: Topics           [Open]  │
+│ Places            12 items     asked by: Place            [Open]  │
+│ People             8 people    asked by: Who is speaking… [Open]  │
+│ [ + Add a list ]  (•) Words and topics  ( ) People… [Person ▾]    │
+│ ▸ For other systems: download a list as SKOS, upload a SKOS file  │
+└───────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Open</strong> shows today&#39;s tree page (O10) for that list: tree with story counts, <strong>Add an item</strong>, rename, move, <strong>Hide from new stories</strong>, the delete guard (&quot;12 stories use this item&quot;). An entity list has no tree: rows Label · Same as · stories. The item form (today&#39;s O11) gains &quot;Same as&quot;. The class choices are the classes of the loaded ontologies (<code>foaf:Person</code>, <code>schema:Place</code>, …), Person first.</p>
+<p>O10x For other systems (folded panel at the end of the Vocabulary tab):</p>
+<pre tabindex="0"><code>│ ▾ For other systems                                                    │
+│ Download [ Questions as SHACL ] [ Omeka template ] [ Linked data ▾ ]   │
+│ Upload   [ Load a vocabulary file ] Turtle, JSON-LD, RDF/XML, SHACL,   │
+│          Omeka template; 5 MB at most                                  │
+│   → We found: [x] 3 properties (new ontology &quot;River Archive&quot;, ra)       │
+│   [x] 1 list &quot;Boat names&quot; (40 items)  [ ] 1 form, 6 questions (added)   │
+│     Left out: 2 classes, 1 property with no label   [ Load these ]      │
+</code></pre>
+<p>Settings → <strong>Ontologies</strong> (Payload list view, read-only rows): label, prefix, namespace, terms, bundled or uploaded, date. Bundled rows cannot be removed. An uploaded ontology with a property that a field uses cannot be removed. A new version of the same namespace shows added, changed, unchanged, gone; a gone term that a field uses stays, marked &quot;No longer in the file&quot;.</p>
+<p>O5 Review screen: values show under the story text in field order, with labels: &quot;Place: Fort Kochi · When it happened: 1962&quot;. An own answer shows &quot;Who is speaking: Ravi (new)&quot; and <strong>Add &quot;Ravi&quot; to People</strong> (adds the item; the story keeps its own answer; open question 1). &quot;No topic fits? Add a concept…&quot; becomes &quot;No item fits? [ Add an item to Places ▾ ]&quot;. Values are read-only for operators. The Today checklist gains the optional line &quot;Add questions, so members tell you place and time.&quot;</p>
+<h2 id="9-data-model-and-interfaces">9 Data model and interfaces</h2>
+<h3 id="91-data-model">9.1 Data model</h3>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 9.1 Data model"><table>
+<thead>
+<tr>
+<th>Collection / field</th>
+<th>Module</th>
+<th>Kind</th>
+<th>Migration</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ontologies</code>: label, namespace (unique), prefix, source (<code>bundled</code>, <code>uploaded</code>), licence, fileHash, loadedAt</td>
+<td><code>vocabulary</code></td>
+<td>new</td>
+<td>yes, plus seed</td>
+</tr>
+<tr>
+<td><code>ontology-terms</code>: iri (unique), ontology, project (custom properties only), kind (<code>property</code>, <code>class</code>), label, comment, rangeHint, gone</td>
+<td><code>vocabulary</code></td>
+<td>new; index on label</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>vocab-fields</code>: project, property (→ term), label, help, valueType, list (→ <code>vocab-lists</code>), required, max (1–10), showAs (<code>line</code>, <code>tags</code>, <code>none</code>), allowOwn, hidden, position (integer)</td>
+<td><code>vocabulary</code></td>
+<td>new; unique (project, property)</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>vocab-lists</code>: project, key, iri, label, kind (<code>items</code>, <code>entities</code>), class (→ term, entities only), hidden</td>
+<td><code>vocabulary</code></td>
+<td>new</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>concepts</code> (admin label &quot;List items&quot;): + list (required), + sameAs</td>
+<td><code>vocabulary</code></td>
+<td>fields</td>
+<td>yes; fill <code>list</code></td>
+</tr>
+<tr>
+<td><code>stories.wadm</code>: pairs → value bodies</td>
+<td><code>stories</code></td>
+<td>data</td>
+<td>yes, main and versions</td>
+</tr>
+<tr>
+<td><code>story-values</code> (admin hidden): story, project, layer (<code>newest</code>, <code>published</code>), property, objectIri, literal, datatype, language, own</td>
+<td><code>stories</code></td>
+<td>new, derived, never edited</td>
+<td>yes, plus backfill</td>
+</tr>
+<tr>
+<td>theme JSON <code>fields</code></td>
+<td><code>projects</code> (asks <code>vocabulary.labels</code>)</td>
+<td>route, additive</td>
+<td>no</td>
+</tr>
+<tr>
+<td>parts <code>fields</code>, <code>field</code>, <code>field-label</code>, <code>field-value</code></td>
+<td><code>player</code></td>
+<td>CONTRACT §3.3, additive</td>
+<td>no</td>
+</tr>
+</tbody></table></div>
+<p><code>story-values</code> is written in the <code>stories</code> <code>afterChange</code> hook with the same <code>req</code>, so it commits with the story. It serves counts per field and per item, the delete guards and the field lock, and later admin filters (&quot;Place is Fort Kochi&quot;).</p>
+<p>Limits: 20 fields, 20 lists, 5000 items per list, 30 values per story (replaces <code>limits.tags</code>), 10 values per field, text 500 characters.</p>
+<h3 id="92-vocabulary-interface">9.2 <code>vocabulary</code> interface</h3>
+<p>The seam rule (B §12): <code>vocabulary</code> knows RDF terms and no WADM; <code>stories</code> knows WADM and no ontologies. They meet at <code>ResolvedValue</code>: one statement without its subject. Today&#39;s free functions (<code>concept</code>, <code>conceptsOf</code>, <code>exportSkos</code>, <code>importSkos</code>) fold into the instance; their tests move to <code>resolve</code>, <code>choices</code> and <code>importFile</code>.</p>
+<pre tabindex="0"><code class="language-ts">export function createVocabulary(config: VocabularyConfig): Vocabulary
+export function vocabularyCollections(deps: VocabularyDeps): CollectionConfig[]
+//   ontologies, ontology-terms, vocab-fields, vocab-lists, concepts; the import endpoint is on `ontologies`
+export interface VocabularyConfig { payload: Payload; origin: string   // ANNOUDIO_ORIGIN: base of minted IRIs
+  stories: () =&gt; Pick&lt;Stories, &#39;valueCounts&#39; | &#39;fieldUsage&#39; | &#39;conceptChanged&#39;&gt;   // a getter: made after the config
+  limits?: Partial&lt;typeof VOCABULARY_LIMITS&gt; }
+export const VOCABULARY_LIMITS = { fileBytes: 5_000_000, fileTerms: 20_000, fields: 20, lists: 20,
+  itemsPerList: 5000, valuesPerStory: 30, maxPerField: 10, textChars: 500 } as const
+export const CATALOGUE: readonly CatalogueEntry[]   // §2, 14 entries
+
+export type Iri = string; export type ValueType = &#39;text&#39; | &#39;date&#39; | &#39;number&#39; | &#39;link&#39; | &#39;list&#39; | &#39;entity&#39;
+export interface CatalogueEntry { key: string; label: string; help?: string; property: Iri
+  valueType: ValueType; list?: { name: string; kind: ListKind; class?: Iri; seed?: string[] }
+  max: number; allowOwn: boolean; showAs: ShowAs }
+export type ListKind = &#39;items&#39; | &#39;entities&#39;; export type ShowAs = &#39;line&#39; | &#39;tags&#39; | &#39;none&#39;
+export interface Field { property: Iri; curie: string; label: string; help?: string; valueType: ValueType
+  list?: { key: string; iri: Iri; label: string; kind: ListKind; class?: Iri; size: number }
+  required: boolean; max: number; showAs: ShowAs; allowOwn: boolean; hidden: boolean
+  usage: number }                                   // stories with a value; usage &gt; 0 = locked
+export interface Profile { project: ProjectSlug; language: string; fields: Field[] }
+export interface Choice { iri: Iri; label: string; language?: string; parent?: Iri; depth: number }
+
+export type ValueInput =
+  | { property: Iri; item: Iri }                    // list or entity
+  | { property: Iri; text: string }                 // text, number, own answer
+  | { property: Iri; date: { year: number; month?: number; day?: number } }
+  | { property: Iri; link: { href: string; label?: string } }
+export type ResolvedObject =
+  | { iri: Iri }
+  | { literal: string; datatype?: Iri; language?: string }   // a datatype or a language, never both
+  | { own: { label: string; language?: string; class: Iri } }
+export interface ResolvedValue { property: Iri; purpose: &#39;tagging&#39; | &#39;describing&#39;
+  text: string; language?: string; object: ResolvedObject }
+export type ValueErrorCode = &#39;required&#39; | &#39;too-many&#39; | &#39;unknown-field&#39; | &#39;hidden-field&#39;
+  | &#39;unknown-item&#39; | &#39;hidden-item&#39; | &#39;own-not-allowed&#39; | &#39;bad-date&#39; | &#39;bad-number&#39; | &#39;bad-link&#39; | &#39;too-long&#39;
+export type ResolveResult = { ok: true; values: ResolvedValue[] }
+  | { ok: false; errors: { property: Iri; code: ValueErrorCode }[] }
+
+export interface Vocabulary {
+  // Annotate page, `stories`, theme JSON
+  profile(project: ProjectSlug, options?: { forNewStories?: boolean }): Promise&lt;Profile | null&gt;
+  choices(project: ProjectSlug, listKey: string, query?: string): Promise&lt;Choice[]&gt;   // ≤ 200 as a tree, else a search
+  resolve(project: ProjectSlug, input: ValueInput[], options?: { keep?: ResolvedValue[]; req?: PayloadRequest }):
+    Promise&lt;ResolveResult&gt;                            // `keep`: stored values of hidden fields carry over
+  inputsOf(project: ProjectSlug, values: ResolvedValue[]): Promise&lt;ValueInput[]&gt;     // refills the form
+  labels(project: ProjectSlug): Promise&lt;{ property: Iri; label: string; showAs: ShowAs }[]&gt;
+  item(project: ProjectSlug, iri: Iri): Promise&lt;{ iri: Iri; label: string; language?: string; list: string } | null&gt;
+
+  // operators: fields
+  addField(operator: OperatorSession, project: ProjectSlug, spec:
+    | { from: &#39;catalogue&#39;; key: string }
+    | { from: &#39;term&#39;; property: Iri; label: string; help?: string; valueType: ValueType; list?: string }
+    | { from: &#39;own&#39;; label: string; help?: string; valueType: ValueType; list?: string }): Promise&lt;FieldResult&gt;
+  updateField(operator: OperatorSession, project: ProjectSlug, property: Iri,
+    patch: Partial&lt;Pick&lt;Field, &#39;label&#39; | &#39;help&#39; | &#39;required&#39; | &#39;max&#39; | &#39;showAs&#39; | &#39;allowOwn&#39; | &#39;hidden&#39;
+      | &#39;valueType&#39;&gt; &amp; { list: string }&gt;): Promise&lt;FieldResult&gt;   // locked keys refused: &#39;field-in-use&#39;
+  moveField(operator: OperatorSession, project: ProjectSlug, property: Iri, to: number): Promise&lt;FieldResult&gt;
+  removeField(operator: OperatorSession, project: ProjectSlug, property: Iri): Promise&lt;FieldResult&gt;
+  searchTerms(query: { kind: &#39;property&#39; | &#39;class&#39;; text: string; ontology?: string; limit?: number }): Promise&lt;Term[]&gt;
+
+  // operators: lists
+  lists(project: ProjectSlug): Promise&lt;ListSummary[]&gt;
+  addList(operator: OperatorSession, project: ProjectSlug, spec: { label: string; kind: ListKind; class?: Iri }):
+    Promise&lt;{ ok: true; key: string } | { ok: false; error: &#39;too-many&#39; | &#39;bad-class&#39; }&gt;
+  addItem(operator: OperatorSession, project: ProjectSlug, listKey: string,
+    spec: { label: string; parent?: Iri; sameAs?: string }): Promise&lt;{ ok: true; iri: Iri } | { ok: false; error: string }&gt;
+
+  // files
+  importFile(operator: OperatorSession, file: { name: string; bytes: Uint8Array }, options: { project?: ProjectSlug
+    apply: boolean; accept?: ImportChoice; names?: { label: string; prefix: string; namespace: Iri } }):
+    Promise&lt;ImportResult&gt;                             // apply: false = preview; same report shape both times
+  exportFile(project: ProjectSlug, what: { kind: &#39;profile&#39;; format: &#39;shacl-turtle&#39; | &#39;shacl-jsonld&#39; | &#39;omeka&#39; }
+    | { kind: &#39;list&#39;; listKey: string; format: &#39;turtle&#39; | &#39;jsonld&#39; }): Promise&lt;{ filename: string; contentType: string; body: string } | null&gt;
+  describe(project: ProjectSlug): AsyncIterable&lt;Quad&gt;   // layer 3: SHACL, custom properties, lists, entities
+
+  removeVocabulary(projectId: number | string, options?: { req?: PayloadRequest }): Promise&lt;void&gt;   // kept
+}
+export type FieldResult = { ok: true; field: Field }
+  | { ok: false; error: &#39;unknown-project&#39; | &#39;unknown-term&#39; | &#39;property-taken&#39; | &#39;field-in-use&#39; | &#39;too-many&#39;
+      | &#39;bad-list&#39; | &#39;not-a-property&#39; }
+</code></pre>
+<p>Why deep: <code>resolve</code> hides label lookup, list membership, hidden rules, own-answer classes, three date datatypes, link checks and limits behind one call. <code>profile</code> serves the Annotate page, the admin tab and (through <code>labels</code>) the theme JSON. <code>importFile</code> hides five parsers, format sniffing, the prefix rule, merge rules and the preview. Callers never see <code>ontology-terms</code> or <code>vocab-fields</code>.</p>
+<h3 id="93-stories-deltas">9.3 <code>stories</code> deltas</h3>
+<pre tabindex="0"><code class="language-ts">// types.ts
+export interface DraftInput { /* … */ values?: ValueInput[] }        // replaces tags; not on a reply
+export type SaveError = /* … */
+  | { code: &#39;reply-and-values&#39; }                                     // replaces &#39;reply-and-tags&#39;
+  | { code: &#39;values-invalid&#39;; errors: { property: Iri; code: ValueErrorCode }[] }
+                                                                     // replaces &#39;too-many-tags&#39;, &#39;unknown-concept&#39;
+export interface OwnDraft { /* … */ values: ResolvedValue[] }         // replaces tags
+export interface StoryReview { /* … */ values: ResolvedValue[] }      // replaces tags; the admin joins labels
+export interface StoriesConfig { /* … */ limits?: { bodies?: number; values?: number; text?: number } }
+export interface Stories {
+  /* … */
+  valueCounts(project: ProjectSlug): Promise&lt;Map&lt;Iri, number&gt;&gt;        // replaces tagCounts; items and entities
+  fieldUsage(project: ProjectSlug): Promise&lt;Map&lt;Iri, number&gt;&gt;         // property IRI → stories with a value
+  conceptChanged(iri: Iri, options?: { req?: PayloadRequest }): Promise&lt;void&gt;   // kept; rewrites `value`
+  exportQuads(operator: OperatorSession, filter?: ExportFilter): AsyncIterable&lt;Quad&gt;
+    // layers 1 and 2; layer 2 quads carry the story IRI as graph; published only
+}
+</code></pre>
+<ul>
+<li><code>saveDraft</code> calls <code>vocabulary.resolve(project, input.values, { keep: hidden-field values of the stored story, req })</code>, then shapes one value body per <code>ResolvedValue</code>, with <code>rdf:subject</code> = the segment IRI.</li>
+<li><code>parseBodies</code> and <code>deriveColumns</code> read value bodies (§3.2 rule 7). The pair form goes with the migration.</li>
+<li>The <code>afterChange</code> hook writes <code>story-values</code> rows for the newest and the published version.</li>
+<li><code>exportStories</code> stays (WADM JSON-LD). The admin route <code>GET /admin/export/{project}.{ttl|trig|jsonld}</code> joins <code>stories.exportQuads</code> and <code>vocabulary.describe</code> and writes Turtle and TriG with <code>n3</code> <code>StreamWriter</code>. The JSON-LD writer is decided in slice 10: extend the hand-written writer of <code>skos.ts</code>, or add <code>jsonld</code> (a new dependency).</li>
+</ul>
+<h2 id="10-payload-feasibility-3902">10 Payload feasibility (3.90.2)</h2>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 10 Payload feasibility (3.90.2)"><table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Kind</th>
+<th>How</th>
+<th>Risk</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>O10v Vocabulary tab</td>
+<td>custom <code>ui</code> field in the project&#39;s tab (as today&#39;s <code>VocabularyPanel</code>)</td>
+<td>server component reads <code>profile</code>; Server Actions call <code>addField</code>, <code>moveField</code>; drag with the keyboard fallback <strong>Move up / Move down</strong>; dialogs are <code>&lt;dialog&gt;</code> with buttons, never a nested <code>&lt;form&gt;</code> (<a href="https://github.com/micahchoo/annoudio/blob/main/design/phase5-notes.md"><code>phase5-notes.md</code></a> decision 13)</td>
+<td>Medium. Collection <code>orderable: true</code> exists but is marked experimental in 3.90.2 and orders one global sequence; an integer <code>position</code> per project is plain and testable.</td>
+</tr>
+<tr>
+<td>Add a question, Edit a field</td>
+<td>custom client components</td>
+<td><code>searchTerms</code> over <code>ontology-terms</code> (2 000+ rows) by label; server-side search</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>O10l Lists tab</td>
+<td>custom <code>ui</code> field</td>
+<td>list summary; <strong>Open</strong> goes to today&#39;s <code>ConceptsView</code> with <code>?list=</code></td>
+<td>Low: reuse <code>ConceptTree</code>, <code>ConceptUsage</code></td>
+</tr>
+<tr>
+<td>Item form (O11)</td>
+<td>default document form</td>
+<td><code>list</code> relationship with <code>filterOptions</code> (project), <code>sameAs</code> text with a URL check; <code>parent</code> filtered to the same list</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>O10x upload</td>
+<td>collection endpoint <code>POST /api/ontologies/import</code></td>
+<td>a route handler: no Server Action 1 MiB limit; streamed read with a 5 MB stop; <code>req.user</code> from Payload</td>
+<td>Low; test a 4 MB file in e2e</td>
+</tr>
+<tr>
+<td>Settings → Ontologies; O5 values; field lock</td>
+<td>default list view (<code>access.create: nobody</code>, delete guard hook); existing story panel; checks inside <code>updateField</code></td>
+<td>panel joins <code>stories.review</code> with <code>vocabulary.labels</code>; the lock reads <code>stories.fieldUsage</code> (fields change only through the interface)</td>
+<td>Low</td>
+</tr>
+<tr>
+<td><code>story-values</code></td>
+<td>collection, <code>admin.hidden: true</code></td>
+<td>written in the stories <code>afterChange</code> with <code>req</code></td>
+<td>Medium: raw SQL counts follow <a href="https://github.com/micahchoo/annoudio/blob/main/.claude/rules/stories-raw-sql.md"><code>.claude/rules/stories-raw-sql.md</code></a></td>
+</tr>
+<tr>
+<td>Migration</td>
+<td>raw SQL over <code>jsonb</code></td>
+<td>main and versions tables</td>
+<td>Medium: <a href="https://github.com/micahchoo/annoudio/blob/main/.claude/rules/app-migrations.md"><code>.claude/rules/app-migrations.md</code></a> hazards</td>
+</tr>
+</tbody></table></div>
+<h2 id="11-build-slices">11 Build slices</h2>
+<p>Each slice: ≤ 5 files (tests count; bundled data files and generated files do not), ends green on <code>pnpm test:int</code>, <code>tsc</code>, lint. Slices 1 to 4 go in order, and 3, 4 and 6 ship in one release (§4). 5, 6 and 7 need 4; 8 to 11 need 7.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in 11 Build slices"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Slice</th>
+<th>Files</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Ontologies</td>
+<td><code>scripts/bundle-ontologies.ts</code>, <code>vocabulary/ontologies.ts</code>, <code>vocabulary/collection.ts</code>, migration, <code>ontologies.int.spec.ts</code></td>
+<td>dcterms, dctype, foaf, skos, schema.org (<code>http:</code> IRIs), rdfs and relators seed; <code>searchTerms({ kind: 'property', text: 'place' })</code> finds <code>dcterms:spatial</code>; each §2 IRI resolves to a term; CONTEXT.md words applied</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Fields and lists, pure</td>
+<td><code>vocabulary/profile.ts</code>, <code>vocabulary/resolve.ts</code>, <code>vocabulary/index.ts</code>, <code>vocabulary/catalogue.ts</code>, <code>profile.int.spec.ts</code></td>
+<td><code>addField({ from: 'catalogue' })</code> makes the field and its list; <code>resolve</code> gives the §3.3 objects; each <code>ValueErrorCode</code> has a test; a second field on one property gives <code>property-taken</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Store values</td>
+<td><code>stories/shape.ts</code>, <code>stories/validate.ts</code>, <code>stories/types.ts</code>, <code>stories/create.ts</code>, <code>values.int.spec.ts</code></td>
+<td><code>saveDraft</code> with four values stores §3.3 byte for byte (key order aside); jsonld.js and <code>jsonld-streaming-parser</code> give the expected N-Quads for it and for an own answer; a reply with values gives <code>reply-and-values</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Migration and <code>story-values</code></td>
+<td>migration <code>vocab_profile</code>, <code>stories/values.ts</code> (collection + hook), <code>stories/index.ts</code> (<code>valueCounts</code>, <code>fieldUsage</code>), <code>vocabulary/collection.ts</code> (guards), <code>migration.int.spec.ts</code></td>
+<td>up on rows with pairs gives value bodies with the same concept IRIs; down gives the pairs back; counts match the old <code>tagCounts</code>; a used field refuses <code>removeField</code> with <code>field-in-use</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Annotate form</td>
+<td><code>annotate/page.tsx</code>, <code>annotate/FieldControls.tsx</code>, <code>annotate/actions.ts</code>, <code>annotate/strings.ts</code>, <code>annotate.e2e.spec.ts</code></td>
+<td>at 360 px: required + 3 shown, rest folded; &gt; 8 items gives a search box; an own answer saves; errors name the label; axe clean</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Widget</td>
+<td><a href="https://github.com/micahchoo/annoudio/blob/main/embed/src/stories.ts"><code>embed/src/stories.ts</code></a>, <code>embed/src/render.ts</code>, <code>projects/theme.ts</code>, <a href="contract.html"><code>CONTRACT.md</code></a>, <code>embed</code> test</td>
+<td>theme JSON has <code>fields</code>; parts <code>fields</code>/<code>field</code>/<code>field-label</code>/<code>field-value</code> render; <code>tag</code> part kept; relabel changes the widget with no story rebuild; CONTRACT §3.2 and §3.3 rules added</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Vocabulary tab</td>
+<td><code>admin/vocabulary/FieldList.tsx</code>, <code>admin/vocabulary/AddQuestion.tsx</code>, <code>admin/vocabulary/actions.ts</code>, <code>admin/strings.ts</code>, <code>vocabulary.e2e.spec.ts</code></td>
+<td>add from the catalogue, own question, move, hide; the lock text shows for a used field; the property line shows under each label</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Upload and ontology search</td>
+<td><code>vocabulary/importFile.ts</code>, <code>vocabulary/rdfxml.ts</code> (+ <code>package.json</code>), the endpoint in <code>vocabulary/collection.ts</code>, <code>admin/vocabulary/LoadFile.tsx</code>, <code>import.int.spec.ts</code></td>
+<td>FOAF RDF/XML loads; a 4 MB Turtle file passes and a 6 MB one is refused; a clashing prefix is refused; a SKOS file gives a list; nothing is written with <code>apply: false</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Lists tab and entities</td>
+<td><code>admin/vocabulary/ListsPanel.tsx</code>, <code>admin/vocabulary/ConceptsView.tsx</code>, <code>vocabulary/collection.ts</code> (<code>sameAs</code>, <code>list</code>), <code>admin/strings.ts</code>, <code>lists.e2e.spec.ts</code></td>
+<td>Add a list of kind People; an entity with &quot;Same as&quot; exports <code>owl:sameAs</code>; the tree page opens per list; the Lists page leads with the member sentence, SKOS folded</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Files for other systems</td>
+<td><code>vocabulary/shacl.ts</code>, <code>vocabulary/omeka.ts</code>, <code>app/(payload)/admin/export/[file]/route.ts</code>, <code>admin/vocabulary/OtherSystems.tsx</code>, <code>export.int.spec.ts</code></td>
+<td>SHACL and Omeka files round-trip (export, import, no change); TriG of §3.3 has one named graph with five triples; only published stories export</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Review screen</td>
+<td><code>admin/stories/StoryPanel.tsx</code>, <code>admin/stories/AddItem.tsx</code>, <code>admin/strings.ts</code>, <a href="ia.html"><code>design/ia.md</code></a>, <code>review.e2e.spec.ts</code></td>
+<td>values show as &quot;Label: value&quot; in field order; &quot;Ravi (new)&quot; offers <strong>Add &quot;Ravi&quot; to People</strong>; no &quot;Concept&quot; or &quot;Topic&quot; word in admin text except the list name Topics</td>
+</tr>
+</tbody></table></div>
+<h2 id="12-open-questions-defaults-in-bold">12 Open questions (defaults in bold)</h2>
+<ol>
+<li><strong>Add &quot;Ravi&quot; to People</strong>: does it also link the member&#39;s own answer to the new entity (an operator edit of a story, with a History line)? Default: <strong>no in v1; the item is added, the story keeps its own answer</strong>, because operators do not edit stories today.</li>
+<li>May operators add or correct values during review (a missing Place)? Default: <strong>no; Return to the member</strong> stays the path (<a href="ia.html"><code>ia.md</code></a> F5).</li>
+<li>Statement subject: always the segment, or a per-field &quot;describes: the part | the story&quot; (for &quot;Where you know this from&quot;, &quot;Told by&quot;)? Default: <strong>always the segment in v1</strong>; a per-field setting is additive later, because one subject rule keeps layer 2 a generic rewrite.</li>
+</ol>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>

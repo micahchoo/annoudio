@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Backup and restore of an Annoudio stack · Annoudio</title>
+<meta name="description" content="This file does not depend on the tool that runs the stack. For the buttons, read GUIDE-dokploy.md or GUIDE-coolify.md. This file tells you what to keep, how often, and how to prove that a backup works">
+<link rel="stylesheet" href="../site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2012h2M7%208v8M11%205v14M15%209v6M19%207v10%22%20stroke%3D%22%230b6e99%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E">
+</head>
+<body class="ao ao-member">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+<nav aria-label="Site"><ul><li><a class="site-brand" href="../index.html">Annoudio</a></li><li><a href="../recordings/index.html">Recordings</a></li><li><a href="../design-system/index.html">Design system</a></li><li><a href="contract.html">Contract</a></li><li><a href="index.html#deploy" aria-current="page">Deploy</a></li><li><a href="index.html#plugins">Plugins</a></li><li><a href="https://github.com/micahchoo/annoudio">GitHub</a></li></ul></nav>
+</header>
+<main id="main" class="site-main site-main--wide">
+<div class="doc">
+<nav class="doc__side" aria-label="Documents"><div><h2>Deploy</h2><ul><li><a href="deploy-dokploy.html">Run with Dokploy</a></li><li><a href="deploy-coolify.html">Run with Coolify</a></li><li><a href="backup.html" aria-current="page">Backup and restore</a></li><li><a href="upgrade.html">Upgrade</a></li></ul></div>
+<div><h2>Plugins</h2><ul><li><a href="plugin-wordpress.html">WordPress block</a></li><li><a href="plugin-omeka-s.html">Omeka S module</a></li></ul></div>
+<div><h2>Reference</h2><ul><li><a href="contract.html">Embed contract</a></li><li><a href="context.html">Context and words</a></li></ul></div>
+<div><h2>Design</h2><ul><li><a href="ia.html">Information architecture</a></li><li><a href="vocab.html">Questions and lists</a></li><li><a href="unverified.html">Not verified yet</a></li><li><a href="architecture-concerns.html">Architecture concerns</a></li></ul></div></nav>
+<article class="prose">
+<p class="doc__src">From <a href="https://github.com/micahchoo/annoudio/blob/main/deploy/BACKUP.md"><code>deploy/BACKUP.md</code></a> in the repository.</p>
+<details class="toc"><summary>On this page (4 sections)</summary><ol><li><a href="#what-you-must-back-up">What you must back up</a></li><li><a href="#how-often-and-in-which-order">How often, and in which order</a></li><li><a href="#the-commands-for-a-person-with-a-terminal">The commands (for a person with a terminal)</a></li><li><a href="#the-restore-test">The restore test</a></li></ol></details>
+<h1 id="backup-and-restore-of-an-annoudio-stack">Backup and restore of an Annoudio stack</h1>
+<p>This file does not depend on the tool that runs the stack. For the buttons, read <a href="deploy-dokploy.html"><code>GUIDE-dokploy.md</code></a> or <a href="deploy-coolify.html"><code>GUIDE-coolify.md</code></a>. This file tells you what to keep, how often, and how to prove that a backup works.</p>
+<h2 id="what-you-must-back-up">What you must back up</h2>
+<p>A stack keeps its data in three places. Lose one, and the restore is incomplete.</p>
+<div class="scroll" tabindex="0" role="region" aria-label="Table in What you must back up"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Holds</th>
+<th>How to back up</th>
+<th>If you lose it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Postgres (volume <code>pgdata</code>)</td>
+<td>Operators, members, projects, recordings, concepts, stories, the job queue (<code>pgboss</code>)</td>
+<td><code>pg_dump</code> (a logical dump). <strong>Never copy the volume files of a running database.</strong></td>
+<td>All stories and accounts are gone.</td>
+</tr>
+<tr>
+<td>The <code>media</code> volume</td>
+<td>The raw uploads (<code>raw/</code>) and the served files (<code>derived/</code>)</td>
+<td>A file archive (tar) of the volume</td>
+<td>Stories stay, but their sound, image and video bodies do not play.</td>
+</tr>
+<tr>
+<td>The settings (<code>.env</code>, or the Environment screen of the tool)</td>
+<td><code>POSTGRES_PASSWORD</code>, <code>PAYLOAD_SECRET</code>, <code>ANNOUDIO_ORIGIN</code>, <code>SMTP_URL</code>, <code>EMAIL_FROM</code>, <code>TZ</code> (if set)</td>
+<td>Copy the text into a password manager. Do it again after each change.</td>
+<td>With a different <code>PAYLOAD_SECRET</code>, all sessions stop. With a different <code>ANNOUDIO_ORIGIN</code>, every story IRI is wrong. Without <code>TZ</code>, the review mail comes at 08:00 UTC.</td>
+</tr>
+</tbody></table></div>
+<p>The code is in git. You do not back it up, but write down the release (git branch or commit) that runs.</p>
+<h2 id="how-often-and-in-which-order">How often, and in which order</h2>
+<ul>
+<li>Postgres: every day. Keep 14 days.</li>
+<li><code>media</code>: every day, <strong>after</strong> the Postgres backup (for example Postgres at 02:00, <code>media</code> at 02:30).</li>
+<li><code>.env</code>: after each change.</li>
+<li>Both, by hand, before each upgrade (<a href="upgrade.html"><code>UPGRADE.md</code></a>).</li>
+</ul>
+<p>Why this order: the app and the worker never change or delete a file in <code>media</code> (<code>raw/</code> stays for ever, a derived file never changes). So a <code>media</code> backup that is newer than the Postgres backup holds every file that the database names. The other order can lose the files of the last 30 minutes.</p>
+<p>Why the containers can stay on during the <code>media</code> backup: the worker writes each derived file in <code>work/</code> and then renames it into <code>derived/</code>. The archive can contain a half-written file only in <code>work/</code> or <code>uploads/</code>, and the stack does not need those after a restore.</p>
+<p>Keep the backups outside the server (S3 or another computer). A backup on the same disk is lost with the disk.</p>
+<h2 id="the-commands-for-a-person-with-a-terminal">The commands (for a person with a terminal)</h2>
+<p>Do these on the server, in the folder of the repository. <code>&lt;stack&gt;</code> is the project name of the stack (<code>docker compose ls</code> shows it; Dokploy and Coolify give their own name).</p>
+<p>Back up Postgres. The format is the same as the Dokploy backup, so the two can restore each other:</p>
+<pre tabindex="0"><code class="language-sh">docker compose -p &lt;stack&gt; exec -T postgres \
+  pg_dump -Fc --no-acl --no-owner -U annoudio annoudio | gzip &gt; annoudio-db-$(date +%F).dump.gz
+</code></pre>
+<p>Back up <code>media</code>:</p>
+<pre tabindex="0"><code class="language-sh">docker run --rm -v &lt;stack&gt;_media:/volume_data:ro -v &quot;$PWD&quot;:/backup alpine:3.24 \
+  tar cf /backup/annoudio-media-$(date +%F).tar -C /volume_data .
+</code></pre>
+<p>Restore Postgres. Stop the app and the worker first, so nothing writes during the restore. Then empty the two schemas, and restore into the empty database:</p>
+<pre tabindex="0"><code class="language-sh">docker compose -p &lt;stack&gt; stop app worker
+docker compose -p &lt;stack&gt; exec -T postgres psql -v ON_ERROR_STOP=1 -U annoudio -d annoudio \
+  -c &#39;DROP SCHEMA IF EXISTS pgboss CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;&#39;
+gunzip -c annoudio-db-2026-10-09.dump.gz | docker compose -p &lt;stack&gt; exec -T postgres \
+  pg_restore -U annoudio -d annoudio -O --exit-on-error
+docker compose -p &lt;stack&gt; start app worker
+</code></pre>
+<p>Do not use <code>pg_restore --clean</code> on a database that the stack has used. It fails on three tables of <code>pgboss</code> (the job queue uses partitioned tables) and exits with code 1. The data comes back, but the exit code hides real errors. (Tested on 2026-10-09; see <a href="https://github.com/micahchoo/annoudio/blob/main/design/phase6-notes.md"><code>design/phase6-notes.md</code></a>.)</p>
+<p>Restore <code>media</code> into a stopped stack. The volume must not be in use:</p>
+<pre tabindex="0"><code class="language-sh">docker compose -p &lt;stack&gt; stop app worker
+docker run --rm -v &lt;stack&gt;_media:/volume_data -v &quot;$PWD&quot;:/backup alpine:3.24 \
+  tar xf /backup/annoudio-media-2026-10-09.tar -C /volume_data
+docker compose -p &lt;stack&gt; start app worker
+</code></pre>
+<p>The archive keeps the owner (uid 1000). If you restore with a tool that does not, the service <code>media-init</code> corrects the owner at the next start.</p>
+<h2 id="the-restore-test">The restore test</h2>
+<p>A backup that you did not restore is a hope, not a backup. Do this test once after the first setup, and then every three months. Do it on a second stack, never on the live stack.</p>
+<ol>
+<li>Make a second stack from the same release, with the <strong>same</strong> <code>.env</code> values (also the same <code>ANNOUDIO_ORIGIN</code>). Give it a different domain in the tool, for example <code>restore-test.stories.example.org</code>. Do not deploy it yet.</li>
+<li>Restore the newest <code>media</code> backup into the volume of the second stack.</li>
+<li>Deploy the second stack. Wait until the app is healthy.</li>
+<li>Restore the newest Postgres backup into the second stack (the commands above, or the Restore button of the tool).</li>
+<li>Restart the app of the second stack.</li>
+<li>Check these four things:<ul>
+<li>You can sign in to <code>/admin</code> with your operator account.</li>
+<li>The number of stories in the admin (<strong>Stories</strong>) is the same as on the live stack, or a little lower (stories after the backup time are missing).</li>
+<li>A sound body of a story plays: open <code>https://&lt;second address&gt;/media/&lt;id&gt;.m4a</code> for one body. (Phase 4b serves these files.)</li>
+<li><code>https://&lt;second address&gt;/stories/&lt;project&gt;/&lt;recording&gt;/</code> shows the published stories of one recording.</li>
+</ul>
+</li>
+<li>Write the date and the result in your operations log.</li>
+<li>Delete the second stack and its volumes.</li>
+</ol>
+<p>Note: the story IRIs and the Annotate links of the second stack still start with the live <code>ANNOUDIO_ORIGIN</code>. This is correct for a restore. Do not publish stories or sign in members on the test stack.</p>
+<p>The second stack has the same <code>SMTP_URL</code>, so it can send real mail: the daily review mail at 08:00 goes to every operator who chose it. Delete the second stack before 08:00, or give it an <code>SMTP_URL</code> that goes nowhere useful (for example a test mailbox) for the test.</p>
+
+</article>
+</div>
+</main>
+<footer class="site-footer">
+<p>Annoudio is free software under the <a href="https://github.com/micahchoo/annoudio/blob/main/LICENSE">MIT licence</a>. Source: <a href="https://github.com/micahchoo/annoudio">github.com/micahchoo/annoudio</a>. Built 2026-10.</p>
+</footer>
+</body>
+</html>
