@@ -2,7 +2,7 @@
 Where we are: ROUND 2 COMPLETE (2026-10-10). Built since the first commit: invite codes; vocabulary (Omeka-style profile + question catalogue, RDF bodies, SKOS lists, entity lists, import/export); concept map + help text everywhere; design system applied to admin, Annotate page, widget; relationship chips, dropdowns, colour picker; operator preview page + "Try it"; range drag on the Annotate waveform; audit fixes; 19 workflow recordings (design/recordings/, WebM).
 Next: owner: commit (260+ changed files uncommitted); team trial; pilot. Open: 3 small stumbles from the re-recording (folded new website row; Overview "Published" counts replies; pre-fix test member) and the declined items in design/audit-fixes-notes.md.
 Suites: app int 364, e2e 84, embed 323 + 4 skipped, worker 85, plugins 13; builds green. Demo: 127.0.0.1:3500 on image with migrations through 20261010_012444_audit_fixes.
-Blocked on: nothing. Git: first commit e1b9be8; everything after it is uncommitted (owner commits).
+Blocked on: nothing. Git: github.com/micahchoo/annoudio (public), main pushed; site https://micahchoo.github.io/annoudio/ from docs/. Dependabot: 49 open alerts (next 16.3.3→16.3.6, vitest 4.0→4.1, nodemailer, undici, sharp) — upgrade round pending owner's word.
 
 ## Log
 - 2026-10-09 CONTEXT.md written (ubiquitous language, module map). ROADMAP.md revised for solo testing.

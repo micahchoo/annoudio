@@ -23,7 +23,7 @@ Firefox, WebKit), worker 85; plugins 13 (rerun by the main session after 7b). `p
 
 ## Git
 
-First commit `e1b9be8` (2026-10-09) holds everything built in this session. The owner commits; agents never do.
+Repo: https://github.com/micahchoo/annoudio (public, MIT). Commits e1b9be8, faf1f29, 388e464 (round 2), then the docs/ site. GitHub Pages serves docs/ on main at https://micahchoo.github.io/annoudio/ (rebuild with `node scripts/build-docs.mjs`). The owner commits; agents never do.
 
 ## How to run
 
